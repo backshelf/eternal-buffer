@@ -41,9 +41,11 @@ export const SIM_DAYS = 7;
  * on purpose and say why in the commit.
  *
  * The bands are drawn from the fitted run at this commit (seed `sim`, one run — the contract is a single-seed
- * check; `--seed=` varies it) with room either side:
- *   - `act` holds the arc itself: the Ex-Console tier unlocks out of the first `:wq`, which the volume curve lands
- *     at ~10.3 played hours, so hour 8 has not seen Act VI yet and hour 12 has finished Act VII.
+ * check; `--seed=` varies it) with room either side, played by the realistic human pilot (`sim/pilot.ts` —
+ * Mosaic crafting & auto-arrange, Skill Trials, Grammar Codex discovery, Tilde petting, Act VI+ echoes, and
+ * Act VII `:vsplit` + `.vimrc`):
+ *   - `act` holds the arc itself: first `:w` lands at ~1:30, first `:wq` at ~8:04 opens Act VI, Mosaic 6×6 at
+ *     ~8:26, Act VII at ~10:52, and the `.vimrc` Forge at ~12:38.
  *   - `sealsRuns` counts the current epoch's bindings (a `:wq` starts it over), so its late bands are wide.
  *   - `activeShare` is the spec's active-first guarantee: the hand always makes the majority of the glyphs.
  */
@@ -54,7 +56,7 @@ export const BANDS = [
       [1, 2],
       [2, 3],
       [2, 4],
-      [3, 6],
+      [4, 6],
       [6, 7],
     ],
   ],
@@ -63,21 +65,22 @@ export const BANDS = [
     [
       [3, 6],
       [3, 6],
-      [4, 7],
-      [6, 8],
-      [7, 10],
+      [5, 8],
+      // Reaching Act V by hour 8 unlocks Scribe #9 (Swapfile Weaver, `minAct: 5`).
+      [6, 9],
+      [8, 10],
     ],
   ],
   [
     "ranks",
     [
-      [10, 30],
-      [20, 45],
-      [30, 55],
-      [45, 75],
-      // Fixing Layer 2 `codex` worth to compare against `best` stopped late rebinds from thrashing every
-      // few minutes, so late epochs actually keep and fill the 24-node tree past 90 ranks.
-      [55, 160],
+      // Playing Mosaic, Tilde petting, Trials, and Grammar Codex raises early/mid-game tree progress over the
+      // old headless-only pilot that ignored those systems.
+      [25, 55],
+      [35, 65],
+      [50, 85],
+      [65, 110],
+      [100, 160],
     ],
   ],
   [

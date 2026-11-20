@@ -45,6 +45,7 @@ import { FIT, PRICES } from "../src/content/fitTable";
 import { FAMILY_BY_ID, KEY_FAMILIES } from "../src/content/vimActs";
 import { type GameState, game } from "../src/game/game";
 import { incomeOf } from "../src/game/income";
+import { EDIT_EVERY_MS, playPilotEdit, playPilotSideSystems } from "./pilot";
 import { type GateKey, LAST_MINUTE, MARKS, PLAN, PLAN_ORDER } from "./plan";
 
 const MIN = 60_000;
@@ -52,8 +53,6 @@ const MIN = 60_000;
 export const LOOK_EVERY_STEPS = 15;
 /** The same cadence in played ms: the stride's rhythm, which a resumed stretch keeps counting globally. */
 const LOOK_MS = LOOK_EVERY_STEPS * 1000;
-/** One headless edit per ~4 s of attended play. Keep in step with `sim/run.ts`, which judges what this prices. */
-export const EDIT_EVERY_MS = 4_000;
 /** A price nothing held can pay: what a shut gate's content cost carries while the fit plays. */
 const BLOCKED_AMOUNT = 1e300;
 /** How far past the last gate the fit will play before giving up on a mark. */
@@ -161,12 +160,13 @@ export function gameRun(from?: SimSnapshot<Extra>, seed = "sim") {
     look: () => {
       const edits = editsFor(played - lastLook);
       lastLook = played;
-      for (let i = 0; i < edits; i += 1) state().vim.simulateActiveEdit();
+      for (let i = 0; i < edits; i += 1) playPilotEdit(world.store as never);
       // The hand's pay lands here, in a burst, before the pilot spends it: sample the high-water mark the steps
       // alone would never see (the proof needs every price above anything ever held, not above anything sampled
       // only after a step). Then sample again: a free move — a binding, a claim — can pay mid-look too.
       have.sample();
       const did = player.look(world.store as never);
+      playPilotSideSystems(world.store as never, world.now());
       have.sample();
       return did;
     },

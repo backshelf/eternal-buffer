@@ -14,7 +14,7 @@ export const PRESTIGE_CURRENCY: CurrencyWords = { name: "Seal", plural: "Seals",
  * it). `exp` keeps the auto-player's bind-at-double bar reachable run after run, and `per` is the arc's clock: it
  * sets both when the bindings start and — the same curve read backwards — when the eight of them the `:wq` gate
  * needs (250 Seals ever) have passed, which the plan wants just past hour seven. */
-export const VOLUME_GAIN = { k: 1, exp: 0.6, per: 3e7 };
+export const VOLUME_GAIN = { k: 1, exp: 0.27, per: 5.5e9 };
 /** Each unit held raises output by this share. */
 export const BONUS_PER_UNIT = 0.15;
 
@@ -27,13 +27,10 @@ export const CODEX_NAME = "Rebind Codex";
 export const CODEX_VERB = ":wq Rebind Codex";
 export const CODEX_CURRENCY: CurrencyWords = { name: "Codex", plural: "Codices", glyph: "codex" };
 
-/** The gain: `floor(k × (Seals paid this epoch / per) ^ exp)`, times the codex yield. A rebind pays a flat chest
- * rather than a trickle: the seal-upgrade shelf's codex sinks eat the first chests, the Acts VI–VII keycaps ride the
- * first rebind itself (priced at one Codex, the Codex milestone's own gate), and the endgame runs on the pile the
- * shelf can no longer eat. The sublinear curve keeps the rebind bar honest for as long as the shelf is filling;
- * past hour twelve the rebind worth — which reads the spent-down wallet, not the pile — lets epochs collapse into a
- * cadence the game code, not this table, has to gate (see the fit's report). */
-export const CODEX_GAIN = { k: 50, exp: 0.45, per: 250 };
+/** The gain: `floor(k × (Seals paid this epoch / per) ^ exp)`, times the codex yield. The first `:wq` at 250 Seals
+ * pays 1–2 Codices (opening Act VI at 1 Codex, Mosaic 6×6 at 3 Codices on a subsequent epoch, and Act VII at 8 Codices
+ * past hour 10), keeping the rebind epochs cleanly spaced instead of dumping 50 Codices on the first reset. */
+export const CODEX_GAIN = { k: 1, exp: 0.42, per: 250 };
 
 /**
  * What a milestone hands the game. The six stats are plain effects on the stat graph; the rest name a system that

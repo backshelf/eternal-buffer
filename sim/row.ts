@@ -25,8 +25,7 @@ export interface Row {
   sealsRuns: number;
   /** `:wq` Rebind Codex resets. */
   codexRuns: number;
-  /** Grammar Codex pairs discovered. The headless pilot plays Clean Cuts but never types, so this stays 0: a real
-   * player's Clarity runs ahead of the sim by `1.06 ^ pairs`. */
+  /** Grammar Codex pairs discovered by the pilot (signature anomaly idioms + organic exploration). */
   pairs: number;
   /** Achievements earned. */
   earned: number;

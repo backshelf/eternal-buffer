@@ -12,6 +12,7 @@ import {
   MINUTE_MS,
 } from "watchpot/core";
 import { START } from "../src/content/economy";
+import { MOSAIC_PIECES } from "../src/content/mosaic";
 import { WORDS } from "../src/content/words";
 import { expeditions } from "../src/game/expeditions";
 import { autoArrangeMosaic, crafting, held, mosaic, score } from "../src/game/mosaic";
@@ -74,8 +75,11 @@ describe("Plugin Mosaic", () => {
     expect(before.crafting.craft("cap-obj")).toBe(true);
     const after = store.getState();
 
-    expect(after.wallet.ink.toNumber()).toBe(before.wallet.ink.toNumber() - 320);
-    expect(after.wallet.shards.toNumber()).toBe(before.wallet.shards.toNumber() - 3);
+    const capObj = MOSAIC_PIECES.find((p) => p.id === "cap-obj");
+    expect(after.wallet.ink.toNumber()).toBe(before.wallet.ink.toNumber() - (capObj?.recipe.inputs.ink ?? 0));
+    expect(after.wallet.shards.toNumber()).toBe(
+      before.wallet.shards.toNumber() - (capObj?.recipe.inputs.shards ?? 0),
+    );
     expect(after.crafting.made["cap-obj"]?.toNumber()).toBe(1);
     expect(held(after, "cap-obj")).toBe(1);
     // The free cap is held before the bench cuts anything.
@@ -116,17 +120,17 @@ describe("Plugin Mosaic", () => {
     store.getState().mosaic.place(board.cellOf(2, 2), "cap-obj");
     store.getState().mosaic.place(board.cellOf(3, 2), "cap-op");
 
-    const mulOf = (state: ReturnType<typeof store.getState>) => {
+    const addOf = (state: ReturnType<typeof store.getState>) => {
       const effect = mosaic.select
         .contributions(state)
         .find((c) => c.source === sourceOf("cap-obj", 2, 2))?.effect;
-      return effect?.mul;
+      return effect?.add;
     };
 
-    // 1.4 alone, plus the content's 0.2 for the operator beside it.
-    expect(mulOf(store.getState())).toBeCloseTo(1.6, 5);
+    // +0.40 alone, plus the content's +0.20 for the operator beside it.
+    expect(addOf(store.getState())).toBeCloseTo(0.6, 5);
     store.getState().mosaic.lift(board.cellOf(3, 2));
-    expect(mulOf(store.getState())).toBeCloseTo(1.4, 5);
+    expect(addOf(store.getState())).toBeCloseTo(0.4, 5);
   });
 
   test("auto-arrange lays a board at least as good as an empty one", () => {

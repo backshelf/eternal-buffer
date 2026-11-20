@@ -44,14 +44,14 @@ export const PLAN: readonly PlanGate[] = [
   { key: "substitute", minute: 420, note: "" },
   {
     key: "dot-echo",
-    minute: 570,
-    note: "Act VI's keycaps, priced before the first `:wq` pays: one Codex each, the design's own gate",
+    minute: 425,
+    note: "Act VI opens: Echoes & Choreography (one Codex, out of first `:wq`)",
   },
-  { key: "registers", minute: 573, note: "" },
-  { key: "macros", minute: 576, note: "" },
-  { key: "ex-power", minute: 580, note: "Act VII opens: the Ex-Console (never before hour 10)" },
-  { key: "dual-split", minute: 585, note: "" },
-  { key: "vimrc-forge", minute: 590, note: "the `.vimrc` Forge: the endgame's first gate" },
+  { key: "registers", minute: 510, note: "" },
+  { key: "macros", minute: 570, note: "" },
+  { key: "ex-power", minute: 630, note: "Act VII opens: the Ex-Console (never before hour 10)" },
+  { key: "dual-split", minute: 680, note: "" },
+  { key: "vimrc-forge", minute: 730, note: "the `.vimrc` Forge: the endgame's first gate" },
 ];
 
 /** The plan's order of keys, as `fitTableSource` writes a table and the report reads one. */
@@ -75,8 +75,8 @@ export interface PlanMark {
 export const MARKS: readonly PlanMark[] = [
   { key: "first-bind", minute: 100, line: "the first `:w Bind Volume` (Act III's door)" },
   { key: "first-rebind", minute: 430, line: "the first `:wq Rebind Codex` (~7.2 h)" },
-  { key: "act-six", minute: 440, line: "Act VI's first keycap in hand, out of the first `:wq` (one Codex)" },
-  { key: "mosaic-six", minute: 580, line: "the Mosaic opens to 6×6 (three Codices ever)" },
-  { key: "act-seven", minute: 620, line: "Act VII's first keycap in hand (~10.3 h)" },
-  { key: "endgame", minute: 740, line: "the `.vimrc` Forge and the mastery endgame (12–16 h)" },
+  { key: "act-six", minute: 450, line: "Act VI's first keycap in hand (~7.5 h)" },
+  { key: "mosaic-six", minute: 560, line: "the Mosaic opens to 6×6 (three Codices ever, ~9.3 h)" },
+  { key: "act-seven", minute: 630, line: "Act VII's first keycap in hand (~10.5 h)" },
+  { key: "endgame", minute: 730, line: "the `.vimrc` Forge and the mastery endgame (~12.2 h)" },
 ];

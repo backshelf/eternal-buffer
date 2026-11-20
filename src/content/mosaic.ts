@@ -76,8 +76,8 @@ const besideTags = (view: BoardView<Fx>) => {
 const wholeBoard = (view: BoardView<Fx>) => PIECE_TAGS.reduce((count, tag) => count + view.count(tag), 0);
 
 /**
- * The fourteen. Bonuses stay small and mostly additive so a crowded board compounds gently: the grid rewards a
- * layout drawn for one stat at a time, never one layout that beats every goal.
+ * The fourteen. Repeatable pieces add into each stat's base pool (`(1 + sum) × muls`) so a full 6×6 board
+ * compounds gently instead of exploding exponentially; the two unique relics (`limit: 1`) multiply on top.
  */
 export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
   {
@@ -88,8 +88,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "The four keys your fingers find without asking permission.",
     synergyHint: "Set a switch beside it and the cap takes the hint.",
-    recipe: { inputs: { ink: 20 } },
-    effects: (view) => [{ stat: "output", mul: 1.15 + 0.1 * besideTag(view, "switch") }],
+    recipe: { inputs: { ink: 40 } },
+    effects: (view) => [{ stat: "output", add: 0.12 + 0.08 * besideTag(view, "switch") }],
   },
   {
     id: "cap-word",
@@ -99,9 +99,9 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "A cap that crosses a whole line in one unhurried stride.",
     synergyHint: "Lay motions beside it in the same row; it counts the company.",
-    recipe: { inputs: { ink: 60, shards: 1 } },
+    recipe: { inputs: { ink: 100, shards: 1 } },
     effects: (view) => [
-      { stat: "output", mul: 1.25 + 0.12 * view.row.filter((p) => p.tags?.includes("motion")).length },
+      { stat: "output", add: 0.2 + 0.08 * view.row.filter((p) => p.tags?.includes("motion")).length },
     ],
   },
   {
@@ -112,8 +112,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "It speaks only in verbs: delete, change, yank, and then silence.",
     synergyHint: "An operator wants motions on all four sides before it will work.",
-    recipe: { inputs: { ink: 200, shards: 2 } },
-    effects: (view) => [{ stat: "output", mul: 1.3 + 0.18 * besideTag(view, "motion") }],
+    recipe: { inputs: { ink: 250, shards: 2 } },
+    effects: (view) => [{ stat: "output", add: 0.25 + 0.15 * besideTag(view, "motion") }],
   },
   {
     id: "cap-obj",
@@ -123,8 +123,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "Brackets, words, paragraphs: anything an operator can reach into.",
     synergyHint: "Operators beside it sharpen it; the bracket does the aiming.",
-    recipe: { inputs: { ink: 320, shards: 3 } },
-    effects: (view) => [{ stat: "output", mul: 1.4 + 0.2 * besideTag(view, "operator") }],
+    recipe: { inputs: { ink: 400, shards: 3 } },
+    effects: (view) => [{ stat: "output", add: 0.4 + 0.2 * besideTag(view, "operator") }],
   },
   {
     id: "switch-tactile",
@@ -134,8 +134,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "Amber stem, forty-five grams, a click like a knuckle in winter.",
     synergyHint: "Caps laid around it keep the tempo up; the switch keeps the time.",
-    recipe: { inputs: { ink: 150, shards: 1 } },
-    effects: (view) => [{ stat: "tempo", mul: 1.12 + 0.05 * besideCaps(view) }],
+    recipe: { inputs: { ink: 180, shards: 1 } },
+    effects: (view) => [{ stat: "tempo", add: 0.08 + 0.04 * besideCaps(view) }],
   },
   {
     id: "switch-heavy",
@@ -145,8 +145,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "Brass clickbar, eighty grams, bought purely for the noise.",
     synergyHint: "Put it on the rim of the open cells, where its weight shows.",
-    recipe: { inputs: { ink: 240, shards: 2 } },
-    effects: (view) => [{ stat: "gain", mul: 1.18 + (view.edge || view.corner ? 0.1 : 0) }],
+    recipe: { inputs: { ink: 300, shards: 2 } },
+    effects: (view) => [{ stat: "gain", add: 0.12 + (view.edge || view.corner ? 0.08 : 0) }],
   },
   {
     id: "inkwell",
@@ -156,8 +156,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "A well of margin ink that refills from the space around it.",
     synergyHint: "Leave it breathing room. On this board, empty cells are machinery.",
-    recipe: { inputs: { ink: 300, shards: 2 } },
-    effects: (view) => [{ stat: "inkRate", mul: 1.35 + 0.15 * besideEmpty(view) }],
+    recipe: { inputs: { ink: 350, shards: 2 } },
+    effects: (view) => [{ stat: "inkRate", add: 0.25 + 0.12 * besideEmpty(view) }],
   },
   {
     id: "lantern",
@@ -171,10 +171,10 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     effects: (view) =>
       view.corner
         ? [
-            { stat: "offline", mul: 1.1 },
-            { stat: "output", mul: 1.2 },
+            { stat: "offline", add: 0.02 },
+            { stat: "output", add: 0.25 },
           ]
-        : [{ stat: "offline", mul: 1.1 }],
+        : [{ stat: "offline", add: 0.02 }],
   },
   {
     id: "spool-macro",
@@ -186,8 +186,8 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     synergyHint: "A column of spools multiplies its own noise; one spool is just loud.",
     recipe: { inputs: { ink: 1_200, shards: 8 }, takesMs: 10_000 },
     effects: (view) => [
-      { stat: "tempo", mul: 1.45 },
-      { stat: "output", mul: 1 + 0.25 * view.column.filter((p) => p.tags?.includes("macro")).length },
+      { stat: "tempo", add: 0.2 },
+      { stat: "output", add: 0.2 * view.column.filter((p) => p.tags?.includes("macro")).length },
     ],
   },
   {
@@ -201,7 +201,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     synergyHint: "Surround it. She sleeps better on a crowded shelf.",
     recipe: { inputs: { ink: 2_500, shards: 18 }, takesMs: 20_000, minAct: 2 },
     effects: (view) => {
-      const crowd = 1.25 + 0.15 * view.around.length;
+      const crowd = 1.15 + 0.05 * view.around.length;
       return [
         { stat: "output", mul: crowd },
         { stat: "inkRate", mul: crowd },
@@ -218,7 +218,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     line: "A die cut from candle wax and stubbornness, still warm.",
     synergyHint: "Switches beside it press harder; wax remembers pressure.",
     recipe: { inputs: { ink: 900, shards: 6 }, takesMs: 8_000 },
-    effects: (view) => [{ stat: "gain", mul: 1.3 + 0.15 * besideTag(view, "switch") }],
+    effects: (view) => [{ stat: "gain", add: 0.2 + 0.1 * besideTag(view, "switch") }],
   },
   {
     id: "ex-prism",
@@ -229,7 +229,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     line: "An old ex-console prism, ground to split a command into its colours.",
     synergyHint: "Variety beside it is the whole point; four alike tags waste the glass.",
     recipe: { inputs: { ink: 1_800, shards: 9 }, takesMs: 12_000, minAct: 3 },
-    effects: (view) => [{ stat: "codexGain", mul: 1.25 + 0.15 * besideTags(view) }],
+    effects: (view) => [{ stat: "codexGain", add: 0.15 + 0.1 * besideTags(view) }],
   },
   {
     id: "dither-lens",
@@ -240,7 +240,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     line: "Everything it looks at becomes dots, and every dot gets clearer.",
     synergyHint: "It counts the whole board, so fill the grid before you judge it.",
     recipe: { inputs: { ink: 500, shards: 4 } },
-    effects: (view) => [{ stat: "output", mul: 1 + 0.05 * wholeBoard(view) }],
+    effects: (view) => [{ stat: "output", add: 0.03 * wholeBoard(view) }],
   },
   {
     id: "null-key",
@@ -248,6 +248,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     glyph: "<>",
     tags: ["cat"],
     rarity: "mythic",
+    limit: 1,
     line: "The key that does nothing, kept because it does nothing extremely well.",
     synergyHint: "Set it beside Tilde's cushion and it finally does something.",
     recipe: { inputs: { ink: 4_000, shards: 30 }, takesMs: 30_000, minAct: 4 },

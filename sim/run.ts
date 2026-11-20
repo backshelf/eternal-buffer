@@ -14,10 +14,10 @@
  */
 import { type Decimal, ZERO } from "watchpot/core";
 import {
+  atLeast,
   atMost,
   autoPlayer,
   byHour,
-  check,
   createSimWorld,
   formatVerdicts,
   grid,
@@ -35,13 +35,11 @@ import {
 import { ACTIVE, BANDS, CONTRACT_HOURS, SCHEDULE, SIM_DAYS, SIM_HOURS } from "../src/content/pacing";
 import { type GameState, game } from "../src/game/game";
 import { incomeOf } from "../src/game/income";
+import { EDIT_EVERY_MS, playPilotEdit, playPilotSideSystems } from "./pilot";
 import { COLUMNS, type Row, type RunWatch, readRow } from "./row";
 
 const HOUR = 3_600_000;
 const MIN = 60_000;
-/** One headless edit per ~4 s of attended play: the folio work a player does between looks. Keep in step with
- * `sim/fit.ts`, which prices the plan on the same cadence. */
-const EDIT_EVERY_MS = 4_000;
 /** A stretch of played minutes without a purchase or an unlock stops being lively somewhere around here. */
 const MAX_GAP_MIN = 2;
 const args = simArgs();
@@ -134,13 +132,13 @@ const look = (at: LookAt) => {
     lastPayoffAt = now;
   }
   const before = payoffSignature(state());
-  const vim = state().vim;
-  for (let i = 0; i < editsFor(now - lastLookAt); i += 1) vim.simulateActiveEdit();
+  for (let i = 0; i < editsFor(now - lastLookAt); i += 1) playPilotEdit(world.store as never);
   lastLookAt = now;
   presses += at.presses;
   const did = auto.look(world.store as never);
+  const sideActed = playPilotSideSystems(world.store as never, now);
   bought += did.bought;
-  if (did.bought > 0 || payoffSignature(state()) !== before) {
+  if (did.bought > 0 || sideActed || payoffSignature(state()) !== before) {
     lastPayoffAt = now;
   } else {
     watch.maxGapMin = Math.max(watch.maxGapMin, (now - lastPayoffAt) / MIN);
@@ -200,12 +198,7 @@ if (contract) {
   // The band table is the arc; the quiet stretch is its texture: no look-to-look gap may run dead.
   verdicts.push(
     atMost("longest stretch without a meaningful payoff (min)", watch.maxGapMin, MAX_GAP_MIN),
-    check(
-      "Grammar pairs discovered by the headless hand",
-      take().pairs,
-      "0 (the editor logs pairs, not the sim)",
-      true,
-    ),
+    atLeast("Grammar pairs discovered by the headless hand", take().pairs, 25),
   );
   console.log(formatVerdicts(verdicts));
   if (verdicts.some((v) => !v.ok && !v.todo)) process.exit(1);

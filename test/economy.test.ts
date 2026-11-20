@@ -4,6 +4,8 @@ import { describe, expect, test } from "bun:test";
 import { D, type Decimal, ZERO } from "watchpot/core";
 import { autoPlayer } from "watchpot/sim";
 import { freshStore } from "watchpot/test";
+import { VOLUME_GAIN } from "../src/content/prestige";
+import { FAMILY_BY_ID } from "../src/content/vimActs";
 import { type GameState, game } from "../src/game/game";
 import { activeVimRateOf, idleGlyphRateOf, incomeOf, inkRateOf } from "../src/game/income";
 
@@ -57,10 +59,10 @@ describe("the active-first economy", () => {
     outearns();
     expect(inkRateOf(run.store.getState()).gt(0)).toBe(true);
 
-    // A volume bound by hand: the run starts over and the epoch carries its seals. The first bind is a ~1:42 climb
+    // A volume bound by hand: the run starts over and the epoch carries its seals. The first bind is a ~1:30 climb
     // by the fitted curve, so the fixture lends the run its earnings rather than playing the whole evening.
     run.store.setState((s) => {
-      s.wallet.earned = D(3e7);
+      s.wallet.earned = D(VOLUME_GAIN.per);
     });
     expect(run.store.getState().volumes.bind()).toBe(true);
     run.play(10);
@@ -79,7 +81,7 @@ describe("the active-first economy", () => {
 
     // The same loan as above: the test is about what `:w` keeps, not about how long the climb takes.
     run.store.setState((s) => {
-      s.wallet.earned = D(3e7);
+      s.wallet.earned = D(VOLUME_GAIN.per);
     });
     expect(run.store.getState().volumes.bind()).toBe(true);
 
@@ -94,7 +96,7 @@ describe("the active-first economy", () => {
     // The climb to 250 Seals ever is a long evening, and this test is about the reset, not the climb: the archive is
     // put where a rebind is due. The keys are bought for real, with the Glyphs the fixture lends.
     run.store.setState((s) => {
-      s.wallet.glyphs = D(500_000);
+      s.wallet.glyphs = D(FAMILY_BY_ID["word-stride"].cost.amount * 2);
       s.wallet.seals = D(40);
       s.wallet.sealsEver = D(320);
       s.wallet.treats = D(4);
@@ -134,7 +136,7 @@ describe("the active-first economy", () => {
       f.key === "codex" && f.moves ? f.moves(run.store.getState() as never) : [],
     );
     const rebind = moves.find((m) => m.id.includes("codex"));
-    // Gain at 250 seals is 50 codices, below 2× best (120), so worth stays 0 even though wallet was spent down.
+    // Gain at 250 seals is 1 codex, below 1.5× best (90), so worth stays 0 even though wallet was spent down.
     expect(rebind?.worth?.(run.store.getState() as never) ?? 0).toBe(0);
   });
 });
