@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+bash.exe.stackdump
+.watchpot/
+.claude/

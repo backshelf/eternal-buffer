@@ -1,0 +1,300 @@
+{
+  "name": "The Eternal Buffer",
+  "slug": "eternal-buffer",
+  "premise": "You are a midnight archivist mending an infinite, glitching manuscript of reality in a glowing modal editor. Motions carve clean signal from rot, operators stitch broken folios, and a stray cat named Tilde naps on your statusline.",
+  "voice": "Warm, dryly witty, bookish-weird. Nocturnal archivist meets antique Unix terminal. Short sentences with tactile physical details and cheeky Vim lore.",
+  "player": "Someone who enjoys active keyboard-driven incrementals over long desk sittings and wants to build real Vim muscle memory slowly and delightfully.",
+  "core": "generators",
+  "features": ["tree", "prestige", "achievements", "visitor"],
+  "currencies": {
+    "main": {
+      "name": "Glyph",
+      "plural": "Glyphs",
+      "glyph": "key"
+    }
+  },
+  "stats": {
+    "output": "Clarity",
+    "offline": "Night Watch",
+    "gain": "Seal Yield"
+  },
+  "generators": [
+    {
+      "name": "Wax-Sealed Moth",
+      "line": "Chews stray semicolons while you sleep."
+    },
+    {
+      "name": "Margin Quill",
+      "line": "Copies footnotes nobody asked for at 14 Hz."
+    },
+    {
+      "name": "Tallow Candle",
+      "line": "Keeps the phosphor warm past three in the morning."
+    },
+    {
+      "name": "Lead Typesetter",
+      "line": "Sets broken brackets back into brass chases."
+    },
+    {
+      "name": "Bellows Press",
+      "line": "Flattens curled vellum one sigh at a time."
+    },
+    {
+      "name": "Index Automaton",
+      "line": "Files lost verses under the wrong letter, fast."
+    },
+    {
+      "name": "Phosphor Loom",
+      "line": "Weaves stray scanlines back into clean margins."
+    },
+    {
+      "name": "Null Archivist",
+      "line": "Reads only the lines that were deleted with dd."
+    }
+  ],
+  "tree": {
+    "name": "Keycap Codex",
+    "nodes": [
+      {
+        "name": "Home Row Callus",
+        "line": "Your fingers stop hunting for the arrows.",
+        "stat": "output"
+      },
+      {
+        "name": "Warm Lamp Oil",
+        "line": "The desk stays lit after you step away.",
+        "stat": "offline"
+      },
+      {
+        "name": "Word Stride",
+        "line": "Hop from word to word instead of crawling.",
+        "stat": "output"
+      },
+      {
+        "name": "Wax Stamp",
+        "line": "Presses heavier seals into bound volumes.",
+        "stat": "gain"
+      },
+      {
+        "name": "Operator Grammar",
+        "line": "Verbs meet motions and the page obeys.",
+        "stat": "output"
+      },
+      {
+        "name": "Night Margins",
+        "line": "Moths work double shifts while the lid is shut.",
+        "stat": "offline"
+      },
+      {
+        "name": "Inner Brackets",
+        "line": "Carve cleanly inside quotes without bruising the shell.",
+        "stat": "output"
+      },
+      {
+        "name": "Folio Binding",
+        "line": "Tighter stitching yields denser volumes.",
+        "stat": "gain"
+      },
+      {
+        "name": "Search Lantern",
+        "line": "Every matching rune in the manuscript lights up.",
+        "stat": "output"
+      },
+      {
+        "name": "Archive Hibernate",
+        "line": "The buffer dreams in dithered amber until dawn.",
+        "stat": "offline"
+      },
+      {
+        "name": "Echo Dot",
+        "line": "One clean cut repeated until the table shines.",
+        "stat": "output"
+      },
+      {
+        "name": "Colophon Seal",
+        "line": "Every bound chapter echoes into the next.",
+        "stat": "gain"
+      }
+    ]
+  },
+  "prestige": {
+    "name": "Bind Volume",
+    "verb": ":w Bind Volume",
+    "currency": {
+      "name": "Seal",
+      "plural": "Seals",
+      "glyph": "flame"
+    }
+  },
+  "achievements": {
+    "name": "Marginalia",
+    "items": [
+      {
+        "name": "Moth Keeper",
+        "line": "Five moths orbiting the gutter.",
+        "when": {
+          "own": 0,
+          "count": 5
+        }
+      },
+      {
+        "name": "Footnote Flood",
+        "line": "Ten quills scratching in unison.",
+        "when": {
+          "own": 1,
+          "count": 10
+        }
+      },
+      {
+        "name": "Midnight Wax",
+        "line": "Ten candles, zero smoke alarms.",
+        "when": {
+          "own": 2,
+          "count": 10
+        }
+      },
+      {
+        "name": "Brass Chase",
+        "line": "Five lead typesetters locking lines.",
+        "when": {
+          "own": 3,
+          "count": 5
+        }
+      },
+      {
+        "name": "Flat Vellum",
+        "line": "Five bellows pressing the night away.",
+        "when": {
+          "own": 4,
+          "count": 5
+        }
+      },
+      {
+        "name": "Misfiled Fast",
+        "line": "Five automatons alphabetizing dreams.",
+        "when": {
+          "own": 5,
+          "count": 5
+        }
+      },
+      {
+        "name": "Amber Warp",
+        "line": "Three looms humming at 60 Hz.",
+        "when": {
+          "own": 6,
+          "count": 3
+        }
+      },
+      {
+        "name": "Deleted Lore",
+        "line": "One Null Archivist reading the void.",
+        "when": {
+          "own": 7,
+          "count": 1
+        }
+      },
+      {
+        "name": "Clean Ink",
+        "line": "A thousand glyphs rescued from rot.",
+        "when": {
+          "earned": 1000
+        }
+      },
+      {
+        "name": "Million-Line Scroll",
+        "line": "The gutter needs seven digits now.",
+        "when": {
+          "earned": 1000000
+        }
+      },
+      {
+        "name": "Giga-Folio",
+        "line": "A billion glyphs, still no exit.",
+        "when": {
+          "earned": 1000000000
+        }
+      },
+      {
+        "name": "First Binding",
+        "line": "Typed :w and meant it.",
+        "when": {
+          "runs": 1
+        }
+      },
+      {
+        "name": "Serial Editor",
+        "line": "Five volumes stacked beside the lamp.",
+        "when": {
+          "runs": 5
+        }
+      },
+      {
+        "name": "Keycap Scholar",
+        "line": "Four nodes lit on the Codex.",
+        "when": {
+          "nodes": 4
+        }
+      },
+      {
+        "name": "Full Layout",
+        "line": "Ten nodes humming in sequence.",
+        "when": {
+          "nodes": 10
+        }
+      },
+      {
+        "name": "No Write Since Last Epoch",
+        "line": "Trillion glyphs deep and you still haven't left.",
+        "when": {
+          "earned": 1000000000000
+        },
+        "secret": true
+      }
+    ]
+  },
+  "visitor": {
+    "name": "Margin Moth",
+    "line": "Tilde bats a glowing moth loose from the gutter.",
+    "buff": {
+      "name": "Phosphor Rush",
+      "mult": 3,
+      "seconds": 60
+    }
+  },
+  "tabs": {
+    "make": "Buffer",
+    "tree": "Codex",
+    "prestige": "Volumes",
+    "achievements": "Marginalia"
+  },
+  "session": "long",
+  "look": {
+    "palette": {
+      "ground": "#110f0d",
+      "ink": "#ebe3d0",
+      "signal": "#e59a28"
+    },
+    "type": {
+      "display": {
+        "family": "Cardo",
+        "spec": "Cardo:ital,wght@0,400;0,700;1,400",
+        "fallback": "Georgia, serif"
+      },
+      "ui": {
+        "family": "Work Sans",
+        "spec": "Work+Sans:ital,wght@0,100..900;1,100..900",
+        "fallback": "\"Helvetica Neue\", Arial, sans-serif"
+      },
+      "num": {
+        "family": "Martian Mono",
+        "spec": "Martian+Mono:wdth,wght@75..112.5,100..800",
+        "fallback": "Menlo, monospace"
+      }
+    },
+    "surface": {
+      "base": "print",
+      "line": "An amber phosphor monitor printing onto coarse Bayer-dithered soot: a warm 4x4 ordered-dither light pool breathes around your Vim cursor, ripples outward on Clean Cuts, thickens with Flow, and casts dot-screen light behind every ASCII panel."
+    },
+    "moment": "Typing :wq to Rebind the Codex for the first time literally writes-and-quits the buffer: every line collapses into Bayer-dithered amber dust under a sweeping raster curtain, Tilde pads across the blank void leaving a glowing ~ trail, and the archive reboots into a richer dual-split strata."
+  }
+}

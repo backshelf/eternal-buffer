@@ -1,0 +1,69 @@
+/* The Eternal Buffer — generated from tokens.json */
+:root, [data-theme="game"] {
+  --ground: #110f0d;
+  --ground-raised: #1e1c19;
+  --paper: #2b2824;
+  --paper-shade: #36332e;
+  --ink: #ebe3d0;
+  --ink-muted: #9f998c;
+  --on-paper: #ebe3d0;
+  --on-paper-muted: #9f998c;
+  --hairline: #2b2824;
+  --hairline-paper: #383530;
+  --edge: #7e796f;
+  --signal: #e59a28;
+  --on-signal: #121214;
+  --focus: #ebe3d0;
+  --scene-base: #1e1c19;
+  --scene-ink: #ebe3d0;
+  --scene-tint: var(--signal);
+  --overlay: #000000b3;
+  --ok: #5fd39a;
+  --warn: #f0b23c;
+  --danger: #ff7a7a;
+  --ok-paper: var(--ok);
+  --warn-paper: var(--warn);
+  --danger-paper: var(--danger);
+  --rarity-plate: #000000;
+  --glare: #ffffff66;
+  --rarity-top: var(--signal);
+  --foil-1: #e59a28;
+  --foil-2: #efc27e;
+  --foil-3: #e7b05a;
+  --foil-4: #e59a28;
+  --foil-5: #efc27e;
+  --shadow-card: 0 6px 16px #000000a6;
+  --shadow-sheet: 0 -16px 48px #000000b3;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --gutter: 2px;
+  --radius-0: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-card: 0px;
+  --radius-pill: 0px;
+  --font-display: "Cardo", Georgia, serif;
+  --font-ui: "Work Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-num: "Martian Mono", Menlo, monospace;
+}
+.headline { font-family: var(--font-display); font-size: 44px; line-height: 0.95; font-weight: 700; letter-spacing: -0.02em; }
+.title { font-family: var(--font-display); font-size: 24px; line-height: 1; font-weight: 700; letter-spacing: -0.005em; }
+.title-italic { font-family: var(--font-display); font-size: 28px; line-height: 1.05; font-weight: 400; font-style: italic; }
+.body { font-family: var(--font-ui); font-size: 14px; line-height: 1.45; font-weight: 400; }
+.body-strong { font-family: var(--font-ui); font-size: 14px; line-height: 1.45; font-weight: 600; }
+.small { font-family: var(--font-ui); font-size: 13px; line-height: 1.4; font-weight: 400; }
+.label { font-family: var(--font-ui); font-size: 12px; line-height: 1.2; font-weight: 600; letter-spacing: 0.02em; }
+.code { font-family: var(--font-ui); font-size: 11px; line-height: 1; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.lot-number { font-family: var(--font-ui); font-size: 11px; line-height: 1; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.button { font-family: var(--font-ui); font-size: 14px; line-height: 1; font-weight: 600; }
+.counter { font-family: var(--font-num); font-size: 40px; line-height: 1; font-weight: 500; letter-spacing: -0.02em; }
+.number { font-family: var(--font-num); font-size: 16px; line-height: 1; font-weight: 500; }
+.number-small { font-family: var(--font-num); font-size: 12px; line-height: 1; font-weight: 500; }
