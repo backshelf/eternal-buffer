@@ -13,5 +13,5 @@
     "allowImportingTsExtensions": true,
     "types": ["bun"]
   },
-  "include": ["env.d.ts", "src", "sim", "design", "dev.ts"]
+  "include": ["env.d.ts", "src", "sim", "test", "design", "dev.ts"]
 }
