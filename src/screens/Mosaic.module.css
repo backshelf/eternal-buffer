@@ -1,0 +1,373 @@
+/*
+ * The Plugin Mosaic: a ruled plate of keycap sockets with the bench that cuts the pieces beside it. Square corners, the
+ * one ASCII alphabet of `theme.css`, and the theme's own tokens for every colour; the only picture is the foil shader
+ * behind a laid cell.
+ */
+
+.screen {
+  display: grid;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: 20px 16px 32px;
+}
+.standing {
+  max-width: 62ch;
+  color: var(--ui-ink-muted);
+  font-size: 13px;
+}
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 12px;
+  align-items: start;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.hint {
+  flex: 1 1 100%;
+  min-height: 1.4em;
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+}
+
+/* The plate: one rail column of row numbers, one head row of column letters, then the sockets. A `fieldset` for the
+ * board's name, with every default reset: it is a group of buttons, not a form. */
+.plate {
+  display: grid;
+  grid-template-columns: 14px repeat(6, minmax(0, 1fr));
+  gap: 3px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 6px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-ground);
+  background-image: var(--dither-4);
+}
+.corner,
+.head,
+.rail {
+  display: grid;
+  place-items: center;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* One socket: a button first, a keycap socket second. */
+.socket {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 2px;
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  cursor: pointer;
+  transition:
+    border-color var(--ui-duration) ease-out,
+    background-color var(--ui-duration) ease-out;
+}
+.socket:hover {
+  border-color: color-mix(in srgb, var(--ui-accent) 60%, var(--ui-line));
+}
+.socket[data-state="open"] {
+  border-color: color-mix(in srgb, var(--ui-line) 82%, transparent);
+  color: var(--ui-ink-muted);
+}
+.socket[data-state="closed"] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--ui-line) 50%, transparent);
+  background-color: transparent;
+  background-image: none;
+  color: color-mix(in srgb, var(--ui-ink-muted) 62%, transparent);
+  cursor: not-allowed;
+}
+.socket[data-state="laid"] {
+  border-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+  background-color: var(--ui-surface);
+}
+.socket[data-state="sealed"] {
+  border-style: dashed;
+  background-color: var(--ui-ground);
+  background-image: none;
+}
+.socket[data-target] {
+  border-color: var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-accent) 12%, var(--ui-sunken));
+}
+.socket[data-looked] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-ink) 24%, transparent);
+}
+.socket[data-chosen] {
+  border-color: var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-accent) 18%, var(--ui-sunken));
+  box-shadow: inset 0 0 0 1px var(--ui-accent);
+}
+
+/* The foil under a laid piece, and the CSS still for a machine without WebGL2. */
+.foil {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0.8;
+  pointer-events: none;
+}
+.foilStill {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.socketText {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  white-space: pre;
+}
+.ringText {
+  color: inherit;
+  font-size: 8px;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.glyph {
+  position: relative;
+  z-index: 1;
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.badge {
+  position: relative;
+  z-index: 1;
+  color: var(--ui-ink-muted);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+/* A rung's hue, in the one place a piece's name is drawn: its glyph. */
+[data-rarity="common"] .glyph {
+  color: var(--ui-ink-muted);
+}
+[data-rarity="uncommon"] .glyph {
+  color: color-mix(in srgb, var(--ui-ink) 76%, var(--ui-accent));
+}
+[data-rarity="rare"] .glyph {
+  color: var(--ui-accent);
+}
+[data-rarity="relic"] .glyph {
+  color: var(--ui-mode-visual);
+}
+[data-rarity="mythic"] .glyph {
+  color: var(--ui-mode-replace);
+}
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding-top: 8px;
+  border-top: var(--ui-hairline);
+}
+.tallyRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.tallyLabel {
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tallyValue {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+}
+.figure {
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-height: 2.6em;
+  font-size: 12px;
+}
+.code {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.detailName {
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+}
+.rarity {
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.detailEffects {
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+}
+.detailHint {
+  flex: 1 1 100%;
+  color: var(--ui-ink-muted);
+  font-style: italic;
+}
+.muted {
+  color: var(--ui-ink-muted);
+}
+
+/* The bench: one row a piece, the hold button at the start and the cut at the end. */
+.bench {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.benchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.name {
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+  line-height: 1.2;
+}
+.line {
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  align-items: baseline;
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+}
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.count {
+  margin-inline-start: auto;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+}
+.hold {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.hold:hover {
+  background-color: color-mix(in srgb, var(--ui-accent) 6%, transparent);
+}
+.hold[aria-pressed="true"] {
+  background-color: color-mix(in srgb, var(--ui-accent) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--ui-accent);
+}
+.hold .glyph {
+  display: grid;
+  place-items: center;
+  min-height: 28px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-ground);
+  background-image: var(--dither-4);
+  font-size: 13px;
+}
+.hold:hover .name {
+  color: var(--ui-accent);
+}
+.benchText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.benchAction {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+.cut {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.locked {
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.queue {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ringText {
+    font-size: 7px;
+  }
+}

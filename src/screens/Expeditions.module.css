@@ -1,0 +1,239 @@
+/*
+ * Margin Expeditions: the stair of what is away at the top, the eight errands below it. The meter is ASCII and the
+ * figures are in the machine face, so a run in progress reads like a line of a log rather than a loading bar.
+ */
+
+.screen {
+  display: grid;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: 20px 16px 32px;
+}
+.standing {
+  max-width: 62ch;
+  color: var(--ui-ink-muted);
+  font-size: 13px;
+}
+.threshold {
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.figure {
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The stair: a row per slot, empty ones included, so the count of what is away is the count of rows. */
+.runs {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.run {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head claim"
+    "meta claim";
+  gap: 2px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.run[data-state="idle"] {
+  border-style: dashed;
+  background-image: none;
+  color: var(--ui-ink-muted);
+}
+.run[data-state="ready"] {
+  border-color: var(--ui-accent);
+  box-shadow: inset 2px 0 0 var(--ui-accent);
+}
+.runHead {
+  grid-area: head;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.runName {
+  font-family: var(--ui-font-display);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.meter {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  white-space: pre;
+}
+.run[data-state="idle"] .meter {
+  color: color-mix(in srgb, var(--ui-ink-muted) 45%, transparent);
+}
+.runMeta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.meta {
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+}
+.reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ui-ink);
+  font-size: 11px;
+}
+.claim {
+  grid-area: claim;
+  min-height: 34px;
+}
+.run[data-state="ready"] .claim {
+  animation: gleam 1.6s ease-in-out infinite alternate;
+}
+@keyframes gleam {
+  from {
+    box-shadow: 0 0 0 color-mix(in srgb, var(--ui-accent) 0%, transparent);
+  }
+  to {
+    box-shadow: 0 0 12px color-mix(in srgb, var(--ui-accent) 55%, transparent);
+  }
+}
+
+/* The eight errands: what each costs, what it brings back, and what is holding it shut. */
+.stair {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.errand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.errand[data-locked] {
+  border-style: dashed;
+  background-image: none;
+}
+.errandText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.errandHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.name {
+  font-family: var(--ui-font-display);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.errand[data-locked] .name {
+  color: var(--ui-ink-muted);
+}
+.duration {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.done {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.line {
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 2px;
+}
+.cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+}
+.free {
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.errandAction {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  min-width: 96px;
+}
+.dispatch {
+  min-height: 34px;
+}
+.why {
+  color: var(--ui-ink-muted);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-align: end;
+  text-transform: uppercase;
+}
+.footnote {
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
+@media (max-width: 620px) {
+  .run,
+  .errand {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .run {
+    grid-template-areas:
+      "head"
+      "meta"
+      "claim";
+  }
+  .claim,
+  .errandAction {
+    justify-self: start;
+    justify-items: start;
+  }
+  .why {
+    text-align: start;
+  }
+}
