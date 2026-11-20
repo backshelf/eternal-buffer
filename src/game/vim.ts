@@ -24,7 +24,7 @@ import {
 import { TILDE_BOND_STEP, TILDE_PET_COOLDOWN_MS, tildeTreatCost } from "../content/tilde";
 import { KEY_FAMILIES, type KeyFamilyId, VIMRC_RULES } from "../content/vimActs";
 import { VISITOR_BUFFS, type VisitorBuffId } from "../content/visitor";
-import { generateFolio } from "../vim/folio";
+import { generateFolio, practiceRite } from "../vim/folio";
 import { wallet } from "./wallet";
 
 /** The par scoring grades: at or under par, within three keys of it, or anything longer. */
@@ -125,6 +125,8 @@ export interface VimDerived {
   activeGlyphsPerEdit: Decimal;
   /** What a second of active play is worth now, without the stats: for the sim and the HUD. */
   expectedActivePerSec: Decimal;
+  /** How many `.vimrc` slots the Forge holds (five, or six after The One-Macro Epoch). */
+  vimrcSlots: number;
 }
 
 /** The one `.vimrc` slot count the Forge opens with. */
@@ -176,7 +178,7 @@ interface VimHost {
   /** Read only through `wallet.draft.debit` and `wallet.draft.credit`, which need the slice present. */
   wallet: object;
   stats: { output: Decimal; tempo: Decimal };
-  trials: { rules: string[] };
+  trials: { rules: string[]; completions?: Readonly<Record<string, number>> };
   boosts: BuffsState;
 }
 
@@ -185,10 +187,12 @@ function trialRule(s: VimHost, flag: string): boolean {
   return s.trials.rules.includes(flag);
 }
 
-/** The grade of an edit against its par: at or under, within three keys, or anything longer. */
-function gradeOf(keysUsed: number, parKeys: number): VimGrade {
-  if (keysUsed <= parKeys) return "clean";
-  if (keysUsed <= parKeys + TIDY_SLACK) return "tidy";
+/** The grade of an edit against its par: at or under, within slack, or anything longer. */
+function gradeOf(keysUsed: number, parKeys: number, forgive: boolean): VimGrade {
+  const cleanLimit = parKeys + (forgive ? 3 : 0);
+  const tidyLimit = parKeys + (forgive ? 6 : TIDY_SLACK);
+  if (keysUsed <= cleanLimit) return "clean";
+  if (keysUsed <= tidyLimit) return "tidy";
   return "mended";
 }
 
@@ -224,7 +228,11 @@ function resolveAnomalyIn(
   weight: number,
   isPawprint: boolean,
 ): ResolvedAnomaly {
-  const grade = gradeOf(keysUsed, parKeys);
+  const rules = s.vim.vimrcRules;
+  const snipeBonus = rules["auto-snipe-crit"] === true && hintId.includes("snipe") ? 1 : 0;
+  const effectivePar = parKeys + snipeBonus;
+  const forgive = rules["par-forgiveness"] === true;
+  const grade = gradeOf(keysUsed, effectivePar, forgive);
 
   // A folio re-evaluated after it was already paid for pays nothing, whatever the grade.
   if (s.vim.resolvedAnomalyIds[anomalyId] === true) {
@@ -240,12 +248,28 @@ function resolveAnomalyIn(
     .mul(s.stats.tempo)
     .mul(s.stats.output);
 
+  if (s.vim.activeSplit) {
+    paid = paid.mul(rules["split-resonance"] === true ? 2.5 : 1.5);
+  }
+  if (rules["echo-chain"] === true && s.vim.echoStacks > 0) {
+    paid = paid.mul(1 + Math.min(0.5, s.vim.echoStacks * 0.1));
+  }
+  if (rules["macro-overclock"] === true && s.vim.echoStacks > 0) {
+    paid = paid.mul(2);
+  }
+
   // One-Shot Surgeon: slop pays nothing at all.
-  if (trialRule(s, "parOnly") && keysUsed > parKeys) paid = D(0);
-  // The One-Macro Epoch: echoes pay five times over, raw edits a tenth.
-  if (trialRule(s, "macroTrial")) paid = paid.mul(s.vim.echoStacks > 0 ? 5 : 0.1);
+  if (trialRule(s, "parOnly") && grade !== "clean") paid = D(0);
+  // The One-Macro Epoch: echoes pay five times over (six with Macro Overclock), raw edits a tenth.
+  if (trialRule(s, "macroTrial")) {
+    const macroMult = rules["macro-overclock"] === true ? 6 : 5;
+    paid = paid.mul(s.vim.echoStacks > 0 ? macroMult : 0.1);
+  }
 
   wallet.draft.credit(s, "glyphs", paid);
+  if (grade === "clean" && rules["ink-siphon"] === true && paid.gt(0)) {
+    wallet.draft.credit(s, "ink", paid.mul(0.1));
+  }
 
   const drop = hashUnit(`${anomalyId}|${s.vim.folioSerial}`);
   const treatDrop = drop < TREAT_DROP_SHARE;
@@ -261,7 +285,8 @@ function resolveAnomalyIn(
   if (grade === "clean") {
     s.vim.totalCleanCuts += 1;
     s.vim.hintMastery[hintId] = (s.vim.hintMastery[hintId] ?? 0) + 1;
-    s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + 2);
+    const flowGain = rules["fast-flow"] === true ? 3 : 2;
+    s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + flowGain);
   } else if (grade === "tidy") {
     s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + 1);
   }
@@ -277,7 +302,8 @@ function completeFolioIn(s: VimHost, isRite: boolean, riteFamily?: string): Foli
   const seed = s.vim.folioSeed;
   if (Object.keys(s.vim.resolvedAnomalyIds).length === 0) return { bonus: D(0), nextSeed: seed };
 
-  const bonus = s.vim.activeGlyphsPerEdit.mul(FOLIO_CLEAR_MULT).mul(s.vim.flowMult).mul(s.stats.output);
+  let bonus = s.vim.activeGlyphsPerEdit.mul(FOLIO_CLEAR_MULT).mul(s.vim.flowMult).mul(s.stats.output);
+  if (s.vim.activeSplit) bonus = bonus.mul(2.5);
   wallet.draft.credit(s, "glyphs", bonus);
 
   s.vim.totalFoliosCleared += 1;
@@ -344,11 +370,11 @@ export const vim = defineFeature({
     reach<{
       stats: { output: Decimal; tempo: Decimal };
       boosts: BuffsState;
-      trials: { rules: string[] };
+      trials: { rules: string[]; completions?: Readonly<Record<string, number>> };
     }>(),
   ],
   initial: (): VimState => ({
-    unlockedFamilies: {},
+    unlockedFamilies: { "core-move": true, "core-edit": true },
     completedRites: {},
     discoveredPairs: {},
     hintMastery: {},
@@ -383,8 +409,15 @@ export const vim = defineFeature({
       flowMult: (s) => D(1 + s.vim.flow * FLOW_PER_STACK),
       codexPairMult: (s) => D(CODEX_PAIR_MULT).pow(Object.keys(s.vim.discoveredPairs).length),
       riteMult: (s) => D(1).add(D(0.25).mul(Object.keys(s.vim.completedRites).length)),
-      tildeClarityMult: (s) => D(1 + TILDE_BOND_STEP * s.vim.tildeBond),
-      tildeInkMult: (s) => D(1 + TILDE_BOND_STEP * s.vim.tildeBond),
+      tildeClarityMult: (s) => {
+        const step = TILDE_BOND_STEP * (s.vim.vimrcRules["cat-familiar"] === true ? 1.5 : 1);
+        return D(1 + step * s.vim.tildeBond);
+      },
+      tildeInkMult: (s) => {
+        const step = TILDE_BOND_STEP * (s.vim.vimrcRules["cat-familiar"] === true ? 1.5 : 1);
+        return D(1 + step * s.vim.tildeBond);
+      },
+      vimrcSlots: (s) => VIMRC_SLOTS + ((s.trials.completions?.["macro-trial"] ?? 0) > 0 ? 1 : 0),
       actTier: (s): 1 | 2 | 3 | 4 | 5 | 6 | 7 => {
         let tier: 1 | 2 | 3 | 4 | 5 | 6 | 7 = 1;
         for (const family of KEY_FAMILIES) {
@@ -441,7 +474,7 @@ export const vim = defineFeature({
         if (!family.requires.every((required) => s.vim.unlockedFamilies[required] === true)) return false;
         if (!wallet.draft.debit(s, family.cost.currency, family.cost.amount)) return false;
         s.vim.unlockedFamilies[id] = true;
-        s.vim.pendingRiteFamily = id;
+        if (practiceRite(id) !== undefined) s.vim.pendingRiteFamily = id;
         if (family.act > s.vim.highestAct) s.vim.highestAct = family.act;
         return true;
       }),
@@ -516,7 +549,7 @@ export const vim = defineFeature({
         for (const entry of VIMRC_RULES) {
           if (s.vim.vimrcRules[entry.id] === true) used += entry.slotCost;
         }
-        if (used + rule.slotCost > VIMRC_SLOTS) return false;
+        if (used + rule.slotCost > s.vim.vimrcSlots) return false;
         s.vim.vimrcRules[ruleId] = true;
         return true;
       }),
@@ -571,10 +604,13 @@ export const vim = defineFeature({
             return;
           }
 
+          const baseStep = s.vim.vimrcRules["fast-flow"] === true ? 4_000 : FLOW_DECAY_MS;
+          const decayStep =
+            s.vim.activeSplit && s.vim.vimrcRules["split-resonance"] === true ? baseStep * 2 : baseStep;
           s.vim.flowDecayMs += ctx.dtMs;
-          while (s.vim.flowDecayMs >= FLOW_DECAY_MS && s.vim.flow > 0) {
+          while (s.vim.flowDecayMs >= decayStep && s.vim.flow > 0) {
             s.vim.flow -= 1;
-            s.vim.flowDecayMs -= FLOW_DECAY_MS;
+            s.vim.flowDecayMs -= decayStep;
           }
           if (s.vim.flow <= 0) s.vim.flowDecayMs = 0;
         },

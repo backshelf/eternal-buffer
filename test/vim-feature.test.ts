@@ -70,10 +70,15 @@ function probeStore() {
 }
 
 describe("unlocking a Keycap Family", () => {
-  test("a paid family pays its price, owes a rite, and survives both resets", () => {
+  test("core Act I families start unlocked and paid families pay their price, owe a rite, and survive resets", () => {
     const { store } = probeStore();
 
-    expect(store.getState().vim.unlockFamily("core-move")).toBe(true);
+    // Act I core families are already bound from the first night and never queue a nonexistent rite.
+    expect(store.getState().vim.unlockedFamilies["core-move"]).toBe(true);
+    expect(store.getState().vim.unlockedFamilies["core-edit"]).toBe(true);
+    expect(store.getState().vim.unlockFamily("core-move")).toBe(false);
+    expect(store.getState().vim.pendingRiteFamily).toBeNull();
+
     // A paid family costs the price the content sets, and the profile starts with none.
     const price = FAMILY_BY_ID["word-stride"].cost.amount;
     expect(price).toBeGreaterThan(0);
@@ -101,6 +106,38 @@ describe("unlocking a Keycap Family", () => {
     const { store } = probeStore();
     // The editor and the screens only ever pass known ids; the action still refuses anything else.
     expect(store.getState().vim.unlockFamily("no-such-family" as KeyFamilyId)).toBe(false);
+  });
+
+  test("Act VII .vimrc rules and dual-split resonance take real effect", () => {
+    const { store } = probeStore();
+    // Raise to Act VII by unlocking an Act VII family directly in state.
+    store.setState((s) => {
+      s.vim.unlockedFamilies["ex-power"] = true;
+      s.vim.unlockedFamilies["dual-split"] = true;
+      s.vim.unlockedFamilies["vimrc-forge"] = true;
+      s.vim.tildeBond = 2;
+    });
+
+    const base = store.getState().vim.resolveAnomaly("r:base", 7, 4, "hint.rot", 1);
+    expect(base.grade).toBe("tidy");
+
+    expect(store.getState().vim.toggleVimrcRule("par-forgiveness")).toBe(true);
+    expect(store.getState().vim.toggleVimrcRule("ink-siphon")).toBe(true);
+    expect(store.getState().vim.toggleVimrcRule("cat-familiar")).toBe(true);
+
+    // Cat familiar boosts Tilde bond from +20% (1.2) to +30% (1.3).
+    expect(store.getState().vim.tildeClarityMult.toNumber()).toBeCloseTo(1.3, 10);
+
+    // Par forgiveness widens Clean Cut window by +3 (7 keys on par 4 is now Clean Cut) and ink-siphon drips ink.
+    const inkBefore = store.getState().wallet.ink;
+    const forgiven = store.getState().vim.resolveAnomaly("r:forgiven", 7, 4, "hint.rot", 1);
+    expect(forgiven.grade).toBe("clean");
+    expect(store.getState().wallet.ink.gt(inkBefore)).toBe(true);
+
+    // Dual split multiplies payouts cleanly.
+    store.getState().vim.setDualSplit(true);
+    const splitEdit = store.getState().vim.resolveAnomaly("r:split", 4, 4, "hint.rot", 1);
+    expect(splitEdit.paid.gt(forgiven.paid)).toBe(true);
   });
 });
 

@@ -345,6 +345,8 @@ describe("generateFolio", () => {
     for (const anomaly of empty.anomalies) {
       expect(ANOMALY_SPEC[anomaly.kind].families.length).toBe(0);
       expect(["stray-rot", "missing-rune"]).toContain(anomaly.kind);
+      // Act I hints never suggest locked Act II/III keys like `f`, `r`, or `cw`.
+      expect(anomaly.optimalHint).not.toMatch(/^f|\br[a-z]|\bcw\b/);
     }
     expect(empty.anomalies.length).toBeGreaterThanOrEqual(2);
 

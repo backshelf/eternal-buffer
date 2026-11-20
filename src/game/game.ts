@@ -21,7 +21,30 @@ import { wallet } from "./wallet";
  */
 export const game = defineGame({
   id: SLUG,
-  save: { key: `${SLUG}.save`, version: 2, migrations: { 2: (saved) => saved } },
+  save: {
+    key: `${SLUG}.save`,
+    version: 3,
+    migrations: {
+      2: (saved) => saved,
+      3: (saved) => {
+        if (!saved || typeof saved !== "object") return saved;
+        const root = saved as {
+          vim?: { unlockedFamilies?: Record<string, true>; pendingRiteFamily?: string | null };
+        };
+        if (!root.vim) return saved;
+        const unlocked = {
+          "core-move": true as const,
+          "core-edit": true as const,
+          ...(root.vim.unlockedFamilies ?? {}),
+        };
+        const pending =
+          root.vim.pendingRiteFamily === "core-move" || root.vim.pendingRiteFamily === "core-edit"
+            ? null
+            : root.vim.pendingRiteFamily;
+        return { ...root, vim: { ...root.vim, unlockedFamilies: unlocked, pendingRiteFamily: pending } };
+      },
+    },
+  },
   vocab: WORDS,
   features: [
     wallet,

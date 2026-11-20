@@ -186,6 +186,7 @@ function wordsIn(line: string): WordSite[] {
 interface Gen {
   dice: Dice;
   clean: readonly string[];
+  unlocked: Readonly<Record<string, true>>;
   taken: Set<number>;
   usedTargets: Set<string>;
   usedTokens: Set<string>;
@@ -293,7 +294,17 @@ function planCharRot(g: Gen, spec: AnomalySpec, options: CharRotOptions = {}): S
   if (!site) return null;
   const middle = Math.floor(site.word.length / 2);
   const rot = nextRotChar(g);
+  const cleanChar = site.word[middle] ?? "a";
   const corrupt = site.word.slice(0, middle) + rot + site.word.slice(middle + 1);
+  const hasSnipe = g.unlocked["char-snipe"] === true;
+  const hasReplace = g.unlocked["line-craft"] === true;
+  const optimalHint =
+    hasSnipe && hasReplace
+      ? `f${rot} r${cleanChar}`
+      : hasSnipe
+        ? `f${rot} x i ${cleanChar} jk`
+        : `h/j/k/l to ${rot}, then x i ${cleanChar} jk`;
+  const parKeys = hasSnipe && hasReplace ? 4 : hasSnipe ? 7 : 10;
 
   return accept(g, {
     draft: {
@@ -303,8 +314,8 @@ function planCharRot(g: Gen, spec: AnomalySpec, options: CharRotOptions = {}): S
       colEnd: site.end,
       targetText: corrupt,
       expectedLine: g.clean[site.line] ?? "",
-      parKeys: 4,
-      optimalHint: `f${rot} r${site.word[middle] ?? "a"}`,
+      parKeys,
+      optimalHint,
     },
     spans: [{ line: site.line, start: site.start, end: site.end, text: corrupt }],
   });
@@ -333,6 +344,15 @@ function planMissingRune(g: Gen, spec: AnomalySpec): SitePlan | null {
   if (pool.length === 0) return null;
   const site = pool[g.dice.int(pool.length)];
   if (!site) return null;
+  const hasSnipe = g.unlocked["char-snipe"] === true;
+  const hasChange = g.unlocked["op-change"] === true;
+  const optimalHint =
+    hasSnipe && hasChange
+      ? `f[ cw ${site.word} Esc`
+      : hasChange
+        ? `cw ${site.word} Esc`
+        : `x x x i ${site.word} jk`;
+  const parKeys = (hasChange ? 6 : 9) + site.word.length;
   return accept(g, {
     draft: {
       kind: spec.kind,
@@ -341,8 +361,8 @@ function planMissingRune(g: Gen, spec: AnomalySpec): SitePlan | null {
       colEnd: site.end,
       targetText: RUNE_GAP,
       expectedLine: g.clean[site.line] ?? "",
-      parKeys: 6 + site.word.length,
-      optimalHint: `f[ cw ${site.word} Esc`,
+      parKeys,
+      optimalHint,
     },
     spans: [{ line: site.line, start: site.start, end: site.end, text: RUNE_GAP }],
   });
@@ -933,6 +953,7 @@ export function generateFolio(input: GenerateFolioInput): Folio {
   const g: Gen = {
     dice,
     clean: template.lines,
+    unlocked: input.unlocked,
     taken: new Set<number>(),
     usedTargets: new Set<string>(),
     usedTokens: new Set<string>(),

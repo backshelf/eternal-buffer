@@ -75,7 +75,9 @@ export const BANDS = [
       [20, 45],
       [30, 55],
       [45, 75],
-      [55, 90],
+      // Fixing Layer 2 `codex` worth to compare against `best` stopped late rebinds from thrashing every
+      // few minutes, so late epochs actually keep and fill the 24-node tree past 90 ranks.
+      [55, 160],
     ],
   ],
   [
@@ -95,7 +97,7 @@ export const BANDS = [
       [0, 0],
       [0, 0],
       [0, 1],
-      [1, 150],
+      [1, 40],
     ],
   ],
   [

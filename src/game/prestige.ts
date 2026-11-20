@@ -39,11 +39,14 @@ const milestonesOf = (list: readonly PrestigeMilestone[]): PrestigeMilestoneDef[
   list.map((m) => ({ id: m.id, at: m.at, on: m.on, name: m.name, text: m.line }));
 
 /**
- * What a reset is worth to the auto-player: taken only once it pays at least one and at least doubles what the layer
- * holds, and valued at the gain itself.
+ * What a reset is worth to the auto-player: taken only once it pays at least one and at least doubles the reference
+ * amount, and valued at the gain itself. Layer 2 (`codex`) passes its `best` payout as a floor so spending Codices
+ * on upgrades never tricks the auto-player into thrashing rebinds minutes apart.
  */
-const worthOf = (gain: Decimal, held: Decimal) =>
-  gain.gte(1) && gain.gte(held.mul(2)) ? gain.toNumber() : 0;
+const worthOf = (gain: Decimal, held: Decimal, floor?: Decimal) => {
+  const ref = floor?.gt(held) ? floor : held;
+  return gain.gte(1) && gain.gte(ref.mul(2)) ? gain.toNumber() : 0;
+};
 
 /**
  * The first layer on the engine's `prestige`: `:w Bind Volume` pays Seals into the wallet and starts the run over.
@@ -76,5 +79,5 @@ export const codex = definePrestige({
   milestones: milestonesOf(CODEX_MILESTONES),
   gain: (s) => codexGain(s),
   canReset: (s) => s.wallet.sealsEver.gte(250) && codexGain(s).gte(1),
-  worth: (s) => worthOf(codexGain(s), s.wallet.codices),
+  worth: (s) => worthOf(codexGain(s), s.wallet.codices, s.codex.best),
 });

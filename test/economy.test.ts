@@ -102,8 +102,8 @@ describe("the active-first economy", () => {
       s.volumes.lifetime = D(300);
       s.volumes.runs = 3;
     });
-    expect(run.store.getState().vim.unlockFamily("core-move")).toBe(true);
-    expect(run.store.getState().vim.unlockFamily("core-edit")).toBe(true);
+    expect(run.store.getState().vim.unlockedFamilies["core-move"]).toBe(true);
+    expect(run.store.getState().vim.unlockedFamilies["core-edit"]).toBe(true);
     expect(run.store.getState().vim.unlockFamily("word-stride")).toBe(true);
 
     const before = run.store.getState();
@@ -121,4 +121,20 @@ describe("the active-first economy", () => {
     expect(after.wallet.seals.eq(0)).toBe(true);
     expect(after.volumes.runs).toBe(0);
   }, 30_000);
+
+  test("spending codices down to zero does not trick rebind worth into thrashing", () => {
+    const run = activePlayer();
+    run.store.setState((s) => {
+      s.wallet.sealsEver = D(500);
+      s.volumes.lifetime = D(250);
+      s.wallet.codices = D(0);
+      s.codex.best = D(60);
+    });
+    const moves = game.features.flatMap((f) =>
+      f.key === "codex" && f.moves ? f.moves(run.store.getState() as never) : [],
+    );
+    const rebind = moves.find((m) => m.id.includes("codex"));
+    // Gain at 250 seals is 50 codices, below 2× best (120), so worth stays 0 even though wallet was spent down.
+    expect(rebind?.worth?.(run.store.getState() as never) ?? 0).toBe(0);
+  });
 });
