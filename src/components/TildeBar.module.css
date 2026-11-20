@@ -1,0 +1,154 @@
+/*
+ * Tilde's statusline: a strip of the archive's own hairline and stipple, two ASCII corners top and two bottom, her
+ * frame in warm fur, the Bond, the two presses, and the Act's quip running out to the right. It is the one place on
+ * the page where the cat is, so it is the one place that wears her colours.
+ */
+.bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 7px 12px;
+  border: 1px solid var(--ui-line);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* The four corners of the frame: the top two drawn here, the bottom two by the spans inside. */
+.bar::before,
+.bar::after {
+  position: absolute;
+  top: -8px;
+  color: color-mix(in srgb, var(--ui-tilde-fur) 72%, var(--ui-line));
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  line-height: 1;
+  content: var(--ui-frame-tl);
+  pointer-events: none;
+  user-select: none;
+}
+.bar::before {
+  left: -5px;
+}
+.bar::after {
+  right: -5px;
+  content: var(--ui-frame-tr);
+}
+.footLeft,
+.footRight {
+  position: absolute;
+  bottom: -8px;
+  color: color-mix(in srgb, var(--ui-tilde-fur) 72%, var(--ui-line));
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+.footLeft {
+  left: -5px;
+}
+.footRight {
+  right: -5px;
+}
+
+/* Her: a square mood dot, then the frame itself. Held still under reduced motion, where the frame is the nap one. */
+.cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ui-tilde-fur);
+}
+.mood {
+  inline-size: 6px;
+  block-size: 6px;
+  background-color: var(--ui-tilde-eye);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ui-tilde-eye) 55%, transparent);
+}
+.bar[data-mood="nap"] .mood {
+  background-color: var(--ui-ink-muted);
+  box-shadow: none;
+}
+.bar[data-mood="typing"] .mood {
+  background-color: var(--ui-mode-insert);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ui-mode-insert) 55%, transparent);
+}
+.bar[data-mood="moth"] .mood {
+  background-color: var(--ui-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ui-accent) 65%, transparent);
+}
+.frame {
+  white-space: pre;
+  letter-spacing: 0.01em;
+}
+
+/* The Bond, and the two presses, each held off the last by the statusline's own rule. */
+.bond {
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--ui-line);
+  color: var(--ui-ink);
+  letter-spacing: 0.04em;
+}
+.bonus {
+  color: var(--ui-ink-muted);
+}
+.actions {
+  display: inline-flex;
+  gap: 6px;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--ui-line);
+}
+
+/* The quip runs out to the right of the pressing; the purse sits at the foot of the line. */
+.quip {
+  flex: 1 1 12em;
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  text-wrap: balance;
+}
+.purse {
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Her heart: one glyph that lifts and goes. Under reduced motion it only stands there for its moment. */
+.heart {
+  position: absolute;
+  top: -6px;
+  left: 24px;
+  color: var(--ui-clean-ink);
+  font-family: var(--ui-font-num);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  animation: lift 1.6s ease-out forwards;
+}
+.heart[data-still] {
+  animation: none;
+  opacity: 1;
+}
+
+@keyframes lift {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+}

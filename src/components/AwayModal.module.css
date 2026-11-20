@@ -1,0 +1,44 @@
+/*
+ * The away journal inside its sheet: the game's own sentence, then the tray of figures the archive set aside, each on
+ * a ruled line with its glyph. No hero; this is a page lifted off the desk and read.
+ */
+.summary {
+  margin: 0;
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.gains {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ui-line);
+}
+.gain {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ui-line) 60%, transparent);
+}
+.glyph {
+  color: var(--ui-accent);
+  line-height: 0;
+}
+.figure {
+  font-family: var(--ui-font-num);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.name {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}

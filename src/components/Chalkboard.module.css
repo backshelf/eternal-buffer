@@ -1,0 +1,197 @@
+/*
+ * The Chalkboard: a strip of keycaps, not buttons — nothing here is pressable, everything is reportage. One
+ * hairline above it and the dither beneath, the Acts running left to right, the last cap you pressed sunk
+ * two pixels into the board, and the whisper on its own line so the strip never changes height.
+ */
+.board {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 7px 10px 6px;
+  border-top: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-ground) 62%, transparent);
+  background-image: var(--dither-4);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* The Practice Rite's ribbon: the one place the board raises its voice. */
+.ribbon {
+  padding: 2px 6px;
+  border-left: 2px solid var(--ui-accent);
+  background-image: var(--dither-accent);
+  color: var(--ui-ink);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.ribbonMark {
+  color: var(--ui-accent);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.act {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.act + .act {
+  padding-left: 14px;
+  border-left: var(--ui-hairline);
+}
+
+.actLabel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--ui-ink-muted);
+  white-space: nowrap;
+}
+.actNumeral {
+  color: var(--ui-accent);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.actTitle {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.families {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.family {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.familyName {
+  margin-right: 2px;
+  color: var(--ui-ink-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* A keycap: one hairline, a two-pixel bevel, and the ink of a cap that has been used. */
+.cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--ui-line);
+  background-color: var(--ui-surface);
+  color: var(--ui-ink);
+  font-size: 10px;
+  line-height: 1;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-ink) 16%, transparent);
+  transition:
+    background-color 90ms ease-out,
+    color 90ms ease-out,
+    translate 90ms ease-out;
+}
+/* The cap the last press landed on: physically down, and lit. */
+.cap[data-pressed="true"] {
+  border-color: var(--ui-accent);
+  background-color: var(--ui-accent);
+  color: var(--ui-on-accent);
+  box-shadow: none;
+  translate: 0 2px;
+}
+/* A teaser cap: the next Act's first family, sealed and pale. */
+.cap[data-locked="true"] {
+  border-style: dashed;
+  background-color: transparent;
+  color: var(--ui-ink-muted);
+  box-shadow: none;
+}
+
+.more {
+  color: var(--ui-ink-muted);
+  font-size: 9px;
+}
+
+.teaser {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ui-ink-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nextRite {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nextRiteFamily {
+  color: var(--ui-accent);
+}
+
+/*
+ * The whisper. It holds its line even when empty (`—` and a muted tone) so the strip never jumps, and each
+ * new whisper fades in on a fresh key: `data-whisper` changes with every press, which restarts the run.
+ */
+.whisper {
+  margin: 0;
+  min-height: 14px;
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: whisper-in 220ms ease-out;
+}
+.whisper[data-kind="hint"] {
+  color: var(--ui-target-ink);
+}
+.whisper[data-kind="lock"] {
+  color: var(--ui-rot-ink);
+}
+.whisper[data-kind="rust"] {
+  color: var(--ui-warn, var(--ui-ink-muted));
+}
+
+@keyframes whisper-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .board {
+    font-size: 9px;
+  }
+  .familyName {
+    display: none;
+  }
+  .actTitle {
+    display: none;
+  }
+}

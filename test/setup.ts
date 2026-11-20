@@ -42,6 +42,7 @@ const NAMES = [
   "DOMParser",
   "XMLSerializer",
   "Image",
+  "Window",
   "DOMRect",
   "screen",
   "matchMedia",

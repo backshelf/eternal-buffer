@@ -1,0 +1,181 @@
+/*
+ * The hero plate: bone vellum on soot, one hairline all round, and the cursor halo printed underneath the
+ * text. The shader sits in its own layer with no pointer, so every click lands on the page itself. The
+ * caret's colour is a custom property the plate swaps by mode, which is also what the vim block cursor
+ * reads: `motion/react` and CodeMirror own their own transforms, this file owns only the look.
+ */
+.frame {
+  --caret: var(--ui-mode-normal);
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 320px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+  isolation: isolate;
+  overflow: hidden;
+}
+.frame[data-mode="insert"] {
+  --caret: var(--ui-mode-insert);
+}
+.frame[data-mode="visual"],
+.frame[data-mode="visual-line"],
+.frame[data-mode="visual-block"] {
+  --caret: var(--ui-mode-visual);
+}
+.frame[data-mode="replace"] {
+  --caret: var(--ui-mode-replace);
+}
+.frame[data-mode="command"] {
+  --caret: var(--ui-mode-command);
+}
+
+/* The plate's own ASCII corners, in the one alphabet theme.css defines. */
+.frame::before,
+.frame::after {
+  position: absolute;
+  z-index: 2;
+  color: color-mix(in srgb, var(--ui-accent) 72%, transparent);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  content: var(--ui-frame-tl);
+  pointer-events: none;
+  user-select: none;
+}
+.frame::before {
+  top: 2px;
+  left: 4px;
+}
+.frame::after {
+  top: 2px;
+  right: 4px;
+  content: var(--ui-frame-tr);
+}
+
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.glow :global(canvas) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.still {
+  width: 100%;
+  height: 100%;
+}
+
+.panes {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+.panes[data-split="on"] {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+}
+.host {
+  min-width: 0;
+  min-height: 0;
+}
+.host :global(.cm-editor) {
+  height: 100%;
+}
+.host :global(.cm-scroller) {
+  height: 100%;
+}
+.host :global(.cm-editor.cm-focused) {
+  outline: none;
+}
+
+/*
+ * The block cursor. @replit/codemirror-vim draws it in a layer of its own with a pink that belongs to no
+ * palette; the data attribute gives this rule the specificity to overrule the package's own theme, and the
+ * caret takes the mode's colour from `--caret`. Insert mode keeps the native caret, which the theme tints.
+ */
+.frame[data-mode] :global(.cm-fat-cursor) {
+  background: var(--caret);
+}
+.frame[data-mode] :global(.cm-editor:not(.cm-focused) .cm-fat-cursor) {
+  background: transparent;
+  outline: 1px solid var(--caret);
+}
+.frame[data-mode="insert"] :global(.cm-content),
+.frame[data-mode="replace"] :global(.cm-content) {
+  caret-color: var(--caret);
+}
+
+/* The twin margin: the page as it was bound, for the Act VII split. Clicking it returns you to the page. */
+.twin {
+  min-width: 0;
+  padding: 12px 14px 20px;
+  border-left: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-ground) 55%, transparent);
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  line-height: 1.65;
+  overflow: auto;
+  cursor: text;
+}
+.twinHead {
+  margin: 0 0 10px;
+  color: var(--ui-accent);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.twinLine {
+  margin: 0;
+  white-space: pre;
+}
+
+/* The touch keypad: the day-one motions as caps you can press with a thumb. */
+.keypad {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-top: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-ground) 62%, transparent);
+}
+.keypadKey {
+  min-width: 34px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-surface);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  box-shadow: inset 0 calc(-1 * var(--ui-bevel)) 0 color-mix(in srgb, var(--ui-ink) 14%, transparent);
+  cursor: pointer;
+}
+.keypadKey:active {
+  background-color: var(--ui-sunken);
+  box-shadow: inset 0 0 0 color-mix(in srgb, var(--ui-ink) 14%, transparent);
+  translate: 0 var(--ui-bevel);
+}
+
+@media (max-width: 720px) {
+  .frame {
+    min-height: 260px;
+  }
+  .panes[data-split="on"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .twin {
+    display: none;
+  }
+}

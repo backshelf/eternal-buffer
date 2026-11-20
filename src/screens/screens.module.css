@@ -1,3 +1,8 @@
+/*
+ * A screen's own layout: the column of panels, the cards inside them, and the small pieces the archive repeats on every
+ * page (a keycap, a pip, a milestone, a ledger row). Colour, type and corners all come from the registry's tokens; no
+ * surface here is rounded, and no frame is drawn that `Panel` already draws.
+ */
 .screen {
   display: grid;
   gap: 16px;
@@ -11,6 +16,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .row {
   display: flex;
@@ -39,4 +47,404 @@
 .num {
   font-family: var(--ui-font-num);
   font-variant-numeric: tabular-nums;
+}
+
+/* --- A screen with sub-pages (the Codex) ---------------------------------------------------------------- */
+.pages {
+  display: grid;
+  gap: 12px;
+}
+.subTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.subTab {
+  flex: 1 1 auto;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: none;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color var(--ui-duration) ease-out,
+    border-color var(--ui-duration) ease-out;
+}
+.subTab:hover {
+  border-color: var(--ui-line);
+  color: var(--ui-ink);
+}
+.subTab[data-state="active"] {
+  border-color: color-mix(in srgb, var(--ui-accent) 62%, var(--ui-line));
+  background-color: var(--ui-surface);
+  background-image: var(--dither-accent);
+  color: var(--ui-ink);
+}
+.page {
+  display: grid;
+  gap: 12px;
+}
+.page[hidden] {
+  display: none;
+}
+
+/* --- A card: one family, one node, one rule ------------------------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 11px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.card[data-state="short"] {
+  border-color: color-mix(in srgb, var(--ui-line) 80%, var(--ui-ink-muted));
+}
+.card[data-state="open"] {
+  border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line));
+}
+.card[data-state="maxed"],
+.card[data-state="bound"] {
+  border-color: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-line));
+  background-color: var(--ui-surface);
+}
+.card[data-state="locked"] {
+  opacity: 0.62;
+}
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cardName {
+  min-width: 0;
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.tag {
+  flex: none;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+.effects {
+  color: color-mix(in srgb, var(--ui-accent) 74%, var(--ui-ink));
+}
+.bound {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ruleLine {
+  margin: 0;
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  word-break: break-word;
+}
+
+/* --- Keycaps --------------------------------------------------------------------------------------------- */
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.keycap {
+  padding: 1px 6px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-surface);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  line-height: 1.5;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-ink) 14%, transparent);
+}
+
+/* --- The Grammar Codex matrix ---------------------------------------------------------------------------- */
+.group {
+  display: grid;
+  gap: 6px;
+}
+.groupTitle {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(198px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pair {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-height: 82px;
+  padding: 8px 9px;
+  border: 1px dashed var(--ui-line);
+  background-color: var(--ui-sunken);
+}
+.pairKeys {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+}
+.pair[data-found] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ui-accent) 55%, var(--ui-line));
+  background-color: var(--ui-surface);
+}
+.pair[data-found] .pairKeys {
+  color: var(--ui-accent);
+}
+.pairName {
+  font-weight: 600;
+}
+.pairLine {
+  color: var(--ui-ink-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.blank {
+  min-height: 36px;
+  margin-top: 2px;
+  background-color: color-mix(in srgb, var(--ui-line) 22%, transparent);
+  background-image: var(--dither-4);
+}
+
+/* --- The .vimrc slots ------------------------------------------------------------------------------------ */
+.slots {
+  display: flex;
+  gap: 4px;
+}
+.slotPip {
+  width: 28px;
+  height: 10px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+}
+.slotPip[data-lit] {
+  border-color: var(--ui-accent);
+  background-color: var(--ui-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ui-accent) 40%, transparent);
+}
+
+/* --- Prestige: the peak light, the milestones, the ledger ------------------------------------------------- */
+.peak {
+  justify-self: start;
+  padding: 3px 8px;
+  border: 1px solid var(--ui-accent);
+  background-image: var(--dither-accent);
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.milestones {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.milestone {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px dashed var(--ui-line);
+}
+.milestone[data-reached] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+  background-image: var(--dither-accent);
+}
+.check {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.milestone[data-reached] .check {
+  color: var(--ui-accent);
+}
+.milestoneBody {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.milestoneName {
+  font-weight: 600;
+}
+.ledger {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.ledger > div {
+  display: grid;
+  gap: 1px;
+}
+.ledger dt {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ledger dd {
+  margin: 0;
+  font-family: var(--ui-font-num);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.runs {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px dashed var(--ui-line);
+}
+.run:first-child {
+  border-top: none;
+}
+
+/* --- The Scribes ----------------------------------------------------------------------------------------- */
+.scribes {
+  display: grid;
+  gap: 8px;
+}
+.scribe {
+  display: grid;
+}
+.rates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pips {
+  display: flex;
+  gap: 4px;
+}
+.pip {
+  flex: 1 1 0;
+  height: 6px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+}
+.pip[data-lit] {
+  border-color: var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-accent) 55%, transparent);
+  background-image: var(--dither-accent);
+}
+
+/* --- Marginalia: the wall's own rail --------------------------------------------------------------------- */
+.archiveWall.archiveWall {
+  max-width: calc(var(--columns) * 78px + 132px);
+}
+.archiveWall.archiveWall > [role="row"] {
+  grid-template-columns: minmax(88px, max-content) repeat(var(--columns), minmax(0, 1fr));
+  align-items: center;
+}
+.archiveWall [data-row-aside] {
+  display: grid;
+  gap: 1px;
+  padding-inline: 2px 8px;
+  border-inline-end: 1px dashed var(--ui-line);
+}
+.rowAside {
+  display: grid;
+  gap: 1px;
+}
+.rowTitle {
+  font-family: var(--ui-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.rowBonus {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* --- Phone: one column of cards, and the wall's rail above its row --------------------------------------- */
+@media (max-width: 620px) {
+  .screen {
+    padding: 16px 12px 28px;
+  }
+  .cards,
+  .matrix {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .subTab {
+    flex-basis: 100%;
+  }
+  .archiveWall.archiveWall > [role="row"] {
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+  }
+  .archiveWall [data-row-aside] {
+    grid-column: 1 / -1;
+    border-inline-end: none;
+    border-block-end: 1px dashed var(--ui-line);
+  }
 }

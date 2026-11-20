@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   AchievementGrid,
   type AchievementRow,
+  type AchievementRowAside,
   type AchievementTile,
   type AchievementWords,
   cx,
@@ -16,6 +17,8 @@ export interface AchievementWallProps {
   /** A tile's picture; the tile's state is on the tile (`data-earned`, `data-hidden`), so a plain glyph will do. */
   icon: (tile: AchievementTile) => ReactNode;
   words: AchievementWords;
+  /** A rail beside each row (its name, how full it is, what a full one gives): the caller's own markup. */
+  renderRowAside?: (aside: AchievementRowAside) => ReactNode;
   className?: string;
 }
 
@@ -24,7 +27,14 @@ export interface AchievementWallProps {
  * and one detail bubble (`[data-name]`, `[data-line]`, `[data-reward]`) for the tile under the pointer or the focus.
  * Every row keeps the first row's width (`--columns`), the tiles shrinking on a narrow page rather than wrapping.
  */
-export function AchievementWall({ label, rows, icon, words, className }: AchievementWallProps) {
+export function AchievementWall({
+  label,
+  rows,
+  icon,
+  words,
+  renderRowAside,
+  className,
+}: AchievementWallProps) {
   return (
     <AchievementGrid
       aria-label={label}
@@ -33,6 +43,7 @@ export function AchievementWall({ label, rows, icon, words, className }: Achieve
       rows={rows}
       words={words}
       renderIcon={(tile) => icon(tile)}
+      renderRowAside={renderRowAside}
       detailProps={{ className: s.detail }}
     />
   );

@@ -1,27 +1,43 @@
 import { fmt } from "watchpot/core";
-import type { AchievementRow, AchievementWords } from "watchpot/ui";
+import type { AchievementRow, AchievementRowAside, AchievementWords } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
 import { tileMark } from "../app/icons";
-import { ACHIEVEMENTS, POWER, WALL_NAME, type When } from "../content/achievements";
+import { ACHIEVEMENTS, POWER, ROW_TITLES, WALL_NAME, type When } from "../content/achievements";
 import { GENERATORS } from "../content/generators";
-import { PRESTIGE_VERB } from "../content/prestige";
+import { CODEX_VERB, PRESTIGE_VERB } from "../content/prestige";
 import { TREE_NAME } from "../content/tree";
-import { CURRENCY, MAIN, STAT, TAB_NAMES } from "../content/words";
+import { ACTS } from "../content/vimActs";
+import { CURRENCY, MAIN, TAB_NAMES } from "../content/words";
 import { wall } from "../game/achievements";
 import { AchievementWall } from "../ui/AchievementWall";
 import { Title } from "../ui/Title";
 import s from "./screens.module.css";
 
 /** A producer's name by id, for "own" conditions. */
-const PRODUCER = new Map<string, string>([...GENERATORS.map((g): [string, string] => [g.id, g.name])]);
+const PRODUCER = new Map<string, string>(GENERATORS.map((g): [string, string] => [g.id, g.name]));
 
-/** What a condition asks, in words. */
+/** An Act's numeral, for "reach" conditions. */
+const NUMERAL = new Map<number, string>(ACTS.map((act): [number, string] => [act.id, act.numeral]));
+
+/** What a condition asks, in words. Every `When` says its own line: the note under the flavour. */
 function ask(w: When): string {
-  if ("own" in w) return `Own ${w.count} ${PRODUCER.get(w.own) ?? w.own}.`;
-  if ("earned" in w) return `Make ${fmt(w.earned).text} ${CURRENCY[MAIN].plural.toLowerCase()} in one run.`;
+  const glyphs = CURRENCY[MAIN].plural.toLowerCase();
+  if ("own" in w) return `Own ${w.count} × ${PRODUCER.get(w.own) ?? w.own}.`;
+  if ("earned" in w) return `Rescue ${fmt(w.earned).text} ${glyphs} in one run.`;
   if ("runs" in w) return `${PRESTIGE_VERB} ${w.runs === 1 ? "once" : `${w.runs} times`}.`;
-  if ("nodes" in w) return `Raise ${w.nodes} of ${TREE_NAME.toLowerCase()}.`;
-  return "";
+  if ("nodes" in w) return `Raise ${w.nodes} nodes of the ${TREE_NAME}.`;
+  if ("folios" in w) return `Clear ${fmt(w.folios).text} folios.`;
+  if ("cleanCuts" in w) return `Land ${fmt(w.cleanCuts).text} Clean Cuts.`;
+  if ("flow" in w) return `Hold ${w.flow} stacks of Flow at once.`;
+  if ("pairs" in w) return `Speak ${w.pairs} Grammar Codex pairs in real play.`;
+  if ("act" in w) return `Reach Act ${NUMERAL.get(w.act) ?? w.act}.`;
+  if ("mosaicPlaced" in w) return `Press ${w.mosaicPlaced} pieces into the Mosaic.`;
+  if ("expeditions" in w) return `Bring home ${w.expeditions} Margin Expeditions.`;
+  if ("tildeBond" in w) return `Raise Tilde's bond to ${w.tildeBond}.`;
+  if ("tildePets" in w) return `Pet Tilde ${w.tildePets} times.`;
+  if ("challenges" in w) return `Clear ${w.challenges} Vim Skill Trials.`;
+  if ("codexRuns" in w) return `${CODEX_VERB} ${w.codexRuns === 1 ? "once" : `${w.codexRuns} times`}.`;
+  return "A moment the archive keeps to itself.";
 }
 
 const ASK = new Map(ACHIEVEMENTS.map((a) => [a.id, ask(a.when)]));
@@ -29,12 +45,27 @@ const ASK = new Map(ACHIEVEMENTS.map((a) => [a.id, ask(a.when)]));
 /** What the wall says around its tiles. */
 const WORDS: AchievementWords = {
   hiddenName: "???",
-  hiddenLine: "A secret.",
+  hiddenLine: "???",
   earned: ", earned",
   locked: ", not yet",
 };
 
-/** The wall: every achievement in rows of eight, and what the earned ones give. */
+/** A row's rail: its name, how full it is, and what a full one gives. */
+function rowAside(aside: AchievementRowAside) {
+  const secret = aside.index === ROW_TITLES.length - 1 && aside.earned === 0;
+  const title = secret ? "???" : (ROW_TITLES[aside.index] ?? `Row ${aside.index + 1}`);
+  return (
+    <span className={s.rowAside}>
+      <span className={s.rowTitle}>{title}</span>
+      <span className={s.num}>
+        {aside.earned} / {aside.total}
+      </span>
+      <span className={s.rowBonus}>×{POWER.row.toFixed(2)} Clarity a row</span>
+    </span>
+  );
+}
+
+/** The wall: every achievement in six rows of eight, with the row's own rail and what the earned ones give. */
 export function AchievementsScreen() {
   const earned = useGameState((st) => st.achievements.earned);
   const rows: AchievementRow[] = wall.def.board.rows(earned).map((row) => ({
@@ -47,24 +78,27 @@ export function AchievementsScreen() {
           {tile.achievement.line} <em>{ASK.get(tile.achievement.id)}</em>
         </>
       ),
-      reward: `${STAT.output} ×${POWER.each}`,
+      reward: `Clarity ×${POWER.each}`,
       earned: tile.earned,
       hidden: tile.hidden,
     })),
   }));
   const count = wall.def.board.count(earned);
+  const full = wall.def.board.rowsComplete(earned);
   return (
     <div className={s.screen}>
       <Title>{TAB_NAMES.achievements}</Title>
       <p className={`small ${s.muted}`}>
-        {count} of {ACHIEVEMENTS.length} · {STAT.output} ×
+        {count} of {ACHIEVEMENTS.length} tiles struck · {full} of {ROW_TITLES.length} rows full · Clarity ×
         {fmt(wall.def.board.power(earned, POWER), { decimals: 2 }).text}
       </p>
       <AchievementWall
         label={WALL_NAME}
+        className={s.archiveWall}
         rows={rows}
         words={WORDS}
         icon={(tile) => tileMark(tile.earned, tile.hidden ?? false)}
+        renderRowAside={rowAside}
       />
     </div>
   );

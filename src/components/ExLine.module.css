@@ -1,0 +1,84 @@
+/*
+ * Vim's bottom row, drawn to the archive's rules: no corners, one hairline above, the mode pill in the
+ * mode's own ink, the console's words in bone vellum, and the caret's address in the machine face at the
+ * right. The pill, the pending keys and the recording flag are one line that never wraps, so the line's
+ * height does not jump as commands come and go.
+ */
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 26px;
+  padding: 3px 10px 4px;
+  border-top: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-ground) 72%, transparent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.pill {
+  flex: none;
+  color: var(--ui-mode-normal);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.line[data-mode="insert"] .pill {
+  color: var(--ui-mode-insert);
+}
+.line[data-mode="visual"] .pill,
+.line[data-mode="visual-line"] .pill,
+.line[data-mode="visual-block"] .pill {
+  color: var(--ui-mode-visual);
+}
+.line[data-mode="replace"] .pill {
+  color: var(--ui-mode-replace);
+}
+.line[data-mode="command"] .pill {
+  color: var(--ui-mode-command);
+}
+
+/* The keys of the command in flight, ruled like a keycap so `5d` reads as one object. */
+.pending {
+  flex: none;
+  min-width: 18px;
+  padding: 0 5px;
+  border: var(--ui-hairline);
+  color: var(--ui-accent);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.recording {
+  flex: none;
+  color: var(--ui-danger);
+  letter-spacing: 0.06em;
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--ui-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.resting {
+  color: var(--ui-ink-muted);
+}
+
+.position {
+  flex: none;
+  color: var(--ui-ink-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 720px) {
+  .line {
+    gap: 8px;
+    font-size: 10px;
+  }
+}

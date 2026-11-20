@@ -1,0 +1,84 @@
+/*
+ * The Trials: a stack of rule cards, each with its pips, its restriction in a margin rule and the door in and out of
+ * the run. Colour and type are the registry's tokens; the frame is `Panel`'s.
+ */
+.cards {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+}
+.card[data-state="open"] {
+  border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line));
+}
+.card[data-state="locked"] {
+  background-color: var(--ui-sunken);
+  opacity: 0.72;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.name {
+  margin: 0;
+  font-family: var(--ui-font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.pips {
+  display: flex;
+  gap: 4px;
+}
+.pip {
+  width: 16px;
+  height: 16px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+}
+.pip[data-lit] {
+  border-color: var(--ui-accent);
+  background-color: var(--ui-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ui-accent) 40%, transparent);
+}
+.restriction {
+  margin: 0;
+  padding: 6px 9px;
+  border-inline-start: 2px solid var(--ui-accent);
+  background-image: var(--dither-accent);
+  color: var(--ui-ink);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.reward {
+  color: color-mix(in srgb, var(--ui-accent) 72%, var(--ui-ink));
+}
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.reason {
+  color: var(--ui-ink-muted);
+}
+.underWay {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
