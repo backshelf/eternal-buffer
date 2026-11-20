@@ -90,8 +90,8 @@ const craftablePieces = (st: GameState) =>
 const openTrials = (st: GameState) =>
   CHALLENGES.reduce((n, challenge) => n + (trials.select.check(st, challenge.id) === null ? 1 : 0), 0);
 
-/** Total Scribes owned across all tiers (one Wax-Sealed Moth starts free at the desk). */
-const totalScribes = (st: GameState) =>
+/** Total Scribes owned across all tiers. */
+export const totalScribes = (st: GameState) =>
   Object.values(st.generators.owned).reduce((sum, count) => sum + count, 0);
 
 /** Total Expeditions ever completed or currently active. */
@@ -99,42 +99,61 @@ const anyExpedition = (st: GameState) =>
   st.expeditions.active.length > 0 || Object.values(st.expeditions.done).some((count) => count > 0);
 
 /**
- * Progressive disclosure: returns whether a tab has been earned/revealed for the current save.
- * Fresh saves start with ONLY the Buffer; each system opens as it becomes relevant, while
- * existing/veteran saves with progress automatically see every screen they have reached.
+ * Whether the Margin Desk (Scribes) right wing has been introduced.
+ * Opens after clearing Folio 0 + Folio 1 (once basic mending + a/u are learned and you hold real Glyphs).
+ */
+export function isScribesRevealed(st: GameState): boolean {
+  return (
+    st.vim.totalFoliosCleared >= 2 ||
+    totalScribes(st) >= 1 ||
+    st.wallet.sealsEver.gte(1) ||
+    st.settings.veteranMode
+  );
+}
+
+/**
+ * Progressive disclosure across a 10+ hour arc:
+ * Fresh saves start with ONLY the centered Buffer. Each archive room enters one at a time ONLY once
+ * the player has the prerequisite currency and context to actually use it:
+ *   Scribes (Folio 2) -> Codex (after hiring 1st Scribe & Folio 3) -> Expeditions (after brewing 15 Ink)
+ *   -> Mosaic (after holding 1st Shard) -> Marginalia (3+ achievements) -> Volumes (15K+ Glyphs) -> Trials (Act III / 1st Seal).
  */
 export function isTabRevealed(st: GameState, id: Tab): boolean {
   if (id === "make") return true;
+  if (st.settings.veteranMode) return true;
   const hasPrestiged = st.wallet.sealsEver.gte(1) || st.wallet.codicesEver.gte(1);
   if (id === "tree") {
-    return hasPrestiged || st.vim.totalFoliosCleared >= 1 || st.wallet.earned.gte(20);
+    return (
+      hasPrestiged ||
+      (totalScribes(st) >= 1 && (st.vim.totalFoliosCleared >= 3 || st.wallet.earned.gte(250))) ||
+      st.wallet.earned.gte(500)
+    );
   }
   if (id === "expeditions") {
     return (
       hasPrestiged ||
-      st.vim.totalFoliosCleared >= 2 ||
-      totalScribes(st) >= 2 ||
-      (st.vim.totalFoliosCleared >= 1 && st.wallet.ink.gte(3)) ||
-      anyExpedition(st)
+      anyExpedition(st) ||
+      (totalScribes(st) >= 1 && (st.wallet.ink.gte(15) || st.vim.totalFoliosCleared >= 6))
     );
   }
   if (id === "mosaic") {
     return (
       hasPrestiged ||
-      st.vim.totalFoliosCleared >= 3 ||
-      (st.vim.totalFoliosCleared >= 1 && st.wallet.ink.gte(10)) ||
       st.wallet.shards.gt(0) ||
-      anyExpedition(st)
+      Object.keys(st.crafting.made).length > 0 ||
+      Object.values(st.expeditions.done).some((count) => count > 0)
     );
   }
   if (id === "prestige") {
-    return hasPrestiged || st.wallet.earned.gte(5_000);
+    return hasPrestiged || st.wallet.earned.gte(15_000);
   }
   if (id === "challenges") {
     return hasPrestiged || st.vim.highestAct >= 3;
   }
   if (id === "achievements") {
-    return hasPrestiged || (st.vim.totalFoliosCleared >= 1 && Object.keys(st.achievements.earned).length > 0);
+    return (
+      hasPrestiged || (st.vim.totalFoliosCleared >= 4 && Object.keys(st.achievements.earned).length >= 3)
+    );
   }
   return true;
 }

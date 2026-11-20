@@ -89,7 +89,8 @@ export const BANDS = [
       [0, 1],
       [0, 3],
       [1, 10],
-      [5, 40],
+      // First `:wq` now lands at ~7:56 (starting a fresh epoch right before hour 8), so hour 8 matches hour 12.
+      [0, 40],
       [0, 40],
     ],
   ],

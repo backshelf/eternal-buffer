@@ -1,0 +1,583 @@
+/*
+ * Midnight Archivist Symmetrical 3-Zone TUI Workstation:
+ * Zero template header bar. Center Vim buffer is permanently anchored dead-center (760px) inside
+ * symmetric left/right wings so unlocking Ledger, Rooms, or Scribes never shifts the editor by 1px.
+ */
+.workstation {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(208px, 1fr) minmax(0, 760px) minmax(208px, 1fr);
+  align-items: stretch;
+  gap: 24px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+/* --- Symmetrical Left & Right Wings ---------------------------------------------------------------------- */
+
+.leftWing,
+.rightWing {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--ui-line) 70%, transparent) transparent;
+  scrollbar-width: thin;
+}
+.leftWing {
+  justify-self: end;
+}
+.rightWing {
+  justify-self: start;
+}
+
+.wingInner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 100%;
+  padding: 4px 2px;
+  box-sizing: border-box;
+}
+
+/* Archivist desk colophon stamp (replaces the old full-width SaaS header bar) */
+.brand {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+}
+.brandTitle {
+  margin: 0;
+  font-family: var(--ui-font-display);
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--ui-ink);
+}
+.brandSub {
+  margin: 0;
+  font-family: var(--ui-font-num);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--ui-ink-muted);
+}
+
+.section {
+  display: grid;
+  gap: 8px;
+}
+.sectionHead {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* --- Archive Ledger (Left Wing) -------------------------------------------------------------------------- */
+
+.ledger {
+  display: grid;
+  gap: 6px;
+}
+.ledgerRow,
+.clarityRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 7px 9px;
+  border: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-surface) 85%, transparent);
+  background-image: var(--dither-4);
+  text-align: left;
+  cursor: help;
+}
+.ledgerRow[data-primary] {
+  border-left: 2px solid var(--ui-accent);
+}
+.ledgerRow[data-compact] {
+  padding: 5px 9px;
+}
+.clarityRow {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+}
+.ledgerName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  color: var(--ui-ink-muted);
+  letter-spacing: 0.04em;
+}
+.ledgerAmt {
+  font-family: var(--ui-font-num);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-ink);
+}
+.ledgerRow[data-primary] .ledgerAmt {
+  color: var(--ui-accent);
+}
+.clarityAmt {
+  font-family: var(--ui-font-num);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-accent);
+}
+.ledgerSub {
+  grid-column: 1 / -1;
+  font-family: var(--ui-font);
+  font-size: 11px;
+  color: var(--ui-ink-muted);
+}
+
+/* --- Archive Rooms Nav (Left Wing) ----------------------------------------------------------------------- */
+
+.roomList {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.roomBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-sunken) 85%, transparent);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--ui-duration) ease-out,
+    background-color var(--ui-duration) ease-out;
+}
+.roomBtn:hover {
+  border-color: var(--ui-accent);
+  background-color: var(--ui-surface);
+}
+.roomBtn[data-current] {
+  border-color: var(--ui-accent);
+  border-left: 2px solid var(--ui-accent);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-accent);
+}
+.roomBtn[data-fresh] {
+  border-color: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-line));
+}
+.roomIcon {
+  display: inline-flex;
+  color: var(--ui-accent);
+}
+.roomIcon svg {
+  width: 14px;
+  height: 14px;
+}
+.roomLabel {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.roomCmd {
+  color: var(--ui-ink-muted);
+  font-size: 10px;
+}
+.roomCount {
+  margin-left: auto;
+  padding: 1px 5px;
+  background-color: var(--ui-accent);
+  color: var(--ui-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.newTag {
+  margin-left: auto;
+  padding: 1px 5px;
+  border: 1px solid var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-accent) 18%, transparent);
+  color: var(--ui-accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.wingFoot {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: var(--ui-hairline);
+}
+.utilRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.veteranLink {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.veteranLink:hover {
+  color: var(--ui-accent);
+}
+
+/* --- Center Hero Vim Terminal (ALWAYS dead-center) ------------------------------------------------------- */
+
+.centerStage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.termBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
+  padding: 7px 12px;
+  border: var(--ui-hairline);
+  border-top: 2px solid var(--ui-accent);
+  border-bottom: 0;
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.termLeft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+.termFolio {
+  font-family: var(--ui-font-display);
+  font-size: 17px;
+  font-style: italic;
+  color: var(--ui-ink);
+}
+.termAct {
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--ui-accent);
+}
+.termTrial {
+  padding: 1px 6px;
+  border: 1px solid var(--ui-danger);
+  color: var(--ui-danger);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+.termFlow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  color: var(--ui-ink-muted);
+  cursor: help;
+}
+.termFlowLabel {
+  letter-spacing: 0.14em;
+}
+.termFlowMult {
+  color: var(--ui-ink);
+  font-variant-numeric: tabular-nums;
+}
+.termFlowBar {
+  letter-spacing: 1px;
+  white-space: pre;
+}
+.termFlow[data-live] .termFlowMult,
+.termFlow[data-live] .termFlowBar {
+  color: var(--ui-accent);
+}
+
+.bufferPlate {
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+
+/* --- Right Wing: Scribes & Bind -------------------------------------------------------------------------- */
+
+.scribeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bindBox {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+}
+.bindBox[data-ready] {
+  border-color: var(--ui-accent);
+  background-image: var(--dither-accent);
+}
+.bindLine {
+  margin: 0;
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  color: var(--ui-ink);
+}
+.bindCmd {
+  color: var(--ui-accent);
+  font-weight: 700;
+}
+.bindHint {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ui-ink-muted);
+}
+
+/* --- Tooltips -------------------------------------------------------------------------------------------- */
+
+.tip {
+  display: grid;
+  gap: 3px;
+  min-width: 170px;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+}
+.tipHead {
+  padding-bottom: 4px;
+  border-bottom: var(--ui-hairline);
+  color: var(--ui-accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.tipLine {
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--ui-ink);
+  line-height: 1.4;
+}
+.tipMuted {
+  font-family: var(--ui-font);
+  font-size: 11px;
+  color: var(--ui-ink-muted);
+  line-height: 1.4;
+}
+.tipRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tipRow[data-muted] {
+  color: var(--ui-ink-muted);
+}
+.tipLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tipVal {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Secondary Room Overlay Pane ------------------------------------------------------------------------- */
+
+.roomScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--ui-ground) 82%, transparent);
+  backdrop-filter: blur(2px);
+}
+.roomPane,
+.mobileDrawerPane {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 980px);
+  max-height: 88dvh;
+  border: 1px solid var(--ui-accent);
+  background-color: var(--ui-ground);
+  box-shadow: 0 24px 64px color-mix(in srgb, #000 70%, transparent);
+}
+.mobileDrawerPane {
+  width: min(100%, 420px);
+}
+.roomTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 8px 14px;
+  border-bottom: var(--ui-hairline);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+}
+.roomTitle {
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-accent);
+}
+.roomBalances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-family: var(--ui-font-num);
+  font-size: 11.5px;
+  color: var(--ui-ink);
+}
+.roomBal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.roomBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 10px 20px;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--ui-line) 80%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+/* --- Mobile (< 1060px) ----------------------------------------------------------------------------------- */
+
+.mobileBar,
+.mobileFoot {
+  display: none;
+}
+
+@media (max-width: 1059px) {
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: var(--ui-hairline);
+    background-color: var(--ui-surface);
+  }
+  .mobileTitle {
+    font-family: var(--ui-font-display);
+    font-size: 17px;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--ui-ink);
+  }
+  .mobileBalance {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    font-family: var(--ui-font-num);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ui-accent);
+  }
+  .mobileActions {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .mobileBalance + .mobileActions {
+    margin-left: 4px;
+  }
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+    gap: 0;
+    overflow-y: auto;
+  }
+  .leftWing,
+  .rightWing {
+    display: none;
+  }
+  .centerStage {
+    justify-content: flex-start;
+  }
+  .mobileFoot {
+    display: flex;
+    border-top: var(--ui-hairline);
+    background-color: var(--ui-sunken);
+  }
+  .mobileTab {
+    flex: 1 1 0;
+    padding: 10px 8px;
+    border: 0;
+    border-right: var(--ui-hairline);
+    background: transparent;
+    color: var(--ui-ink);
+    font-family: var(--ui-font-num);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .mobileTab:last-child {
+    border-right: 0;
+  }
+  .mobileTab[data-active] {
+    background-color: var(--ui-surface);
+    color: var(--ui-accent);
+  }
+  .roomScrim {
+    padding: 10px;
+  }
+}

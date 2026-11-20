@@ -41,13 +41,13 @@ export const producers = defineGenerators({
   key: "generators",
   wallet,
   reach: () => [reach<Reads>()],
-  list: GENERATORS.map((g, i): Generator<Currency> & GeneratorDef => ({
+  list: GENERATORS.map((g): Generator<Currency> & GeneratorDef => ({
     ...g,
     pays: MAIN,
     makes: "ink",
     rate: g.rate,
     milestones: g.milestones,
-    free: i === 0 ? 1 : 0,
+    free: 0,
   })),
   mult: (s) => (s.trials.rules.includes("noScribes") ? 0 : s.stats.inkRate.mul(resonance(s))),
   open: (s, g) => (g.minAct ?? 1) <= s.vim.actTier,

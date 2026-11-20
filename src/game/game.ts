@@ -23,7 +23,7 @@ export const game = defineGame({
   id: SLUG,
   save: {
     key: `${SLUG}.save`,
-    version: 3,
+    version: 4,
     migrations: {
       2: (saved) => saved,
       3: (saved) => {
@@ -42,6 +42,28 @@ export const game = defineGame({
             ? null
             : root.vim.pendingRiteFamily;
         return { ...root, vim: { ...root.vim, unlockedFamilies: unlocked, pendingRiteFamily: pending } };
+      },
+      4: (saved) => {
+        if (!saved || typeof saved !== "object") return saved;
+        const root = saved as {
+          vim?: {
+            totalFoliosCleared?: number;
+            totalAnomaliesCleared?: number;
+            onboardingStep?: number;
+            seenBeats?: Record<string, true>;
+          };
+        };
+        if (!root.vim) return saved;
+        const experienced =
+          (root.vim.totalFoliosCleared ?? 0) > 0 || (root.vim.totalAnomaliesCleared ?? 0) > 0;
+        return {
+          ...root,
+          vim: {
+            ...root.vim,
+            onboardingStep: root.vim.onboardingStep ?? (experienced ? 5 : 0),
+            seenBeats: root.vim.seenBeats ?? (experienced ? { scribes: true } : {}),
+          },
+        };
       },
     },
   },

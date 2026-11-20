@@ -208,7 +208,11 @@ describe("Tilde", () => {
     expect(store.getState().vim.petTilde().ok).toBe(true);
     expect(store.getState().vim.tildePets).toBe(2);
 
-    expect(store.getState().wallet.treats.toNumber()).toBe(1);
+    // Profile starts with 0 treats: no bond until you actually earn one.
+    expect(store.getState().wallet.treats.toNumber()).toBe(0);
+    expect(store.getState().vim.feedTilde()).toBe(false);
+
+    store.getState().wallet.credit("treats", 1);
     expect(store.getState().vim.feedTilde()).toBe(true);
     expect(store.getState().wallet.treats.toNumber()).toBe(0);
     expect(store.getState().vim.tildeBond).toBe(1);

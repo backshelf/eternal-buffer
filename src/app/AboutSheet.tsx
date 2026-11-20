@@ -1,6 +1,6 @@
 import { type ReactNode, useId, useState } from "react";
 import { Tabs } from "watchpot/ui";
-import { ARCHIVE_GLOSSARY, EX_NAV_COMMANDS, KEY_GLOSS } from "../content/guide";
+import { ARCHIVE_GLOSSARY, EX_NAV_COMMANDS, KEY_GLOSS, visibleAct1Keys } from "../content/guide";
 import { ACTS, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
 import { Button } from "../ui/Button";
 import { ConfirmButton, Sheet } from "../ui/Sheet";
@@ -216,11 +216,36 @@ function ReferenceAct({
   act,
   unlocked,
   jkEscape,
+  onboardingStep,
+  veteranMode,
 }: {
   act: (typeof ACTS)[number];
   unlocked: (id: KeyFamilyId) => boolean;
   jkEscape: boolean;
+  onboardingStep: number;
+  veteranMode: boolean;
 }) {
+  if (act.id === 1) {
+    const keys = visibleAct1Keys(onboardingStep, veteranMode, jkEscape);
+    return (
+      <section className={s.refAct} aria-label={`Act ${act.numeral}: ${act.title}`}>
+        <h3 className={s.refActTitle}>
+          ACT {act.numeral} · {act.title.toUpperCase()}
+        </h3>
+        <div className={s.refFamilyBlock}>
+          <p className={s.refName}>Core Keys</p>
+          <dl className={s.helpKeyGrid}>
+            {keys.map((key) => (
+              <div key={key} className={s.helpKeyRow}>
+                <dt className={s.helpKeyCap}>{key}</dt>
+                <dd className={s.helpKeyDesc}>{KEY_GLOSS[key] ?? "Core Vim key"}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    );
+  }
   const families = KEY_FAMILIES.filter((family) => family.act === act.id && unlocked(family.id));
   if (families.length === 0) return null;
   return (
@@ -248,12 +273,13 @@ function ReferenceAct({
 }
 
 /**
- * The Help sheet (`? Help` / `:help`): two clear tabs — plain-English Vim Keys + `:ex` console commands,
- * and an Archive Glossary explaining every currency and system without mystery jargon.
+ * The Help sheet (`? Help` / `:help`): plain-English Vim Keys + `:ex` console commands + Archive Glossary.
  */
 export function HelpSheet({ onClose }: { onClose(): void }) {
   const unlocked = useGameState((st) => st.vim.unlockedFamilies);
   const actTier = useGameState((st) => st.vim.highestAct);
+  const onboardingStep = useGameState((st) => st.vim.onboardingStep);
+  const veteranMode = useGameState((st) => st.settings.veteranMode);
   const jkEscape = useGameState((st) => st.settings.jkEscape);
   const owned = (id: KeyFamilyId) => unlocked[id] === true || FAMILY_BY_ID[id].cost.amount === 0;
   const known = KEY_FAMILIES.filter((family) => owned(family.id)).length;
@@ -288,7 +314,14 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
             <code className={s.code}>Esc</code> (or <code className={s.code}>Ctrl-[</code>) exits Insert mode.
           </p>
           {ACTS.filter((act) => act.id <= actTier).map((act) => (
-            <ReferenceAct key={act.id} act={act} unlocked={owned} jkEscape={jkEscape} />
+            <ReferenceAct
+              key={act.id}
+              act={act}
+              unlocked={owned}
+              jkEscape={jkEscape}
+              onboardingStep={onboardingStep}
+              veteranMode={veteranMode}
+            />
           ))}
           {sealed > 0 && (
             <p className={s.refNote}>
@@ -302,7 +335,7 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
         <Tabs.Panel value="commands" className={s.helpPanel}>
           <p className={s.refNote}>
             Press <code className={s.code}>:</code> in Normal mode to open the console, type a command, and
-            press <code className={s.code}>Enter</code>. You can also click any tab in the top bar.
+            press <code className={s.code}>Enter</code>. You can also click any Room in the left wing.
           </p>
           <dl className={s.helpKeyGrid}>
             {EX_NAV_COMMANDS.map((item) => (

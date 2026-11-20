@@ -132,23 +132,26 @@ function Keycaps({ st }: { st: GameState }) {
   const unlock = (family: KeyFamilyDef) => {
     if (!st.vim.unlockFamily(family.id)) return;
     playActUnlock();
+    if (st.vim.seenBeats.codex !== true) st.vim.completeBeat("codex");
     // In guided mode, jump straight into the family's interactive Practice Rite lesson.
     if (!st.settings.veteranMode && family.cost.amount > 0) goPractice();
   };
+  const visibleActs = ACTS.filter((act) => st.settings.veteranMode || act.id <= st.vim.highestAct + 1);
+  const hiddenActs = ACTS.length - visibleActs.length;
   return (
     <>
       <p className={`small ${s.muted}`}>
-        {bound} of {KEY_FAMILIES.length} families bound. A family is bought once and never lost: no :w and no
-        :wq takes a keycap back.
+        {bound} of {KEY_FAMILIES.length} Vim key families unlocked. Keys are permanent forever — neither :w
+        nor :wq ever takes a key back.
       </p>
-      {ACTS.map((act) => {
+      {visibleActs.map((act) => {
         const families = familiesOfAct(act.id);
         const mine = families.filter((family) => st.vim.unlockedFamilies[family.id] === true).length;
         return (
           <Panel
             key={act.id}
-            heading={`${act.numeral} · ${act.title}`}
-            aside={`${mine}/${families.length} bound · ${act.window}`}
+            heading={`Act ${act.numeral} · ${act.title}`}
+            aside={`${mine}/${families.length} unlocked`}
           >
             <p className={`small ${s.muted}`}>{act.subtitle}</p>
             <ul className={s.cards}>
@@ -171,9 +174,9 @@ function Keycaps({ st }: { st: GameState }) {
                         {!priced
                           ? "Core"
                           : rite
-                            ? `Rite passed ×${family.riteBonus}`
+                            ? `Lesson mastered ×${family.riteBonus}`
                             : isBound
-                              ? "Rite owed"
+                              ? "Lesson ready"
                               : `Act ${act.numeral}`}
                       </span>
                     </div>
@@ -188,14 +191,14 @@ function Keycaps({ st }: { st: GameState }) {
                     <div className={s.cardFoot}>
                       <span className={`small ${s.muted}`}>
                         {missing.length > 0
-                          ? `Needs ${missing.join(", ")}`
+                          ? `Unlock ${missing.join(", ")} first`
                           : isBound
-                            ? "Bound to the archive"
+                            ? "Unlocked permanently"
                             : !affordable
                               ? "Not enough yet"
                               : family.requires.length > 0
-                                ? "Its prerequisites are met"
-                                : "From the first night"}
+                                ? "Ready to unlock"
+                                : "Starter keys"}
                       </span>
                       {isBound ? (
                         priced && !rite && st.vim.pendingRiteFamily === family.id ? (
@@ -203,7 +206,7 @@ function Keycaps({ st }: { st: GameState }) {
                             Practice →
                           </Button>
                         ) : (
-                          <span className={s.bound}>Bound</span>
+                          <span className={s.bound}>Unlocked</span>
                         )
                       ) : (
                         <Button
@@ -225,6 +228,12 @@ function Keycaps({ st }: { st: GameState }) {
           </Panel>
         );
       })}
+      {hiddenActs > 0 && (
+        <p className={`small ${s.muted}`}>
+          +{hiddenActs} deeper {hiddenActs === 1 ? "Act" : "Acts"} sealed ahead — unlock Act{" "}
+          {ACTS[visibleActs.length - 1]?.numeral ?? "II"} keys to reveal more of the Vim curriculum.
+        </p>
+      )}
     </>
   );
 }
@@ -245,33 +254,41 @@ function CodexTree({ st }: { st: GameState }) {
   });
   const buy = (half: "run" | "shelf", id: string) => {
     const ok = half === "run" ? st.upgrades.buy(id).ok : st.sealUpgrades.buy(id).ok;
-    if (ok) playBuy();
+    if (ok) {
+      playBuy();
+      if (st.vim.seenBeats.codex !== true) st.vim.completeBeat("codex");
+    }
   };
   const lit = (rows: readonly NodeRow[]) => rows.filter((row) => row.rank > 0).length;
+  const showShelf = st.settings.veteranMode || st.wallet.sealsEver.gte(1) || st.wallet.earned.gte(15_000);
+  const visibleRun = st.settings.veteranMode
+    ? run
+    : run.filter((row) => row.rank > 0 || row.missing.length === 0);
   return (
     <>
-      <Panel heading="The Run's Tree" aside={`${lit(run)} / ${RUN_NODES.length} lit`}>
+      <Panel heading="Run Upgrades (Glyphs)" aside={`${lit(run)} / ${RUN_NODES.length} raised`}>
         <p className={`small ${s.muted}`}>
-          Fourteen nodes bought with the run's own Glyphs. Every :w clears them, and every one of them pays
-          Clarity, Flow Tempo, Ink or Seal Yield while it stands.
+          Spend Glyphs on multipliers for Clarity (Glyph payout), Flow Tempo, Ink Flow, and offline Night
+          Watch. More upgrades reveal as you raise each branch.
         </p>
         <ul className={s.cards}>
-          {run.map((row) => (
+          {visibleRun.map((row) => (
             <NodeCard key={row.node.id} row={row} onBuy={() => buy("run", row.node.id)} />
           ))}
         </ul>
       </Panel>
-      <Panel heading="The Seal Shelf" aside={`${lit(shelf)} / ${SEAL_NODES.length} lit`}>
-        <p className={`small ${s.muted}`}>
-          Ten nodes paid for with Seals and Codices. They survive :w and are cleared only by a :wq, so the
-          shelf you build is the shelf you keep.
-        </p>
-        <ul className={s.cards}>
-          {shelf.map((row) => (
-            <NodeCard key={row.node.id} row={row} onBuy={() => buy("shelf", row.node.id)} />
-          ))}
-        </ul>
-      </Panel>
+      {showShelf && (
+        <Panel heading="Permanent Seal Shelf" aside={`${lit(shelf)} / ${SEAL_NODES.length} raised`}>
+          <p className={`small ${s.muted}`}>
+            Bought with Seals and Codices. Survives :w Volume Binds permanently.
+          </p>
+          <ul className={s.cards}>
+            {shelf.map((row) => (
+              <NodeCard key={row.node.id} row={row} onBuy={() => buy("shelf", row.node.id)} />
+            ))}
+          </ul>
+        </Panel>
+      )}
     </>
   );
 }
@@ -393,39 +410,61 @@ function VimrcForge({ st }: { st: GameState }) {
   );
 }
 
-/** The Codex: keycaps, the two trees, the Grammar Codex and the .vimrc Forge, one page at a time. */
+/** The Codex: Run Upgrades and Vim Keys first, revealing Grammar Codex (Act III) & .vimrc Forge (Act VI+) as earned. */
 export function UpgradesScreen() {
   const st = useGameState((x) => x);
+  const showGrammar =
+    st.settings.veteranMode || st.vim.highestAct >= 3 || Object.keys(st.vim.discoveredPairs).length > 0;
+  const showVimrc = st.settings.veteranMode || st.vim.highestAct >= 6 || st.wallet.codicesEver.gte(1);
+  const introBeat = !st.settings.veteranMode && st.vim.seenBeats.codex !== true;
+
   return (
     <div className={s.screen}>
       <Title>{TAB_NAMES.tree}</Title>
-      <Tabs.Root defaultValue="keycaps" activation="manual" controls="selected" className={s.pages}>
+      {introBeat && (
+        <Panel heading="New · The Codex" tone="surface">
+          <p className="small">
+            Spend Glyphs here on <strong>Run Upgrades</strong> (boosts your Glyph payout &amp; Flow) or unlock
+            new <strong>Vim Key Families</strong> — every new key opens with a short hands-on interactive
+            lesson and stays unlocked forever.
+          </p>
+        </Panel>
+      )}
+      <Tabs.Root defaultValue="tree" activation="manual" controls="selected" className={s.pages}>
         <Tabs.List className={s.subTabs} aria-label="The Codex's pages">
-          <Tabs.Tab value="keycaps" className={s.subTab}>
-            Keycaps · 7 Acts
-          </Tabs.Tab>
           <Tabs.Tab value="tree" className={s.subTab}>
-            Codex Tree
+            Upgrades
           </Tabs.Tab>
-          <Tabs.Tab value="grammar" className={s.subTab}>
-            Grammar Codex
+          <Tabs.Tab value="keycaps" className={s.subTab}>
+            Vim Keys
           </Tabs.Tab>
-          <Tabs.Tab value="vimrc" className={s.subTab}>
-            .vimrc Forge
-          </Tabs.Tab>
+          {showGrammar && (
+            <Tabs.Tab value="grammar" className={s.subTab}>
+              Grammar Codex
+            </Tabs.Tab>
+          )}
+          {showVimrc && (
+            <Tabs.Tab value="vimrc" className={s.subTab}>
+              .vimrc Forge
+            </Tabs.Tab>
+          )}
         </Tabs.List>
-        <Tabs.Panel value="keycaps" className={s.page}>
-          <Keycaps st={st} />
-        </Tabs.Panel>
         <Tabs.Panel value="tree" className={s.page}>
           <CodexTree st={st} />
         </Tabs.Panel>
-        <Tabs.Panel value="grammar" className={s.page}>
-          <GrammarPage st={st} />
+        <Tabs.Panel value="keycaps" className={s.page}>
+          <Keycaps st={st} />
         </Tabs.Panel>
-        <Tabs.Panel value="vimrc" className={s.page}>
-          <VimrcForge st={st} />
-        </Tabs.Panel>
+        {showGrammar && (
+          <Tabs.Panel value="grammar" className={s.page}>
+            <GrammarPage st={st} />
+          </Tabs.Panel>
+        )}
+        {showVimrc && (
+          <Tabs.Panel value="vimrc" className={s.page}>
+            <VimrcForge st={st} />
+          </Tabs.Panel>
+        )}
       </Tabs.Root>
     </div>
   );

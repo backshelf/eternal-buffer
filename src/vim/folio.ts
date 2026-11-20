@@ -15,6 +15,7 @@
 // `targetText`, the only way to describe a permutation or a swap with a single anomaly record.
 import { nextInt, pickWeighted, type RngState, seedRng } from "watchpot/core";
 import {
+  ACT1_FOLIO_TEMPLATES,
   ANOMALY_SPEC,
   ANOMALY_SPECS,
   type AnomalySpec,
@@ -828,10 +829,11 @@ function isEligible(
   return spec.families.every((family) => unlocked[family] === true);
 }
 
-function pickTemplate(dice: Dice): FolioTemplate {
-  const chosen = FOLIO_TEMPLATES[dice.int(FOLIO_TEMPLATES.length)];
+function pickTemplate(dice: Dice, compact: boolean): FolioTemplate {
+  const pool = compact ? ACT1_FOLIO_TEMPLATES : FOLIO_TEMPLATES;
+  const chosen = pool[dice.int(pool.length)];
   if (chosen) return chosen;
-  const first = FOLIO_TEMPLATES[0];
+  const first = pool[0];
   if (first) return first;
   return { id: "blank-folio", genre: "margin-script", title: "A Blank Folio", lines: [""] };
 }
@@ -949,7 +951,8 @@ export function generateFolio(input: GenerateFolioInput): Folio {
   );
 
   const dice = diceFor(input.seed);
-  const template = pickTemplate(dice);
+  const compactAct1 = input.actTier === 1 && input.unlocked["word-stride"] !== true;
+  const template = pickTemplate(dice, compactAct1);
   const g: Gen = {
     dice,
     clean: template.lines,
@@ -962,7 +965,8 @@ export function generateFolio(input: GenerateFolioInput): Folio {
     plans: [],
   };
 
-  const wanted = Math.min(MIN_ANOMALIES + dice.int(MAX_ANOMALIES - MIN_ANOMALIES + 1), MAX_ANOMALIES);
+  const cap = compactAct1 ? 3 : MAX_ANOMALIES;
+  const wanted = Math.min(MIN_ANOMALIES + dice.int(cap - MIN_ANOMALIES + 1), cap);
   const exhausted = new Set<string>();
 
   for (let attempt = 0; attempt < 16 && g.plans.length < wanted; attempt += 1) {

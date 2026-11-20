@@ -23,6 +23,11 @@ export interface GateInput {
   veteranMode: boolean;
   arrowTrainingLeft: number;
   arrowShame: "shame" | "block" | "off";
+  /**
+   * Act I progressive interactive onboarding stage (0..5, default 5 = all Act I keys open):
+   * 0 = h j k l only; 1 = +x; 2/3 = +i Esc; 4 = +a u; 5 = +I A (complete).
+   */
+  onboardingStep?: number;
 }
 
 /** The two families every archivist is handed at the door. They are never priced and never lock again. */
@@ -228,6 +233,45 @@ export function gateKeystroke(input: GateInput): GateDecision {
 
   const family = keyToFamily(key, ctrlKey, pendingKeys, mode);
   if (!family) return { allowed: true };
+
+  // During Act I's interactive onboarding beats, hold back not-yet-taught core keys so a beginner
+  // discovers each key one step at a time instead of stumbling into Insert/Append by accident.
+  const step = input.onboardingStep ?? 5;
+  if (!veteranMode && CORE_FAMILIES.has(family) && step < 5) {
+    if (key === "x" && step < 1) {
+      return {
+        allowed: false,
+        family,
+        reason: "locked",
+        message: "Walk onto the glowing red Ø with h j k l first — then x unlocks.",
+      };
+    }
+    if (key === "i" && step < 2) {
+      return {
+        allowed: false,
+        family,
+        reason: "locked",
+        message: "Finish cutting with x first — i (Insert mode) unlocks on the next step.",
+      };
+    }
+    if ((key === "a" || key === "u") && step < 3) {
+      return {
+        allowed: false,
+        family,
+        reason: "locked",
+        message: `${key} arrives right after this first page. Use h j k l, x, and i for now.`,
+      };
+    }
+    if ((key === "I" || key === "A") && step < 4) {
+      return {
+        allowed: false,
+        family,
+        reason: "locked",
+        message: `${key} arrives in the next quick lesson — stick to your unlocked keys for now.`,
+      };
+    }
+  }
+
   if (CORE_FAMILIES.has(family) || veteranMode || unlocked[family] === true) {
     return { allowed: true, family };
   }

@@ -7,7 +7,7 @@ export const START: Record<Currency, number> = {
   ink: 0,
   seals: 0,
   shards: 0,
-  treats: 1,
+  treats: 0,
   codices: 0,
 };
 /** Away, the core makes this share of its rate (before the offline stat), for at most `OFFLINE_CAP_MS`. */

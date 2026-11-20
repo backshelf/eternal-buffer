@@ -99,16 +99,39 @@ export function ExpeditionsScreen() {
       <span>Every slot is open. Four errands can be away at once.</span>
     );
 
+  const introBeat = !st.settings.veteranMode && st.vim.seenBeats.expeditions !== true;
+  const openList = EXPEDITIONS.filter(
+    (c) => lockOf(c, { actTier: st.vim.actTier, tildeBond: st.vim.tildeBond, codicesEver: codices }) === null,
+  );
+  const nextLocked = EXPEDITIONS.find(
+    (c) => lockOf(c, { actTier: st.vim.actTier, tildeBond: st.vim.tildeBond, codicesEver: codices }) !== null,
+  );
+  const shownErrands = st.settings.veteranMode
+    ? EXPEDITIONS
+    : nextLocked
+      ? [...openList, nextLocked]
+      : openList;
+
   return (
     <div className={s.screen}>
       <Title>Expeditions</Title>
-      <p className={s.standing}>
-        Errands into the archive's unindexed parts. They run on game time, so they keep going while you are
-        elsewhere; the reward is rolled the moment one sets out, and waits here until you take it.
-      </p>
+      {introBeat ? (
+        <Panel heading="New · Margin Errands">
+          <p className={s.standing}>
+            Send Scribes&apos; <strong>Ink</strong> on timed errands (they keep running while you&apos;re
+            away) to bring back <strong>Shards</strong> (for crafting Mosaic tiles) and{" "}
+            <strong>Treats</strong> (to feed Tilde). Dispatch your first errand below!
+          </p>
+        </Panel>
+      ) : (
+        <p className={s.standing}>
+          Timed errands into the archive&apos;s unindexed parts. They run offline too and bring back Shards
+          &amp; Treats.
+        </p>
+      )}
 
       <Panel
-        heading="The Stair"
+        heading="Active Errands"
         aside={
           <span>
             {runs.length} of {slots} away
@@ -183,9 +206,9 @@ export function ExpeditionsScreen() {
         </ul>
       </Panel>
 
-      <Panel heading="The Eight Errands" aside={<span>{EXPEDITIONS.length} chapters</span>}>
+      <Panel heading="Available Errands" aside={<span>{openList.length} open</span>}>
         <ul className={s.stair}>
-          {EXPEDITIONS.map((content) => {
+          {shownErrands.map((content) => {
             const lock = lockOf(content, {
               actTier: st.vim.actTier,
               tildeBond: st.vim.tildeBond,
@@ -224,6 +247,8 @@ export function ExpeditionsScreen() {
                     onClick={() => {
                       if (store.getState().expeditions.start(content.id) !== null) return;
                       playBuy();
+                      if (st.vim.seenBeats.expeditions !== true)
+                        store.getState().vim.completeBeat("expeditions");
                     }}
                   >
                     Dispatch

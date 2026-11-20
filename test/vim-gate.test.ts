@@ -40,6 +40,26 @@ describe("Act I key gate", () => {
     expect(gate({ key: "Escape" }).allowed).toBe(true);
   });
 
+  test("stages core Act I keys progressively during interactive onboarding", () => {
+    // Step 0: only h j k l are open; x, i, a, I, A wait for their reactive beats.
+    expect(gate({ key: "j", onboardingStep: 0 }).allowed).toBe(true);
+    expect(gate({ key: "x", onboardingStep: 0 })).toMatchObject({ allowed: false, reason: "locked" });
+    expect(gate({ key: "i", onboardingStep: 0 })).toMatchObject({ allowed: false, reason: "locked" });
+    expect(gate({ key: "A", onboardingStep: 0 })).toMatchObject({ allowed: false, reason: "locked" });
+
+    // Step 1: x unlocks once the cursor lands on Ø; i still waits.
+    expect(gate({ key: "x", onboardingStep: 1 }).allowed).toBe(true);
+    expect(gate({ key: "i", onboardingStep: 1 })).toMatchObject({ allowed: false, reason: "locked" });
+
+    // Step 2: i unlocks; a/u wait for Folio 1 and I/A wait for Folio 2.
+    expect(gate({ key: "i", onboardingStep: 2 }).allowed).toBe(true);
+    expect(gate({ key: "a", onboardingStep: 2 })).toMatchObject({ allowed: false, reason: "locked" });
+    expect(gate({ key: "I", onboardingStep: 3 })).toMatchObject({ allowed: false, reason: "locked" });
+
+    // Veteran mode always bypasses onboarding holds.
+    expect(gate({ key: "A", onboardingStep: 0, veteranMode: true }).allowed).toBe(true);
+  });
+
   test("locks w, f, d, q and Ctrl-v with the family that owns them", () => {
     expect(gate({ key: "w" })).toMatchObject({ allowed: false, family: "word-stride", reason: "locked" });
     expect(gate({ key: "f" })).toMatchObject({ allowed: false, family: "char-snipe", reason: "locked" });

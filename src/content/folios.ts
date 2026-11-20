@@ -21,6 +21,91 @@ export interface FolioTemplate {
 }
 
 /**
+ * Compact Act I pages (6 short lines, 30–50 chars) used before Word Stride (`w b e`) is unlocked,
+ * so a brand-new Vim learner using `h j k l` never has to slog across a 90-character line.
+ */
+export const ACT1_FOLIO_TEMPLATES: readonly FolioTemplate[] = [
+  {
+    id: "act1-lamp-1",
+    genre: "nocturne-verse",
+    title: "Lamp Watch · Desk 7",
+    lines: [
+      "The amber lamp hums past midnight.",
+      "Warm vellum waits beneath the glass.",
+      "A stray moth circles the inkwell.",
+      "Three quiet pages left before dawn.",
+      "Every clean cut steadies the margin.",
+      "The night shift keeps the ink warm.",
+    ],
+  },
+  {
+    id: "act1-ledger-2",
+    genre: "astral-ledger",
+    title: "Short Star Ledger",
+    lines: [
+      "Star nine drifted west at dusk.",
+      "Comet dust settled on the shelf.",
+      "The brass dome hums in the frost.",
+      "Two lanterns burn by the north pane.",
+      "We bound the spine with wax thread.",
+      "Closing note: the sky still waits.",
+    ],
+  },
+  {
+    id: "act1-shelf-3",
+    genre: "shelf-manifest",
+    title: "Shelf Four Slip",
+    lines: [
+      "Shelf four holds the quiet folios.",
+      "Copy one is warm to the touch.",
+      "Copy two smells of cedar and smoke.",
+      "A brass key sits behind the ledger.",
+      "Dust the gilt edge with soft brush.",
+      "Return the lamp before first light.",
+    ],
+  },
+  {
+    id: "act1-memo-4",
+    genre: "mainframe-memo",
+    title: "Terminal Seven Note",
+    lines: [
+      "MEMO: night desk, terminal seven.",
+      "Phosphor tube tuned to warm amber.",
+      "Keep backup on while mending pages.",
+      "Green text is not in the schedule.",
+      "Leave the cursor on a clean line.",
+      "End of midnight maintenance note.",
+    ],
+  },
+  {
+    id: "act1-margin-5",
+    genre: "margin-script",
+    title: "Notes in Pencil",
+    lines: [
+      "A small note written in the margin.",
+      "Count the moths on the north glass.",
+      "Fold the vellum along the dry grain.",
+      "Leave one candle for the late shift.",
+      "A tiny pawprint marks the last row.",
+      "The archive remembers every hand.",
+    ],
+  },
+  {
+    id: "act1-rite-6",
+    genre: "broken-incantation",
+    title: "The Small Binding",
+    lines: [
+      "Speak softly when the wick leans.",
+      "Hold the seal in your left palm.",
+      "Three words: amber, vellum, signal.",
+      "Wipe the desk with the linen cloth.",
+      "Sign the corner and shelve the page.",
+      "The binding waits for a steady hand.",
+    ],
+  },
+];
+
+/**
  * Eighteen clean pages, three per genre, every one 10–14 lines. Lines run long on purpose: a long
  * line is what makes a char snipe worth three keystrokes instead of twenty-five.
  */

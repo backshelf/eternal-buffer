@@ -9,15 +9,15 @@ import type { GateKey } from "../../sim/plan";
 
 /** The fitted price of every gate, as the fit wrote it. A gate left out reads as `BLOCKED` in `PRICES`. */
 export const FIT: Partial<Record<GateKey, string>> = {
-  "word-stride": "1.7e6",
-  "line-edge": "2.2e6",
-  "char-snipe": "3.4e6",
-  "file-jump": "9.1e6",
-  counts: "1.4e7",
-  "op-delete": "1.4e7",
-  "op-change": "3.6e7",
-  "op-yank": "1.1e8",
-  "line-craft": "2e8",
+  "word-stride": "100000",
+  "line-edge": "830000",
+  "char-snipe": "2.3e6",
+  "file-jump": "4.1e6",
+  counts: "1.9e7",
+  "op-delete": "4e7",
+  "op-change": "5.1e7",
+  "op-yank": "1.3e8",
+  "line-craft": "1.9e8",
   "text-objects": "6",
   "visual-modes": "6",
   "bracket-indent": "6",
@@ -26,10 +26,10 @@ export const FIT: Partial<Record<GateKey, string>> = {
   substitute: "10",
   "dot-echo": "1",
   registers: "7",
-  macros: "15",
-  "ex-power": "43",
-  "dual-split": "69",
-  "vimrc-forge": "120",
+  macros: "14",
+  "ex-power": "65",
+  "dual-split": "110",
+  "vimrc-forge": "150",
 };
 
 /** The live table the fit plays through: every write lands here first (`sim/fit.ts` mirrors it into the content). */

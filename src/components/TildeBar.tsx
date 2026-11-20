@@ -47,7 +47,10 @@ export function TildeBar({ className }: TildeBarProps) {
   const flow = useGameState((st) => st.vim.flow);
   const flowCap = useGameState((st) => st.vim.flowCap);
   const act = useGameState((st) => st.vim.highestAct);
-  const treats = useGameState((st) => fmt(st.wallet.treats).text);
+  const foliosCleared = useGameState((st) => st.vim.totalFoliosCleared);
+  const veteran = useGameState((st) => st.settings.veteranMode);
+  const treatsCount = useGameState((st) => st.wallet.treats);
+  const treats = fmt(treatsCount).text;
   const live = useGameState((st) => st.visitors.kinds[VISITOR_KIND]?.live ?? null);
   const now = useClockNow(500);
 
@@ -128,6 +131,12 @@ export function TildeBar({ className }: TildeBarProps) {
     delight();
   };
 
+  // Tilde wakes up on the statusline once the player finishes their opening lesson (Folio 0).
+  if (foliosCleared === 0 && !veteran) return null;
+
+  const showTreats = bond > 0 || treatsCount.gt(0);
+  const firstTreatReady = bond === 0 && treatsCount.gte(cost);
+
   return (
     <div className={cx(s.bar, className)} data-mood={mood}>
       <span className={s.footLeft} aria-hidden="true">
@@ -143,19 +152,34 @@ export function TildeBar({ className }: TildeBarProps) {
         </span>
         <VisuallyHidden>{`Tilde is ${MOOD_WORDS[mood]}.`}</VisuallyHidden>
       </span>
-      <span className={s.bond}>
-        BOND {bond} <span className={s.bonus}>(+{Math.round(bond * TILDE_BOND_STEP * 100)}%)</span>
-      </span>
+      {showTreats && (
+        <span className={s.bond} title="Permanent +10% Glyph Clarity & Ink Flow per Bond level">
+          BOND {bond} <span className={s.bonus}>(+{Math.round(bond * TILDE_BOND_STEP * 100)}%)</span>
+        </span>
+      )}
       <span className={s.actions}>
         <Button onClick={pet}>Pet</Button>
-        <Button onClick={feed} cost={cost} glyph={glyphOf("treat", 12)} unit={CURRENCY.treats.plural}>
-          Treat
-        </Button>
+        {showTreats && (
+          <Button
+            variant={firstTreatReady ? "primary" : "secondary"}
+            onClick={feed}
+            cost={cost}
+            glyph={glyphOf("treat", 12)}
+            unit={CURRENCY.treats.plural}
+          >
+            Treat
+          </Button>
+        )}
       </span>
-      <p className={s.quip}>{note ?? quip}</p>
-      <span className={s.purse}>
-        {treats} {CURRENCY.treats.plural}
-      </span>
+      <p className={s.quip}>
+        {note ??
+          (firstTreatReady ? "You found a Treat — feed Tilde for permanent +10% Clarity & Ink!" : quip)}
+      </p>
+      {showTreats && (
+        <span className={s.purse}>
+          {treats} {CURRENCY.treats.plural}
+        </span>
+      )}
       <VisuallyHidden>{note !== null && <span role="status">{note}</span>}</VisuallyHidden>
       {heart > 0 && (
         <span key={heart} className={s.heart} data-still={reduced ? "" : undefined} aria-hidden="true">

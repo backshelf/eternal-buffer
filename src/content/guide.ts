@@ -223,8 +223,23 @@ export const ARCHIVE_GLOSSARY: readonly { term: string; summary: string }[] = [
 ];
 
 /**
- * Hand-crafted Folio 0: a gentle 3-step interactive opening lesson teaching `h j k l`, `x`, `i`, and `jk`/`Esc`
- * right inside the real Vim buffer. Used only on a brand-new player's very first folio (`folioSerial === 0`).
+ * Which Act I keys should be shown on the Chalkboard & Help sheet at a given onboarding step.
+ * Keeps `x i a I A u` from overwhelming a total Vim beginner on frame 1.
+ */
+export function visibleAct1Keys(onboardingStep: number, veteranMode: boolean, jkEscape: boolean): string[] {
+  const all = ["h", "j", "k", "l", "u", "x", "i", "a", "I", "A", "Esc", ...(jkEscape ? ["jk"] : [])];
+  if (veteranMode || onboardingStep >= 5) return all;
+  const keys = ["h", "j", "k", "l"];
+  if (onboardingStep >= 1) keys.push("x");
+  if (onboardingStep >= 2) keys.push("i", "Esc");
+  if (onboardingStep >= 3) keys.push("a", "u");
+  if (onboardingStep >= 4) keys.push("I", "A");
+  return keys;
+}
+
+/**
+ * Hand-crafted Folio 0: a reactive 3-step interactive opening lesson teaching `h j k l`, `x`, `i`, and `Esc`
+ * one key at a time inside the real Vim buffer. Used on a brand-new player's very first folio.
  */
 export const FIRST_LESSON_FOLIO: Folio = {
   id: "folio-0-first-lesson",
@@ -232,14 +247,12 @@ export const FIRST_LESSON_FOLIO: Folio = {
   actTier: 1,
   isRite: true,
   riteFamily: "core-edit",
-  riteBanner:
-    "Move with h j k l · press x to delete a bad character · press i to insert text, then Esc to finish.",
+  riteBanner: "Walk with h j k l. New keys unlock as you reach each glitch.",
   lines: [
     "00:00 — Desk 7, midnight shift.",
-    "The vellØum is warm beneath the amber lamp.",
-    "A stray [_] naps on the statusline.",
-    "Midnight ink smells of ce#ar and warm wax.",
-    "Clear all three anomalies to open the Margin Desk.",
+    "The vellØum is warm by the lamp.",
+    "A stray [_] naps by the desk.",
+    "Dark ink smells of ce#ar wax.",
   ],
   anomalies: [
     {
@@ -249,10 +262,10 @@ export const FIRST_LESSON_FOLIO: Folio = {
       colStart: 4,
       colEnd: 10,
       targetText: "vellØum",
-      expectedLine: "The vellum is warm beneath the amber lamp.",
+      expectedLine: "The vellum is warm by the lamp.",
       parKeys: 12,
       hintId: "stray-rot",
-      optimalHint: "j to line 2, l to Ø, then press x to delete it",
+      optimalHint: "j to line 2, l onto Ø, then press x",
       label: "CUT",
       weight: 1,
     },
@@ -263,10 +276,10 @@ export const FIRST_LESSON_FOLIO: Folio = {
       colStart: 8,
       colEnd: 11,
       targetText: "[_]",
-      expectedLine: "A stray cat naps on the statusline.",
+      expectedLine: "A stray cat naps by the desk.",
       parKeys: 16,
       hintId: "missing-rune",
-      optimalHint: "Move to [, press x x x, press i, type cat, then press Esc",
+      optimalHint: "x x x to clear [_], press i, type cat, then Esc",
       label: "INS",
       weight: 1,
     },
@@ -274,14 +287,114 @@ export const FIRST_LESSON_FOLIO: Folio = {
       id: "folio-0-first-lesson:2",
       kind: "stray-rot",
       line: 3,
-      colStart: 23,
-      colEnd: 28,
+      colStart: 19,
+      colEnd: 24,
       targetText: "ce#ar",
-      expectedLine: "Midnight ink smells of cedar and warm wax.",
+      expectedLine: "Dark ink smells of cedar wax.",
       parKeys: 16,
       hintId: "stray-rot",
-      optimalHint: "Move to #, press x, press i, type d, then press Esc",
+      optimalHint: "Move to #, press x, press i, type d, then Esc",
       label: "FIX",
+      weight: 1,
+    },
+  ],
+  hasPawprint: false,
+};
+
+/**
+ * Hand-crafted Folio 1: teaches `a` (append AFTER cursor) and `u` (undo) in 2 quick edits,
+ * right after basic `hjkl` / `x` / `i` / `Esc` have clicked.
+ */
+export const FOLIO_1_APPEND_LESSON: Folio = {
+  id: "folio-1-append-lesson",
+  title: "Append & Undo · Desk 7",
+  actTier: 1,
+  isRite: true,
+  riteFamily: "core-edit",
+  riteBanner: "New keys: a inserts AFTER the cursor (great at word ends). u undoes a slip.",
+  lines: [
+    "Night shift, page two.",
+    "The brass lam burns steady.",
+    "Warm vellum holds the inØk.",
+    "Press u anytime to undo a mistake.",
+  ],
+  anomalies: [
+    {
+      id: "folio-1-append-lesson:0",
+      kind: "missing-rune",
+      line: 1,
+      colStart: 10,
+      colEnd: 14,
+      targetText: "lam",
+      expectedLine: "The brass lamp burns steady.",
+      parKeys: 14,
+      hintId: "append-a",
+      optimalHint: "Move onto m in lam, press a, type p, then Esc",
+      label: "APP",
+      weight: 1,
+    },
+    {
+      id: "folio-1-append-lesson:1",
+      kind: "stray-rot",
+      line: 2,
+      colStart: 22,
+      colEnd: 25,
+      targetText: "inØk",
+      expectedLine: "Warm vellum holds the ink.",
+      parKeys: 14,
+      hintId: "stray-rot",
+      optimalHint: "Move onto Ø and press x",
+      label: "CUT",
+      weight: 1,
+    },
+  ],
+  hasPawprint: false,
+};
+
+/**
+ * Hand-crafted Folio 2: teaches `I` (insert at start of line) and `A` (insert at end of line)
+ * on two crisp lines — completing the Act I foundation without dumping `x i a I A` on frame 1.
+ */
+export const FOLIO_2_EDGE_LESSON: Folio = {
+  id: "folio-2-edge-lesson",
+  title: "Line Edges · Desk 7",
+  actTier: 1,
+  isRite: true,
+  riteFamily: "core-edit",
+  riteBanner: "New keys: I jumps to the START of a line to type; A jumps to the END of a line to type.",
+  lines: [
+    "Night shift, page three.",
+    "moth drifts near the amber glass.",
+    "The ledger spine holds tight.",
+    "Every clean cut builds your Flo",
+  ],
+  anomalies: [
+    {
+      id: "folio-2-edge-lesson:0",
+      kind: "missing-rune",
+      line: 1,
+      colStart: 0,
+      colEnd: 6,
+      targetText: "moth",
+      expectedLine: "A moth drifts near the amber glass.",
+      parKeys: 10,
+      hintId: "edge-I",
+      optimalHint: "Anywhere on line 2, press Shift+i (I), type A and space, then Esc",
+      label: "START",
+      weight: 1,
+    },
+    {
+      id: "folio-2-edge-lesson:1",
+      kind: "missing-rune",
+      line: 3,
+      colStart: 28,
+      colEnd: 33,
+      targetText: "Flo",
+      expectedLine: "Every clean cut builds your Flow.",
+      parKeys: 10,
+      hintId: "edge-A",
+      optimalHint: "Anywhere on line 4, press Shift+a (A), type w. then Esc",
+      label: "END",
       weight: 1,
     },
   ],

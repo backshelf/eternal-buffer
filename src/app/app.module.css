@@ -1,3 +1,8 @@
+.pageRoot {
+  position: relative;
+  min-height: 100dvh;
+  isolation: isolate;
+}
 .header {
   display: flex;
   flex-wrap: wrap;

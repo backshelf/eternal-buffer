@@ -41,7 +41,7 @@ import {
   playTildePurr,
 } from "../app/sound";
 import { EGG_BY_ID } from "../content/easterEggs";
-import { FIRST_LESSON_FOLIO } from "../content/guide";
+import { FIRST_LESSON_FOLIO, FOLIO_1_APPEND_LESSON, FOLIO_2_EDGE_LESSON } from "../content/guide";
 import type { KeyFamilyId } from "../content/vimActs";
 import { codex, volumes } from "../game/prestige";
 import { VISITOR_KIND } from "../game/visitor";
@@ -86,6 +86,12 @@ export interface ActiveCoachTarget {
   kind: FolioAnomaly["kind"];
   /** 1-based line number in the live document. */
   line: number;
+  /** 1-based starting column of the corrupted span in the live document. */
+  col: number;
+  /** Length of the corrupted span. */
+  length: number;
+  /** Live text of the target line right now (for reactive typing/cutting prompts). */
+  lineText: string;
   label: string;
   corrupt: string;
   /** The exact clean text that replaces `corrupt`, or `null` when the whole line should be deleted. */
@@ -354,9 +360,18 @@ function coachTargetOf(view: EditorView | null, context: BufferContext): ActiveC
   if (!anomaly) return null;
 
   let displayLine = anomaly.line + 1;
+  let displayCol = anomaly.colStart + 1;
+  let displayLen = Math.max(1, anomaly.targetText.length);
+  let lineText = "";
   if (view) {
-    const spans = spansFor(docLines(view.state.doc), anomaly);
-    if (spans[0]) displayLine = spans[0].line + 1;
+    const lines = docLines(view.state.doc);
+    const spans = spansFor(lines, anomaly);
+    if (spans[0]) {
+      displayLine = spans[0].line + 1;
+      displayCol = spans[0].start + 1;
+      displayLen = Math.max(1, spans[0].end - spans[0].start);
+    }
+    lineText = lines[displayLine - 1] ?? "";
   }
 
   const clean =
@@ -365,6 +380,9 @@ function coachTargetOf(view: EditorView | null, context: BufferContext): ActiveC
     id: anomaly.id,
     kind: anomaly.kind,
     line: displayLine,
+    col: displayCol,
+    length: displayLen,
+    lineText,
     label: anomaly.label,
     corrupt: anomaly.targetText,
     clean,
@@ -613,6 +631,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const rules = useGameState((state) => state.trials.rules.join(","));
   const serial = useGameState((state) => state.vim.folioSerial);
   const totalFoliosCleared = useGameState((state) => state.vim.totalFoliosCleared);
+  const onboardingStep = useGameState((state) => state.vim.onboardingStep);
   const resolved = useGameState((state) => state.vim.resolvedAnomalyIds);
   const showLineNumbers = useGameState((state) => state.settings.showLineNumbers);
   const relativeNumbers = useGameState((state) => state.settings.relativeNumbers);
@@ -629,26 +648,28 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const includePawprint =
     serial > 0 && serial % pawEvery === 0 && (unlocked["op-delete"] === true || veteranMode);
 
-  const isFirstLesson =
-    serial === 0 &&
-    totalFoliosCleared === 0 &&
-    riteFamily === null &&
-    !veteranMode &&
-    challengeRules.length === 0;
+  const guidedAct1 = !veteranMode && riteFamily === null && challengeRules.length === 0;
+  const lessonFolio =
+    guidedAct1 && totalFoliosCleared === 0 && serial === 0
+      ? FIRST_LESSON_FOLIO
+      : guidedAct1 && totalFoliosCleared === 1 && onboardingStep <= 3
+        ? FOLIO_1_APPEND_LESSON
+        : guidedAct1 && totalFoliosCleared === 2 && onboardingStep <= 4
+          ? FOLIO_2_EDGE_LESSON
+          : null;
 
   const folio = useMemo(
     () =>
-      isFirstLesson
-        ? FIRST_LESSON_FOLIO
-        : generateFolio({
-            seed,
-            unlocked,
-            actTier,
-            riteFamily: riteFamily ?? undefined,
-            challengeRules,
-            includePawprint,
-          }),
-    [isFirstLesson, seed, unlocked, actTier, riteFamily, challengeRules, includePawprint],
+      lessonFolio ??
+      generateFolio({
+        seed,
+        unlocked,
+        actTier,
+        riteFamily: riteFamily ?? undefined,
+        challengeRules,
+        includePawprint,
+      }),
+    [lessonFolio, seed, unlocked, actTier, riteFamily, challengeRules, includePawprint],
   );
 
   // The plugin and the gutter read the live context, so a new page or a cleared anomaly is visible without
@@ -812,7 +833,12 @@ export function BufferEditor({ className }: BufferEditorProps) {
           if (!point) return;
           marks.at(point.x, point.y, {
             kind: paid.grade,
-            text: paid.grade === "clean" ? "CLEAN CUT" : paid.grade === "tidy" ? "TIDY EDIT" : "MENDED",
+            text:
+              paid.grade === "clean"
+                ? `+${fmt(paid.paid).text} Glyphs · CLEAN CUT`
+                : paid.grade === "tidy"
+                  ? `+${fmt(paid.paid).text} Glyphs · TIDY`
+                  : `+${fmt(paid.paid).text} Glyphs`,
           });
         },
       });
@@ -836,6 +862,10 @@ export function BufferEditor({ className }: BufferEditorProps) {
       if (newlyResolved.length === 0 || !allResolved) return;
 
       clearing.current = true;
+      // Advance Act I interactive onboarding cleanly on each completed lesson page.
+      if (page.id === FIRST_LESSON_FOLIO.id) store.getState().vim.advanceOnboarding(3);
+      else if (page.id === FOLIO_1_APPEND_LESSON.id) store.getState().vim.advanceOnboarding(4);
+      else if (page.id === FOLIO_2_EDGE_LESSON.id) store.getState().vim.advanceOnboarding(5);
       const cleared = store
         .getState()
         .vim.completeFolio(page.isRite, page.riteFamily as KeyFamilyId | undefined);
@@ -948,6 +978,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
         veteranMode: live.settings.veteranMode,
         arrowTrainingLeft: Math.max(0, ARROW_TRAINING - live.vim.totalCleanCuts),
         arrowShame: live.settings.arrowShame,
+        onboardingStep: live.vim.onboardingStep,
       });
 
       if (decision.reason === "arrow-rusted") {
@@ -1196,9 +1227,41 @@ export function BufferEditor({ className }: BufferEditorProps) {
             if (!update.docChanged && !update.selectionSet) return;
             armHint(update.view);
             const info = update.state.doc.lineAt(update.state.selection.main.head);
+            const caretLine = info.number;
+            const caretCol = update.state.selection.main.head - info.from + 1;
+            const liveState = store.getState();
+            const activePage = context.current.folio;
+            // Live reactive Folio 0 onboarding beats:
+            // Step 0 -> 1: the moment the cursor reaches Ø on line 2, unlock `x` with a chime!
+            if (
+              activePage?.id === FIRST_LESSON_FOLIO.id &&
+              !liveState.settings.veteranMode &&
+              liveState.vim.onboardingStep === 0
+            ) {
+              const rotIndex = info.text.indexOf("Ø");
+              if (caretLine === 2 && rotIndex >= 0 && Math.abs(caretCol - 1 - rotIndex) === 0) {
+                liveState.vim.advanceOnboarding(1);
+                playEditFeedback("tidy", 1);
+                say("x unlocked! Press x to delete the glowing Ø under your cursor.");
+              }
+            }
+            // Step 1 -> 2: once anomaly 0 is mended and `[_]` on line 3 is cut away (or cursor reaches it after cutting), unlock `i` + `Esc`!
+            if (
+              activePage?.id === FIRST_LESSON_FOLIO.id &&
+              !liveState.settings.veteranMode &&
+              liveState.vim.onboardingStep === 1 &&
+              liveState.vim.resolvedAnomalyIds["folio-0-first-lesson:0"] === true
+            ) {
+              const line3 = update.state.doc.lines >= 3 ? update.state.doc.line(3).text : "";
+              if (!line3.includes("[") && !line3.includes("_") && !line3.includes("]")) {
+                liveState.vim.advanceOnboarding(2);
+                playEditFeedback("tidy", 2);
+                say("i unlocked! Press i to enter Insert mode, type cat, then press Esc.");
+              }
+            }
             publishStatus({
-              line: info.number,
-              col: update.state.selection.main.head - info.from + 1,
+              line: caretLine,
+              col: caretCol,
               activeTarget: coachTargetOf(update.view, context.current),
               resolvedCount: resolvedCountOf(context.current.folio, store.getState().vim.resolvedAnomalyIds),
             });

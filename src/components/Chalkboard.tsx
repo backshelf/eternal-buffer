@@ -3,7 +3,7 @@
 // and carries the archive's whisper line.
 import { cx } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
-import { KEY_GLOSS } from "../content/guide";
+import { KEY_GLOSS, visibleAct1Keys } from "../content/guide";
 import { ACTS, type ActDef, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
 import { Tooltip } from "../ui/Tooltip";
 import { useBufferStatus } from "./BufferEditor";
@@ -25,12 +25,38 @@ function ActStrip({
   owned,
   lastKey,
   compact,
+  act1Keys,
 }: {
   act: ActDef;
   owned: (id: KeyFamilyId) => boolean;
   lastKey: string | null;
   compact: boolean;
+  act1Keys: readonly string[];
 }) {
+  if (act.id === 1) {
+    return (
+      <div className={s.act}>
+        <span className={s.actLabel}>
+          <span className={s.actNumeral}>{act.numeral}</span>
+          {compact ? null : <span className={s.actTitle}>{act.title}</span>}
+        </span>
+        <ul className={s.families}>
+          <li className={s.family}>
+            {act1Keys.map((key) => {
+              const gloss = KEY_GLOSS[key] ?? "Core Vim key";
+              return (
+                <Tooltip key={`act1-${key}`} content={`${key} — ${gloss}`} side="top">
+                  <span className={s.cap} data-pressed={key === lastKey || null}>
+                    {key}
+                  </span>
+                </Tooltip>
+              );
+            })}
+          </li>
+        </ul>
+      </div>
+    );
+  }
   const families = KEY_FAMILIES.filter((family) => family.act === act.id && owned(family.id));
   return (
     <div className={s.act}>
@@ -65,22 +91,30 @@ function ActStrip({
 }
 
 /**
- * The keycap strip. It reads the buffer's published status for the pressed cap and the whisper, and the
- * store for what you own, so the screen mounts it with no props at all.
+ * The keycap strip. Reads the buffer's published status for the pressed cap and the whisper, and the
+ * store for what you own and which Act I keys have been interactively introduced so far.
  */
 export function Chalkboard({ className, compact = false }: ChalkboardProps) {
   const status = useBufferStatus();
   const unlocked = useGameState((state) => state.vim.unlockedFamilies);
+  const onboardingStep = useGameState((state) => state.vim.onboardingStep);
+  const totalFolios = useGameState((state) => state.vim.totalFoliosCleared);
   const pendingRite = useGameState((state) => state.vim.pendingRiteFamily);
+  const veteranMode = useGameState((state) => state.settings.veteranMode);
+  const jkEscape = useGameState((state) => state.settings.jkEscape);
   const show = useGameState((state) => state.settings.showChalkboard);
 
   if (!show) return null;
 
   const owned = (id: KeyFamilyId) => unlocked[id] === true || FAMILY_BY_ID[id].cost.amount === 0;
+  const act1Keys = visibleAct1Keys(onboardingStep, veteranMode, jkEscape);
   const started = ACTS.filter((act) =>
     KEY_FAMILIES.some((family) => family.act === act.id && owned(family.id)),
   );
-  const sealed = ACTS.find((act) => started.every((open) => open.id !== act.id));
+  const sealed =
+    totalFolios >= 3 || veteranMode
+      ? ACTS.find((act) => started.every((open) => open.id !== act.id))
+      : undefined;
   const sealedFamily = sealed ? KEY_FAMILIES.find((family) => family.act === sealed.id) : undefined;
   const owed = pendingRite ? FAMILY_BY_ID[pendingRite as KeyFamilyId] : undefined;
 
@@ -88,7 +122,14 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
     <figure className={cx(s.board, className)} aria-label="Chalkboard">
       <div className={s.acts}>
         {started.map((act) => (
-          <ActStrip key={act.id} act={act} owned={owned} lastKey={status.lastKey} compact={compact} />
+          <ActStrip
+            key={act.id}
+            act={act}
+            owned={owned}
+            lastKey={status.lastKey}
+            compact={compact}
+            act1Keys={act1Keys}
+          />
         ))}
         {sealed && sealedFamily && (
           <Tooltip
@@ -98,7 +139,7 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
             <div className={s.act} data-sealed="">
               <span className={s.actLabel}>
                 <span className={s.actNumeral}>{sealed.numeral}</span>
-                {compact ? null : <span className={s.actTitle}>sealed</span>}
+                {compact ? null : <span className={s.actTitle}>next</span>}
               </span>
               <span className={s.teaser}>
                 <span className={s.cap} data-locked="">
@@ -122,9 +163,11 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
         data-whisper={status.press}
       >
         {status.whisper ??
-          (started.length <= 1
-            ? "Hover any keycap for its action · ? whispers a hint · : opens the command console"
-            : "Hover any keycap for its action · ? whispers a hint · :codex / :exp / :mosaic / :help")}
+          (onboardingStep < 3 && !veteranMode
+            ? "Hover any keycap to see what it does · new keys appear as you reach each step"
+            : started.length <= 1
+              ? "Hover any keycap for its action · ? whispers a hint · : opens the command console"
+              : "Hover any keycap for its action · ? whispers a hint · :codex / :exp / :mosaic / :help")}
       </p>
     </figure>
   );

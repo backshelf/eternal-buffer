@@ -27,11 +27,11 @@ export interface PlanGate {
  * at the mouth of the 12–16 h endgame.
  */
 export const PLAN: readonly PlanGate[] = [
-  { key: "word-stride", minute: 35, note: "Act II opens: Strides & Snipes" },
-  { key: "line-edge", minute: 48, note: "" },
-  { key: "char-snipe", minute: 62, note: "" },
-  { key: "file-jump", minute: 78, note: "" },
-  { key: "counts", minute: 95, note: "" },
+  { key: "word-stride", minute: 12, note: "Act II opens: Strides & Snipes (early Vim aha-moment)" },
+  { key: "line-edge", minute: 22, note: "" },
+  { key: "char-snipe", minute: 35, note: "" },
+  { key: "file-jump", minute: 52, note: "" },
+  { key: "counts", minute: 72, note: "" },
   { key: "op-delete", minute: 110, note: "Act III opens, on the far side of the first `:w`" },
   { key: "op-change", minute: 140, note: "" },
   { key: "op-yank", minute: 170, note: "" },

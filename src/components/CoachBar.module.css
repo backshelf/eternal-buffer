@@ -1,12 +1,12 @@
 /*
- * The Coach Bar: sits flush atop the Vim buffer plate. Crisp, scannable, zero paragraphs.
- * Highlights the exact corruption -> expected text and the exact Vim keystrokes, turning phosphor jade
- * when the player steps into Insert mode so they always know how to get back to Normal mode.
+ * The Coach Bar: flush above the Vim buffer plate.
+ * During interactive onboarding beats, renders a single glowing reactive keycap + 1-line action cue.
+ * During normal mending, stays a crisp 1-row target strip showing red rot -> clean text.
  */
 .coach {
   display: grid;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border: var(--ui-hairline);
   border-bottom: 0;
   border-left: 2px solid var(--ui-accent);
@@ -14,16 +14,69 @@
   background-image: var(--dither-4);
   font-family: var(--ui-font-num);
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 .coach[data-rite] {
-  border-top: 2px solid var(--ui-accent);
   background-image: var(--dither-accent);
 }
 .coach[data-mode="insert"],
-.coach[data-mode="replace"] {
+.coach[data-mode="replace"],
+.coach[data-tone="insert"] {
   border-left-color: var(--ui-mode-insert);
 }
+.coach[data-tone="unlock"] {
+  border-left-color: var(--ui-target-ink);
+}
+
+/* --- Reactive step-by-step interactive beat -------------------------------------------------------------- */
+
+.liveBeat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+}
+.activeKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-accent);
+  background-color: var(--ui-accent);
+  color: var(--ui-on-accent);
+  font-family: var(--ui-font-num);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ui-accent) 35%, transparent);
+}
+.coach[data-tone="insert"] .activeKey {
+  border-color: var(--ui-mode-insert);
+  background-color: var(--ui-mode-insert);
+  color: var(--ui-ground);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ui-mode-insert) 35%, transparent);
+}
+.liveText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.liveAction {
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.liveSub {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font);
+  font-size: 11.5px;
+}
+
+/* --- Normal & Practice Rite strip ------------------------------------------------------------------------ */
 
 .riteHead {
   display: flex;
@@ -44,32 +97,17 @@
   font-weight: 600;
   font-size: 12px;
 }
-
-.newKeys {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  padding: 5px 8px;
-  border: var(--ui-hairline);
-  background-color: color-mix(in srgb, var(--ui-ground) 72%, transparent);
-  font-size: 11px;
-}
-.keyDef {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.riteNote {
   color: var(--ui-ink-muted);
-}
-.keyMeaning {
   font-family: var(--ui-font);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .targetRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: 6px 10px;
 }
 .lineBadge {
   padding: 1px 5px;
@@ -153,7 +191,6 @@
   color: var(--ui-ink);
   font-family: var(--ui-font-num);
   font-size: 10.5px;
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-ink) 20%, transparent);
 }
 .progress {
   margin-left: auto;

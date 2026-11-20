@@ -214,7 +214,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["core-move"],
     riteBonus: 1.25,
     chalkSummary: "w b e — one word at a time. W B E — one sentence at a time.",
-    cost: { currency: "glyphs", amount: 1.7e6 },
+    cost: { currency: "glyphs", amount: 100_000 },
   },
   {
     id: "line-edge",
@@ -224,7 +224,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["core-move"],
     riteBonus: 1.25,
     chalkSummary: "0 is the left margin, $ the right. ^ is the first ink on the line.",
-    cost: { currency: "glyphs", amount: 2.2e6 },
+    cost: { currency: "glyphs", amount: 830_000 },
   },
   {
     id: "char-snipe",
@@ -234,7 +234,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["word-stride"],
     riteBonus: 1.25,
     chalkSummary: "f then a rune: the cursor lands on it. ; throws again. , throws back.",
-    cost: { currency: "glyphs", amount: 3.4e6 },
+    cost: { currency: "glyphs", amount: 2.3e6 },
   },
   {
     id: "file-jump",
@@ -244,7 +244,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["line-edge"],
     riteBonus: 1.25,
     chalkSummary: "gg the first line, G the last. The folio has ends. Use them.",
-    cost: { currency: "glyphs", amount: 9.1e6 },
+    cost: { currency: "glyphs", amount: 4.1e6 },
   },
   {
     id: "counts",
@@ -254,7 +254,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["char-snipe"],
     riteBonus: 1.25,
     chalkSummary: "8j. 3w. A number in front of a motion multiplies it.",
-    cost: { currency: "glyphs", amount: 1.4e7 },
+    cost: { currency: "glyphs", amount: 1.9e7 },
   },
   {
     id: "op-delete",
@@ -264,7 +264,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["counts"],
     riteBonus: 1.25,
     chalkSummary: "d takes a motion and removes what it crossed. dd takes the line.",
-    cost: { currency: "glyphs", amount: 1.4e7 },
+    cost: { currency: "glyphs", amount: 4e7 },
   },
   {
     id: "op-change",
@@ -274,7 +274,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-delete"],
     riteBonus: 1.25,
     chalkSummary: "c is d that leaves a doorway. Step in, type, Esc.",
-    cost: { currency: "glyphs", amount: 3.6e7 },
+    cost: { currency: "glyphs", amount: 5.1e7 },
   },
   {
     id: "op-yank",
@@ -284,7 +284,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-change"],
     riteBonus: 1.25,
     chalkSummary: "y copies without cutting. p puts it after, P puts it before.",
-    cost: { currency: "glyphs", amount: 1.1e8 },
+    cost: { currency: "glyphs", amount: 1.3e8 },
   },
   {
     id: "line-craft",
@@ -294,7 +294,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-yank"],
     riteBonus: 1.25,
     chalkSummary: "o opens a line below. r replaces one rune. J sews two lines into one.",
-    cost: { currency: "glyphs", amount: 2e8 },
+    cost: { currency: "glyphs", amount: 1.9e8 },
   },
   {
     id: "text-objects",
@@ -384,7 +384,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["registers"],
     riteBonus: 1.25,
     chalkSummary: "qa records into a. @a plays it back. @@ plays the last one.",
-    cost: { currency: "codices", amount: 15 },
+    cost: { currency: "codices", amount: 14 },
   },
   {
     id: "ex-power",
@@ -394,7 +394,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["substitute", "macros"],
     riteBonus: 1.25,
     chalkSummary: ":g/BLIGHT/d purges every blighted line. :sort orders the ledger.",
-    cost: { currency: "codices", amount: 43 },
+    cost: { currency: "codices", amount: 65 },
   },
   {
     id: "dual-split",
@@ -404,7 +404,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["ex-power"],
     riteBonus: 1.25,
     chalkSummary: ":vsplit opens a second folio. Ctrl-w w walks between them.",
-    cost: { currency: "codices", amount: 69 },
+    cost: { currency: "codices", amount: 110 },
   },
   {
     id: "vimrc-forge",
@@ -414,7 +414,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["dual-split"],
     riteBonus: 1.25,
     chalkSummary: "Your own rules, on your own keyboard. The Forge opens five slots.",
-    cost: { currency: "codices", amount: 120 },
+    cost: { currency: "codices", amount: 150 },
   },
 ];
 

@@ -79,6 +79,14 @@ export interface VimState {
   arrowShameCount: number;
   escPanicCount: number;
   highestAct: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  /**
+   * Interactive Act I onboarding stage (permanent):
+   * 0 = hjkl only; 1 = x unlocked; 2 = i + Esc unlocked; 3 = Folio 0 done (a & u beat next);
+   * 4 = Folio 1 done (I & A beat next); 5 = all Act I keys taught.
+   */
+  onboardingStep: number;
+  /** Interactive system-introduction beats already completed (e.g. "scribes", "codex", "expeditions", "mosaic", "tilde"). */
+  seenBeats: Record<string, true>;
 
   /** The Flow streak, in stacks, never above `flowCap`. Run-scoped. */
   flow: number;
@@ -390,6 +398,8 @@ export const vim = defineFeature({
     arrowShameCount: 0,
     escPanicCount: 0,
     highestAct: 1,
+    onboardingStep: 0,
+    seenBeats: {},
     flow: 0,
     flowDecayMs: 0,
     lastFlowAt: 0,
@@ -456,6 +466,8 @@ export const vim = defineFeature({
       arrowShameCount: before.arrowShameCount,
       escPanicCount: before.escPanicCount,
       highestAct: before.highestAct,
+      onboardingStep: before.onboardingStep,
+      seenBeats: before.seenBeats,
       // The run: back to a fresh page, one serial on, and a seed no reset repeats.
       folioSerial: serial,
       folioSeed: rollSeed(before.folioSeed, serial),
@@ -584,6 +596,19 @@ export const vim = defineFeature({
     setGrace: (untilMs: number): void =>
       api.set((s) => {
         s.vim.graceUntil = untilMs;
+      }),
+
+    /** Advances the interactive Act I onboarding step monotonically (0..5). */
+    advanceOnboarding: (step: number): void =>
+      api.set((s) => {
+        const clamped = Math.max(0, Math.min(5, Math.floor(step)));
+        if (clamped > s.vim.onboardingStep) s.vim.onboardingStep = clamped;
+      }),
+
+    /** Marks a system-introduction spotlight beat as completed. */
+    completeBeat: (beatId: string): void =>
+      api.set((s) => {
+        s.vim.seenBeats[beatId] = true;
       }),
 
     /** One headless Clean Cut on the folio on screen, then its clear when that was the last anomaly. */

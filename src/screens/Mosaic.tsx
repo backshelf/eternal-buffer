@@ -390,18 +390,37 @@ export function MosaicScreen() {
   const onCraft = (id: string) => {
     if (!store.getState().crafting.craft(id)) return;
     playBuy();
+    if (st.vim.seenBeats.mosaic !== true) store.getState().vim.completeBeat("mosaic");
     setNote("");
   };
 
   const heldCell = hand?.from === "board" ? plate[hand.cell] : undefined;
+  const introBeat = !st.settings.veteranMode && st.vim.seenBeats.mosaic !== true;
+  const openBench = bench.filter((row) => crafting.select.open(st, row.piece.id));
+  const nextLockedPiece = bench.find((row) => !crafting.select.open(st, row.piece.id));
+  const shownBench = st.settings.veteranMode
+    ? bench
+    : nextLockedPiece
+      ? [...openBench, nextLockedPiece]
+      : openBench;
 
   return (
     <div className={s.screen}>
       <Title>Mosaic</Title>
-      <p className={s.standing}>
-        Keycaps cut from margin ink, laid on a ruled plate. Where a piece sits decides what it is worth,
-        because the pieces beside it do the deciding. Nothing on this page wants typing.
-      </p>
+      {introBeat ? (
+        <Panel heading="New · Plugin Mosaic">
+          <p className={s.standing}>
+            A mouse-friendly keycap board: spend <strong>Ink</strong> &amp; <strong>Shards</strong> on the
+            Bench to cut tiles, then place them on the 4×4 plate. Adjacent tiles boost each other&apos;s
+            multipliers!
+          </p>
+        </Panel>
+      ) : (
+        <p className={s.standing}>
+          Keycaps cut from Ink &amp; Shards, laid on a ruled plate. Where a piece sits decides what it is
+          worth, because adjacent pieces boost each other.
+        </p>
+      )}
 
       <div className={s.stage}>
         <Panel
@@ -493,7 +512,7 @@ export function MosaicScreen() {
 
         <Panel heading="Keycap Bench" aside={<span>{inHand} in hand</span>}>
           <ul className={s.bench}>
-            {bench.map(({ piece, held, laid: down, costs }) => {
+            {shownBench.map(({ piece, held, laid: down, costs }) => {
               const unlocked = crafting.select.open(st, piece.id);
               const canCut = crafting.select.craftable(st, piece.id) > 0;
               const left =

@@ -1,0 +1,118 @@
+/* Compact, scannable Scribe cards designed for the 264px right Margin Desk wing. */
+.scribes {
+  display: grid;
+  gap: 8px;
+}
+.spotlight {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border: 1px solid var(--ui-accent);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-accent);
+}
+.spotTag {
+  font-family: var(--ui-font-num);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ui-accent);
+}
+.spotCopy {
+  margin: 0;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ui-ink);
+}
+.summary {
+  margin: 0;
+  font-family: var(--ui-font-num);
+  font-size: 10.5px;
+  color: var(--ui-ink-muted);
+  line-height: 1.4;
+}
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-surface) 88%, transparent);
+  background-image: var(--dither-4);
+}
+.card[data-spotlight] {
+  border-color: var(--ui-accent);
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.name {
+  font-family: var(--ui-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ui-ink);
+}
+.owned {
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-accent);
+}
+.line {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ui-ink-muted);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-family: var(--ui-font-num);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.rateInk {
+  color: var(--ui-ink);
+}
+.rateGlyph {
+  color: var(--ui-ink-muted);
+}
+.pips {
+  display: flex;
+  gap: 4px;
+}
+.pip {
+  flex: 1 1 0;
+  height: 3px;
+  background-color: var(--ui-line);
+}
+.pip[data-lit] {
+  background-color: var(--ui-accent);
+}
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.teaser {
+  margin: 0;
+  padding: 6px 8px;
+  border: var(--ui-hairline);
+  border-style: dashed;
+  font-family: var(--ui-font-num);
+  font-size: 10.5px;
+  color: var(--ui-ink-muted);
+  line-height: 1.4;
+}

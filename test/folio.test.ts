@@ -247,7 +247,8 @@ describe("generateFolio", () => {
         expect(folio.isRite).toBe(false);
         expect(folio.hasPawprint).toBe(false);
         expect(folio.title.length).toBeGreaterThan(4);
-        expect(folio.lines.length).toBeGreaterThanOrEqual(10);
+        // Act I uses compact 6-line folios before Word Stride (`w b e`) unlocks; Act II+ uses full 10-14 line pages.
+        expect(folio.lines.length).toBeGreaterThanOrEqual(act === 1 ? 6 : 10);
         expect(folio.anomalies.length).toBeGreaterThanOrEqual(2);
         expect(folio.anomalies.length).toBeLessThanOrEqual(5);
 
