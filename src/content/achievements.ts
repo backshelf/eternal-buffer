@@ -96,7 +96,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
     id: "first-scribe",
     name: "First Scribe",
     line: "A wax-sealed moth takes the night shift; you keep the daylight.",
-    when: { own: "wax-sealed-moth", count: 1 },
+    when: { own: "wax-sealed-moth", count: 2 },
   },
   {
     id: "moth-keeper",

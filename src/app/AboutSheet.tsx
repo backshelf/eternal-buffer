@@ -215,9 +215,11 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
 function ReferenceAct({
   act,
   unlocked,
+  jkEscape,
 }: {
   act: (typeof ACTS)[number];
   unlocked: (id: KeyFamilyId) => boolean;
+  jkEscape: boolean;
 }) {
   const families = KEY_FAMILIES.filter((family) => family.act === act.id && unlocked(family.id));
   if (families.length === 0) return null;
@@ -230,12 +232,14 @@ function ReferenceAct({
         <div key={family.id} className={s.refFamilyBlock}>
           <p className={s.refName}>{family.name}</p>
           <dl className={s.helpKeyGrid}>
-            {family.keys.map((key) => (
-              <div key={key} className={s.helpKeyRow}>
-                <dt className={s.helpKeyCap}>{key}</dt>
-                <dd className={s.helpKeyDesc}>{KEY_GLOSS[key] ?? family.chalkSummary}</dd>
-              </div>
-            ))}
+            {family.keys
+              .filter((key) => key !== "jk" || jkEscape)
+              .map((key) => (
+                <div key={key} className={s.helpKeyRow}>
+                  <dt className={s.helpKeyCap}>{key}</dt>
+                  <dd className={s.helpKeyDesc}>{KEY_GLOSS[key] ?? family.chalkSummary}</dd>
+                </div>
+              ))}
           </dl>
         </div>
       ))}
@@ -250,6 +254,7 @@ function ReferenceAct({
 export function HelpSheet({ onClose }: { onClose(): void }) {
   const unlocked = useGameState((st) => st.vim.unlockedFamilies);
   const actTier = useGameState((st) => st.vim.highestAct);
+  const jkEscape = useGameState((st) => st.settings.jkEscape);
   const owned = (id: KeyFamilyId) => unlocked[id] === true || FAMILY_BY_ID[id].cost.amount === 0;
   const known = KEY_FAMILIES.filter((family) => owned(family.id)).length;
   const sealed = KEY_FAMILIES.length - known;
@@ -283,7 +288,7 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
             <code className={s.code}>Esc</code> (or <code className={s.code}>Ctrl-[</code>) exits Insert mode.
           </p>
           {ACTS.filter((act) => act.id <= actTier).map((act) => (
-            <ReferenceAct key={act.id} act={act} unlocked={owned} />
+            <ReferenceAct key={act.id} act={act} unlocked={owned} jkEscape={jkEscape} />
           ))}
           {sealed > 0 && (
             <p className={s.refNote}>

@@ -1366,6 +1366,14 @@ export function BufferEditor({ className }: BufferEditorProps) {
     applying.current = true;
     clearing.current = false;
     keysUsed.current.clear();
+    // Always return to Normal mode when a fresh folio lands so finishing a page in Insert mode
+    // never leaves the next folio stuck in Insert mode.
+    const cm = getCM(view);
+    if (cm?.state.vim?.insertMode) {
+      Vim.exitInsertMode(cm as Parameters<typeof Vim.exitInsertMode>[0]);
+    }
+    modeRef.current = "normal";
+    if (frameRef.current) frameRef.current.dataset.mode = "normal";
     view.dispatch({
       changes: {
         from: 0,
@@ -1377,6 +1385,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
     });
     applying.current = false;
     publishStatus({
+      mode: "normal",
       riteBanner: folio.riteBanner ?? null,
       message: folio.riteBanner ?? "",
       pending: "",

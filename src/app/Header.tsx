@@ -58,17 +58,22 @@ export interface HeaderProps {
 export function Header({ onHelp, onAbout }: HeaderProps) {
   const wallet = useGameState((st) => st.wallet);
   const folios = useGameState((st) => st.vim.totalFoliosCleared);
+  const anomalies = useGameState((st) => st.vim.totalAnomaliesCleared);
+  const veteran = useGameState((st) => st.settings.veteranMode);
   const clarity = useGameState((st) => fmt(st.stats.output, { decimals: 2 }).text);
   const state = useGameState((st) => st);
   const rows = stats.select.parts(state, "output");
 
+  const started = folios > 0 || anomalies > 0 || veteran || wallet.sealsEver.gte(1);
   // Reveal currencies as the player touches them so 0:00 never shows a row of cryptic zeroes.
-  const shown = WORDS.currencies.filter((c) => {
-    if (c === "glyphs") return folios > 0 || wallet.glyphs.gt(0) || wallet.earned.gt(0);
-    if (c === "ink") return folios > 0 || wallet.ink.gt(0);
-    return wallet[c].gt(0);
-  });
-  const showClarity = folios > 0 || state.stats.output.gt(1.001);
+  const shown = started
+    ? WORDS.currencies.filter((c) => {
+        if (c === "glyphs") return folios > 0 || wallet.glyphs.gt(0) || wallet.earned.gt(0);
+        if (c === "ink") return folios > 0 || wallet.ink.gt(0);
+        return wallet[c].gt(0);
+      })
+    : [];
+  const showClarity = started && (folios > 0 || state.stats.output.gt(1.001));
 
   return (
     <header className={s.header}>

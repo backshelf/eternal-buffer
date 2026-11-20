@@ -46,8 +46,20 @@ export function CoachBar({ className }: CoachBarProps) {
 
   const target = status.activeTarget;
   const family = status.riteFamily ? FAMILY_BY_ID[status.riteFamily as KeyFamilyId] : undefined;
+  const isFirstLesson = status.folioTitle === "First Mending · Desk 7";
   const isInsert = status.mode === "insert" || status.mode === "replace";
   const goal = target ? goalCopy(target) : null;
+  const lessonKeys: { key: string; meaning: string }[] = isFirstLesson
+    ? [
+        { key: "h j k l", meaning: "Move left, down, up, right" },
+        { key: "x", meaning: KEY_GLOSS.x ?? "Delete character under cursor" },
+        { key: "i", meaning: "Enter Insert mode to type text" },
+        { key: "Esc", meaning: "Return to Normal mode" },
+      ]
+    : (family?.keys ?? [])
+        .filter((key) => key !== "jk" || jkEscape)
+        .slice(0, 6)
+        .map((key) => ({ key, meaning: KEY_GLOSS[key] ?? family?.chalkSummary ?? "" }));
 
   return (
     <section
@@ -59,7 +71,9 @@ export function CoachBar({ className }: CoachBarProps) {
       {status.isRite && (
         <div className={s.riteHead}>
           <span className={s.riteTag}>INTERACTIVE LESSON</span>
-          <span className={s.riteTitle}>{family ? family.name : status.folioTitle}</span>
+          <span className={s.riteTitle}>
+            {isFirstLesson ? "First Mending · Footwork & Nib" : family ? family.name : status.folioTitle}
+          </span>
           {status.totalAnomalies > 0 && (
             <span className={s.progress}>
               {status.resolvedCount} / {status.totalAnomalies} mended
@@ -68,12 +82,12 @@ export function CoachBar({ className }: CoachBarProps) {
         </div>
       )}
 
-      {status.isRite && family && family.keys.length > 0 && (
+      {status.isRite && lessonKeys.length > 0 && (
         <div className={s.newKeys}>
-          {family.keys.slice(0, 6).map((key) => (
-            <span key={key} className={s.keyDef} title={KEY_GLOSS[key] ?? family.chalkSummary}>
-              <kbd className={s.kbd}>{key}</kbd>
-              <span className={s.keyMeaning}>{KEY_GLOSS[key] ?? ""}</span>
+          {lessonKeys.map((entry) => (
+            <span key={entry.key} className={s.keyDef} title={entry.meaning}>
+              <kbd className={s.kbd}>{entry.key}</kbd>
+              <span className={s.keyMeaning}>{entry.meaning}</span>
             </span>
           ))}
         </div>

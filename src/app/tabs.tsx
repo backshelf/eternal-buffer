@@ -134,7 +134,7 @@ export function isTabRevealed(st: GameState, id: Tab): boolean {
     return hasPrestiged || st.vim.highestAct >= 3;
   }
   if (id === "achievements") {
-    return hasPrestiged || Object.keys(st.achievements.earned).length > 0;
+    return hasPrestiged || (st.vim.totalFoliosCleared >= 1 && Object.keys(st.achievements.earned).length > 0);
   }
   return true;
 }
