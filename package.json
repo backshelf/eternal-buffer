@@ -10,6 +10,7 @@
     "dev": "bun dev.ts",
     "build": "bun build ./index.html --outdir dist --production --sourcemap=linked",
     "typecheck": "bun check",
+    "test": "bun test",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
     "tokens": "bun design/build-tokens.ts",
@@ -19,13 +20,17 @@
     "gates:full": "bun run gates && bun run sim -- --contract"
   },
   "dependencies": {
-    "watchpot": "1.0.0-rc.12",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
     "@number-flow/react": "0.6.2",
+    "@replit/codemirror-vim": "^6.4.0",
     "break_eternity.js": "2.1.3",
     "canvas-confetti": "1.9.4",
     "immer": "11.2.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "watchpot": "1.0.0-rc.12",
     "zustand": "5.0.16",
     "zzfx": "1.4.0"
   },

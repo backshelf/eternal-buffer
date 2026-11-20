@@ -9,7 +9,9 @@ import { upgrades } from "./tree";
 import { boosts } from "./visitor";
 
 /** The stats as a reader sees them: each a Decimal under its id (`s.stats.output`). */
-export type Stats = { readonly [P in "output" | "offline" | "gain"]: Decimal };
+export type Stats = {
+  readonly [P in "output" | "offline" | "gain" | "tempo" | "inkRate" | "codexGain"]: Decimal;
+};
 
 /**
  * The stats, under `stats`: `output` (a multiplier on the core's income), `offline` (the share paid while away, never
@@ -33,6 +35,9 @@ export const stats = defineStats({
     output: { base: 1 },
     offline: { base: OFFLINE_BASE, hardcap: 1 },
     gain: { base: 1 },
+    tempo: { base: 1 },
+    inkRate: { base: 1 },
+    codexGain: { base: 1 },
   },
   sources: [
     {

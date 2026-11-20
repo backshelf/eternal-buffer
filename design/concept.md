@@ -30,3 +30,21 @@ Built for long sittings: two or three a day, most of an hour each, the tab often
 - Type: Cardo (display), Work Sans (interface), Martian Mono (numbers), from Google Fonts.
 - **The surface.** An amber phosphor monitor printing onto coarse Bayer-dithered soot: a warm 4x4 ordered-dither light pool breathes around your Vim cursor, ripples outward on Clean Cuts, thickens with Flow, and casts dot-screen light behind every ASCII panel. (scaffolded on the `print` starter in `src/shaders/`, to be replaced.)
 - **The moment.** Typing :wq to Rebind the Codex for the first time literally writes-and-quits the buffer: every line collapses into Bayer-dithered amber dust under a sweeping raster curtain, Tilde pads across the blank void leaving a glowing ~ trail, and the archive reboots into a richer dual-split strata.
+
+## The Shape
+
+Seven Acts of a Vim curriculum, each unlocking a family of real keys: Footwork (`hjkl`, `x`, `i`/`Esc`), Strides & Snipes (`w b e`, `0 $ ^`, `f t`, `gg G`, counts), Verbs & Composition (`d c y`, `o r ~ J`), Objects & Visual (`iw i" i(`, `v`/`Ctrl-v`, `% > <`), Lantern & Substitute (`/ ? n`, `{ } m`, `:%s`), Echoes & Choreography (`.`, registers, `q`/`@`), and The Ex-Console (`:g`, `:v`, `:norm`, `:sort`, `:vsplit`, `.vimrc`). A key family, once unlocked, is never taken back by any prestige.
+
+The loop is a Living Folio: ten to sixteen lines of corrupted manuscript with two to six anomalies. Walk to an anomaly and repair it in the editor; a repair at or under its par pays a Clean Cut, feeds Flow, and records the Grammar pair if the idiom is new. Clear the folio for a burst, then roll the next.
+
+## The Surface
+
+An amber CRT vellum: soot ground, bone ink, phosphor amber signal, zero radius, box-drawing frames and Bayer-dithered stipple. Cardo for display, Work Sans for interface, Martian Mono for the buffer, keycaps and every number. Four custom WebGL2 shaders carry it: a dithered archive backdrop that breathes with heat, flow and depth; a cursor-halo under the hero buffer that rings on every Clean Cut; a tile foil behind mosaic cells and affordable keycaps; and the full-page `:wq` Codex Rebind moment.
+
+## The Invention
+
+The Vim itself is the game. Real CodeMirror 6 with `@replit/codemirror-vim`, `imap jk <Esc>` from the first minute, a progressive key gate that locks what you have not learned yet and whispers the Act that unlocks it, arrow keys that rust after three training anomalies, adaptive hints that appear on four seconds of idle and retire after five clean uses, and a Chalkboard of physical keycaps that depress as you type. Payouts reward idiomatic grammar: par keystrokes pay a Clean Cut, discovered operator-motion pairs multiply Clarity for good, and the endgame is macros and `:g` sweeping whole folios.
+
+## The Pacing Plan
+
+Ten played hours is the floor; the main arc runs twelve to sixteen, and a completionist run about eighteen to twenty. Act II near half an hour, the first `:w Bind Volume` around an hour and a half, Act IV by four hours, Act V by six, the first `:wq Rebind Codex` around seven, Act VII around ten. Active Vim always pays more than idle Scribes: the Scribes brew Ink, the currency the break-from-typing systems spend, plus a glyph trickle capped at fifteen to forty percent of active play. No active stretch waits more than about two minutes for its next meaningful payoff.
