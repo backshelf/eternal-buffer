@@ -41,6 +41,7 @@ import {
   playTildePurr,
 } from "../app/sound";
 import { EGG_BY_ID } from "../content/easterEggs";
+import { FIRST_LESSON_FOLIO } from "../content/guide";
 import type { KeyFamilyId } from "../content/vimActs";
 import { codex, volumes } from "../game/prestige";
 import { VISITOR_KIND } from "../game/visitor";
@@ -53,6 +54,10 @@ import s from "./BufferEditor.module.css";
 
 /** The shell's Vim Reference sheet hears this when `:help` runs, and opens the drawer. */
 export const HELP_EVENT = "eternal-buffer:help";
+/** Ex navigation commands (`:codex`, `:exp`, `:mosaic`, `:vol`, `:trials`, `:log`, `:buf`, `:scribes`) fire this. */
+export const NAV_EVENT = "eternal-buffer:nav";
+/** Fired when the welcome plate or a tab wants to put focus directly into the Vim buffer. */
+export const FOCUS_BUFFER_EVENT = "eternal-buffer:focus";
 
 /** How often the folio carries a pawprint: one page in seventeen, by the serial, so a reload repeats it. */
 const PAWPRINT_EVERY = 17;
@@ -75,6 +80,20 @@ const MAX_MARKS = 8;
 /** The buffer's modes, in the vocabulary the gate and the Ex line share. */
 export type BufferMode = VimMode;
 
+/** The anomaly the Coach bar is currently guiding the player through. */
+export interface ActiveCoachTarget {
+  id: string;
+  kind: FolioAnomaly["kind"];
+  /** 1-based line number in the live document. */
+  line: number;
+  label: string;
+  corrupt: string;
+  /** The exact clean text that replaces `corrupt`, or `null` when the whole line should be deleted. */
+  clean: string | null;
+  optimalHint: string;
+  parKeys: number;
+}
+
 /** What the buffer publishes for the lines beneath it, once per mode change or cursor move. */
 export interface BufferStatus {
   mode: BufferMode;
@@ -94,6 +113,13 @@ export interface BufferStatus {
   press: number;
   /** The Practice Rite's ribbon, when the page on screen is one. */
   riteBanner: string | null;
+  /** Live interactive coach data for the current folio & active anomaly. */
+  folioTitle: string;
+  isRite: boolean;
+  riteFamily: string | null;
+  resolvedCount: number;
+  totalAnomalies: number;
+  activeTarget: ActiveCoachTarget | null;
 }
 
 const STATUS_EMPTY: BufferStatus = {
@@ -108,6 +134,12 @@ const STATUS_EMPTY: BufferStatus = {
   lastKey: null,
   press: 0,
   riteBanner: null,
+  folioTitle: "",
+  isRite: false,
+  riteFamily: null,
+  resolvedCount: 0,
+  totalAnomalies: 0,
+  activeTarget: null,
 };
 
 let status: BufferStatus = STATUS_EMPTY;
@@ -312,6 +344,45 @@ function countTarget(view: EditorView, context: BufferContext): FolioAnomaly | n
   return folio.anomalies.find((anomaly) => context.resolved[anomaly.id] !== true) ?? null;
 }
 
+/** Builds the live Coach Bar snapshot for the active anomaly, with its current 1-based line number. */
+function coachTargetOf(view: EditorView | null, context: BufferContext): ActiveCoachTarget | null {
+  const folio = context.folio;
+  if (!folio) return null;
+  const anomaly = view
+    ? countTarget(view, context)
+    : (folio.anomalies.find((entry) => context.resolved[entry.id] !== true) ?? null);
+  if (!anomaly) return null;
+
+  let displayLine = anomaly.line + 1;
+  if (view) {
+    const spans = spansFor(docLines(view.state.doc), anomaly);
+    if (spans[0]) displayLine = spans[0].line + 1;
+  }
+
+  const clean =
+    anomaly.expectedLine === null ? null : anomaly.expectedLine.slice(anomaly.colStart, anomaly.colEnd);
+  return {
+    id: anomaly.id,
+    kind: anomaly.kind,
+    line: displayLine,
+    label: anomaly.label,
+    corrupt: anomaly.targetText,
+    clean,
+    optimalHint: anomaly.optimalHint,
+    parKeys: anomaly.parKeys,
+  };
+}
+
+/** Counts how many anomalies in the current folio have been resolved so far. */
+function resolvedCountOf(folio: Folio | null, resolved: Readonly<Record<string, true>>): number {
+  if (!folio) return 0;
+  let n = 0;
+  for (const a of folio.anomalies) {
+    if (resolved[a.id] === true) n += 1;
+  }
+  return n;
+}
+
 /**
  * The page as the record says it stands: a folio that was half-mended when the tab closed opens with those
  * anomalies already mended, so a reload never shows paid-for rot. Only the kinds that are a single span (or
@@ -432,11 +503,11 @@ function anomalyMarks(context: BufferContext): Extension {
  */
 const editorTheme = EditorView.theme(
   {
-    "&": { backgroundColor: "transparent", color: "var(--ui-ink)", fontSize: "13.5px" },
+    "&": { backgroundColor: "transparent", color: "var(--ui-ink)", fontSize: "15px" },
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
       fontFamily: "var(--ui-font-num)",
-      lineHeight: "1.65",
+      lineHeight: "1.75",
       overflowX: "auto",
     },
     ".cm-content": { padding: "12px 0 20px", caretColor: "var(--ui-mode-insert)" },
@@ -541,6 +612,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const riteFamily = useGameState((state) => state.vim.pendingRiteFamily);
   const rules = useGameState((state) => state.trials.rules.join(","));
   const serial = useGameState((state) => state.vim.folioSerial);
+  const totalFoliosCleared = useGameState((state) => state.vim.totalFoliosCleared);
   const resolved = useGameState((state) => state.vim.resolvedAnomalyIds);
   const showLineNumbers = useGameState((state) => state.settings.showLineNumbers);
   const relativeNumbers = useGameState((state) => state.settings.relativeNumbers);
@@ -557,17 +629,26 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const includePawprint =
     serial > 0 && serial % pawEvery === 0 && (unlocked["op-delete"] === true || veteranMode);
 
+  const isFirstLesson =
+    serial === 0 &&
+    totalFoliosCleared === 0 &&
+    riteFamily === null &&
+    !veteranMode &&
+    challengeRules.length === 0;
+
   const folio = useMemo(
     () =>
-      generateFolio({
-        seed,
-        unlocked,
-        actTier,
-        riteFamily: riteFamily ?? undefined,
-        challengeRules,
-        includePawprint,
-      }),
-    [seed, unlocked, actTier, riteFamily, challengeRules, includePawprint],
+      isFirstLesson
+        ? FIRST_LESSON_FOLIO
+        : generateFolio({
+            seed,
+            unlocked,
+            actTier,
+            riteFamily: riteFamily ?? undefined,
+            challengeRules,
+            includePawprint,
+          }),
+    [isFirstLesson, seed, unlocked, actTier, riteFamily, challengeRules, includePawprint],
   );
 
   // The plugin and the gutter read the live context, so a new page or a cleared anomaly is visible without
@@ -1050,6 +1131,30 @@ export function BufferEditor({ className }: BufferEditorProps) {
           );
           return;
         }
+        case "buffer":
+        case "codex":
+        case "expeditions":
+        case "mosaic":
+        case "volumes":
+        case "trials":
+        case "marginalia":
+        case "log":
+        case "scribes": {
+          const target =
+            name === "buffer"
+              ? "make"
+              : name === "codex"
+                ? "tree"
+                : name === "volumes"
+                  ? "prestige"
+                  : name === "trials"
+                    ? "challenges"
+                    : name === "marginalia" || name === "log"
+                      ? "achievements"
+                      : name;
+          window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: { target } }));
+          return;
+        }
         case "!":
           if (/^rm\b/i.test(body)) {
             say(egg("rm-rf-denied"));
@@ -1094,6 +1199,8 @@ export function BufferEditor({ className }: BufferEditorProps) {
             publishStatus({
               line: info.number,
               col: update.state.selection.main.head - info.from + 1,
+              activeTarget: coachTargetOf(update.view, context.current),
+              resolvedCount: resolvedCountOf(context.current.folio, store.getState().vim.resolvedAnomalyIds),
             });
           }),
         ],
@@ -1113,11 +1220,19 @@ export function BufferEditor({ className }: BufferEditorProps) {
     if (typeof window !== "undefined" && window.matchMedia?.("(min-width: 900px)").matches) {
       view.focus();
     }
+    const onFocusRequest = () => view.focus();
+    window.addEventListener(FOCUS_BUFFER_EVENT, onFocusRequest);
     publishStatus({
       mode: "normal",
       riteBanner: context.current.folio?.riteBanner ?? null,
       message: context.current.folio?.riteBanner ?? "",
       pending: "",
+      folioTitle: context.current.folio?.title ?? "",
+      isRite: context.current.folio?.isRite ?? false,
+      riteFamily: context.current.folio?.riteFamily ?? null,
+      resolvedCount: resolvedCountOf(context.current.folio, context.current.resolved),
+      totalAnomalies: context.current.folio?.anomalies.length ?? 0,
+      activeTarget: coachTargetOf(view, context.current),
     });
 
     const cm = getCM(view);
@@ -1230,6 +1345,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
     return () => {
       resetHint();
       ro?.disconnect();
+      window.removeEventListener(FOCUS_BUFFER_EVENT, onFocusRequest);
       frame?.removeEventListener("keydown", onPromptKey, true);
       document.removeEventListener("pointerdown", onPointerDown, true);
       cm?.off("vim-mode-change", onModeChange);
@@ -1267,6 +1383,12 @@ export function BufferEditor({ className }: BufferEditorProps) {
       whisper: null,
       line: 1,
       col: 1,
+      folioTitle: folio.title,
+      isRite: folio.isRite,
+      riteFamily: folio.riteFamily ?? null,
+      resolvedCount: resolvedCountOf(folio, context.current.resolved),
+      totalAnomalies: folio.anomalies.length,
+      activeTarget: coachTargetOf(view, context.current),
     });
   }, [folio]);
 
@@ -1275,6 +1397,13 @@ export function BufferEditor({ className }: BufferEditorProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: these three are the trigger, not the payload
   useEffect(() => {
     viewRef.current?.dispatch({ effects: annotate.of(null) });
+    if (viewRef.current) {
+      publishStatus({
+        resolvedCount: resolvedCountOf(context.current.folio, context.current.resolved),
+        totalAnomalies: context.current.folio?.anomalies.length ?? 0,
+        activeTarget: coachTargetOf(viewRef.current, context.current),
+      });
+    }
   }, [resolved, folio, blind]);
 
   // Line numbers: the setting, the trial's blind gutter, and the relative option. The reconfigure is the
@@ -1421,6 +1550,15 @@ function bindExOnce(router: ExRouter): void {
     ["colorscheme", "colo"],
     ["set", "set"],
     ["vsplit", "vs"],
+    ["buffer", "buf"],
+    ["codex", "codex"],
+    ["expeditions", "exp"],
+    ["mosaic", "mosaic"],
+    ["volumes", "vol"],
+    ["trials", "trials"],
+    ["marginalia", "marg"],
+    ["log", "log"],
+    ["scribes", "scribes"],
     ["!", "!"],
   ];
   for (const [name, prefix] of BINDINGS) Vim.defineEx(name, prefix, answer(name));

@@ -27,6 +27,10 @@ export interface Settings {
   tintPreset: "amber" | "jade" | "paper" | "midnight";
   /** Draw the touch keypad under the editor, for a phone. */
   touchKeypad: boolean;
+  /** Whether the player has dismissed the opening desk arrival plate. */
+  welcomed: boolean;
+  /** Show the live Target Coach strip above the buffer. */
+  showCoach: boolean;
 }
 
 /**
@@ -38,7 +42,7 @@ export const settings = playerSettings({
   initial: (): Settings => ({
     sound: true,
     motion: "system",
-    jkEscape: true,
+    jkEscape: false,
     veteranMode: false,
     arrowShame: "shame",
     showChalkboard: true,
@@ -46,5 +50,7 @@ export const settings = playerSettings({
     showLineNumbers: true,
     tintPreset: "amber",
     touchKeypad: false,
+    welcomed: false,
+    showCoach: true,
   }),
 });

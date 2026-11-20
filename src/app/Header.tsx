@@ -1,4 +1,5 @@
 import { fmt } from "watchpot/core";
+import { CURRENCY_HELP } from "../content/guide";
 import { CURRENCY, type Currency, NAME, STAT, WORDS } from "../content/words";
 import { stats } from "../game/stats";
 import { Button } from "../ui/Button";
@@ -8,14 +9,24 @@ import s from "./app.module.css";
 import { useGameState } from "./hooks";
 import { glyphOf } from "./icons";
 
-/** The balances always in the header: the run's own two. */
-const ALWAYS: readonly Currency[] = ["glyphs", "ink"];
+/** Tooltip body for a currency pill: plain-English summary of where it comes from and what it buys. */
+function CurrencyHelp({ currency }: { currency: Currency }) {
+  const info = CURRENCY_HELP[currency];
+  return (
+    <span className={s.breakdown}>
+      <span className={s.breakdownHead}>{info.title}</span>
+      <span className={s.tipLine}>{info.summary}</span>
+      <span className={s.tipMuted}>{info.detail}</span>
+    </span>
+  );
+}
 
-/** One line of the Clarity breakdown: where the multiplier came from, and what it gave. */
+/** One line of the Clarity breakdown: plain-English intro, then each contributing source. */
 function Breakdown({ rows }: { rows: ReturnType<typeof stats.select.parts> }) {
   return (
     <span className={s.breakdown}>
       <span className={s.breakdownHead}>{STAT.output}</span>
+      <span className={s.tipMuted}>Global multiplier on every Glyph you earn.</span>
       {rows.length === 0 && <span className={s.breakdownRow}>Nothing raises it yet.</span>}
       {rows.map((row, index) => (
         <span key={`${index}:${row.label}`} className={s.breakdownRow} data-muted={row.muted ?? undefined}>
@@ -34,47 +45,57 @@ function Breakdown({ rows }: { rows: ReturnType<typeof stats.select.parts> }) {
 
 /** Props of the header: the two sheets it can open. */
 export interface HeaderProps {
-  /** The Vim reference sheet, from the `?`. */
+  /** The Vim reference & glossary sheet, from `? Help` or `:help`. */
   onHelp(): void;
   /** The settings sheet. */
   onAbout(): void;
 }
 
 /**
- * The header: the game's name in `Cardo`, an ASCII rule, a cell per balance, the Clarity breakdown behind its
- * figure, and the two sheets. A reading a screen does not need is not taken here: the pills read the wallet, the
- * breakdown is worked out when the header renders, and nothing watches the clock.
+ * The header: whisper-quiet at 0:00 (just title, ? Help, Settings), progressively revealing labeled
+ * currency pills with plain-English tooltips and Clarity as the player earns them.
  */
 export function Header({ onHelp, onAbout }: HeaderProps) {
   const wallet = useGameState((st) => st.wallet);
+  const folios = useGameState((st) => st.vim.totalFoliosCleared);
   const clarity = useGameState((st) => fmt(st.stats.output, { decimals: 2 }).text);
-  // The deeper currencies are earned late: they appear once there is something to count.
-  const shown = WORDS.currencies.filter((c) => ALWAYS.includes(c) || wallet[c].gt(0));
-  // A breakdown is only worked out when the header has something to show it for, and a fresh state is what it reads.
   const state = useGameState((st) => st);
   const rows = stats.select.parts(state, "output");
+
+  // Reveal currencies as the player touches them so 0:00 never shows a row of cryptic zeroes.
+  const shown = WORDS.currencies.filter((c) => {
+    if (c === "glyphs") return folios > 0 || wallet.glyphs.gt(0) || wallet.earned.gt(0);
+    if (c === "ink") return folios > 0 || wallet.ink.gt(0);
+    return wallet[c].gt(0);
+  });
+  const showClarity = folios > 0 || state.stats.output.gt(1.001);
+
   return (
     <header className={s.header}>
       <p className={s.name}>{NAME}</p>
-      <span className={s.rule} aria-hidden="true">
-        ├──────────┤
-      </span>
-      <div className={s.pills}>
-        {shown.map((c) => (
-          <CurrencyPill
-            key={c}
-            id={c}
-            glyph={glyphOf(CURRENCY[c].glyph)}
-            word={CURRENCY[c].plural}
-            amount={fmt(wallet[c]).text}
-          />
-        ))}
-        <Tooltip content={<Breakdown rows={rows} />} side="bottom">
-          <button type="button" className={s.clarity}>
-            {STAT.output} ×{clarity}
-          </button>
-        </Tooltip>
-      </div>
+      {shown.length > 0 && (
+        <div className={s.pills}>
+          {shown.map((c) => (
+            <Tooltip key={c} content={<CurrencyHelp currency={c} />} side="bottom">
+              <span className={s.pillTrigger}>
+                <CurrencyPill
+                  id={c}
+                  glyph={glyphOf(CURRENCY[c].glyph)}
+                  word={CURRENCY[c].plural}
+                  amount={fmt(wallet[c]).text}
+                />
+              </span>
+            </Tooltip>
+          ))}
+          {showClarity && (
+            <Tooltip content={<Breakdown rows={rows} />} side="bottom">
+              <button type="button" className={s.clarity}>
+                {STAT.output} ×{clarity}
+              </button>
+            </Tooltip>
+          )}
+        </div>
+      )}
       <div className={s.headActions}>
         <Button variant="ghost" onClick={onHelp}>
           ? Help

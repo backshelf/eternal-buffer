@@ -37,6 +37,22 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+.pillTrigger {
+  display: inline-flex;
+  cursor: help;
+}
+.tipLine {
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.tipMuted {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font);
+  font-size: 11px;
+  line-height: 1.4;
+}
 /* The Clarity figure: a pill like the balances, and the one thing in the header that answers a hover. */
 .clarity {
   padding: 2px 8px;
@@ -224,6 +240,91 @@
   margin: 0;
   color: var(--ui-ink-muted);
   font-size: 12px;
+  line-height: 1.45;
+}
+.helpTabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: var(--ui-hairline);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+.helpTab {
+  padding: 5px 10px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.helpTab[aria-selected="true"] {
+  border-color: var(--ui-accent);
+  background-color: var(--ui-surface);
+  color: var(--ui-accent);
+}
+.helpPanel {
+  display: grid;
+  gap: 12px;
+}
+.refFamilyBlock {
+  display: grid;
+  gap: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--ui-line);
+}
+.helpKeyGrid {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+.helpKeyRow {
+  display: grid;
+  grid-template-columns: minmax(56px, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+}
+.helpKeyCap {
+  padding: 1px 6px;
+  border: 1px solid var(--ui-line);
+  background-color: var(--ui-ground);
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
+}
+.helpKeyDesc {
+  margin: 0;
+  color: var(--ui-ink);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.glossaryList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.glossaryItem {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: var(--ui-hairline);
+  border-left: 2px solid var(--ui-accent);
+  background-color: var(--ui-sunken);
+}
+.glossaryTerm {
+  font-family: var(--ui-font-num);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ui-accent);
+}
+.glossaryDesc {
+  margin: 0;
+  color: var(--ui-ink);
+  font-size: 12.5px;
   line-height: 1.45;
 }
 

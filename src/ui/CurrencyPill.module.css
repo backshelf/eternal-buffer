@@ -38,7 +38,18 @@
 .amount {
   font-family: var(--ui-font-num);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
+}
+.word {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+@media (max-width: 720px) {
+  .word {
+    display: none;
+  }
 }

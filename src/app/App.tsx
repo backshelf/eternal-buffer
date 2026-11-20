@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Decimal } from "watchpot/core";
 import { DevPanel } from "watchpot/devtools";
 import { MarkLayer } from "watchpot/kit";
@@ -6,8 +6,9 @@ import { useGameRuntime } from "watchpot/react";
 import { pinShaderClock, ShaderPool } from "watchpot/shader";
 import type { SheetRegistry } from "watchpot/ui";
 import { AwayModal } from "../components/AwayModal";
-import { HELP_EVENT } from "../components/BufferEditor";
+import { FOCUS_BUFFER_EVENT, HELP_EVENT, NAV_EVENT, publishStatus } from "../components/BufferEditor";
 import { MomentOverlay } from "../components/MomentOverlay";
+import { WelcomeOverlay } from "../components/WelcomeOverlay";
 import { LATE_RATE } from "../content/economy";
 import { NAME } from "../content/words";
 import { incomeOf } from "../game/income";
@@ -24,7 +25,7 @@ import { marks, wireArchiveWatch } from "./feel";
 import { Header } from "./Header";
 import { useGameState, useGameStore } from "./hooks";
 import { sound } from "./sound";
-import { TAB_WORDS, type Tab, useTabs } from "./tabs";
+import { isTabRevealed, TAB_WORDS, type Tab, useTabs } from "./tabs";
 import { VisitorLayer } from "./Visitor";
 
 /** The global sheets, by kind. A new sheet adds its kind here and its line to the registry. */
@@ -142,13 +143,46 @@ export function App() {
    * A tab press. Leaving the Buffer for the Mosaic, the Expeditions or the Codex is a breather, not a lapse in
    * practice: the Flow is held for twenty seconds of game time so a look at the board never wipes the streak.
    */
-  const selectTab = (next: Tab) => {
-    if (tab === "make" && next !== "make") {
-      const state = store.getState();
-      state.vim.setGrace(state.gameNow() + 20_000);
-    }
-    setTab(next);
-  };
+  const selectTab = useCallback(
+    (next: Tab) => {
+      if (tab === "make" && next !== "make") {
+        const state = store.getState();
+        state.vim.setGrace(state.gameNow() + 20_000);
+      }
+      setTab(next);
+      if (next === "make") {
+        window.setTimeout(() => window.dispatchEvent(new Event(FOCUS_BUFFER_EVENT)), 30);
+      }
+    },
+    [store, tab],
+  );
+
+  // Vim `:ex` screen navigation (`:buf`, `:codex`, `:exp`, `:mosaic`, `:vol`, `:trials`, `:log`).
+  useEffect(() => {
+    const onNav = (event: Event) => {
+      const target = (event as CustomEvent<{ target?: string }>).detail?.target;
+      if (!target || target === "scribes") return;
+      const valid: readonly Tab[] = [
+        "make",
+        "tree",
+        "expeditions",
+        "mosaic",
+        "prestige",
+        "challenges",
+        "achievements",
+      ];
+      if (!(valid as readonly string[]).includes(target)) return;
+      const next = target as Tab;
+      const live = store.getState();
+      if (!isTabRevealed(live, next) && !live.settings.veteranMode) {
+        publishStatus({ message: `:${target} is still sealed — keep mending folios to open it.` });
+        return;
+      }
+      selectTab(next);
+    };
+    window.addEventListener(NAV_EVENT, onNav);
+    return () => window.removeEventListener(NAV_EVENT, onNav);
+  }, [store, selectTab]);
 
   const backdrop = BACKDROP && (
     <Backdrop
@@ -179,6 +213,7 @@ export function App() {
         backdrop={backdrop}
         overlays={
           <>
+            <WelcomeOverlay />
             <VisitorLayer />
             <EarnedToasts />
             <ArchiveShows />

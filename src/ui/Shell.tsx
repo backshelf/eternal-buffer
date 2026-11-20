@@ -63,6 +63,7 @@ export function Shell<T extends string, S extends { kind: string } = never>({
     () => Object.fromEntries(tabs.map((t) => [t.id, t.Screen])) as unknown as ScreenTable<T>,
     [tabs],
   );
+  const showNav = tabs.length > 1;
   return (
     <PageRootContext.Provider value={root}>
       <PageShell<T, never, S>
@@ -76,16 +77,18 @@ export function Shell<T extends string, S extends { kind: string } = never>({
         onCloseSheet={onCloseSheet}
         covered={sheet !== null}
         header={header && ((frame) => <div className={s.header}>{header(frame)}</div>)}
-        nav={(frame) => (
-          <TabBar
-            tabs={tabs}
-            current={tab}
-            onSelect={(id) => (id === tab ? frame.reselect() : onSelectTab(id))}
-            label={label}
-            words={tabWords}
-            rail={frame.wide}
-          />
-        )}
+        nav={(frame) =>
+          showNav ? (
+            <TabBar
+              tabs={tabs}
+              current={tab}
+              onSelect={(id) => (id === tab ? frame.reselect() : onSelectTab(id))}
+              label={label}
+              words={tabWords}
+              rail={frame.wide}
+            />
+          ) : null
+        }
         overlays={
           <>
             {backdrop}

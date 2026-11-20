@@ -1,6 +1,6 @@
-// Mounts the whole assembled page once, inside `<StrictMode>`, and walks all seven tabs: the proof that the game
-// renders what it says it renders, that every screen mounts without throwing, and that the editor and Tilde are
-// really there under it. happy-dom: no CSS, no layout, no WebGL2, so this asserts what is drawn, never where.
+// Mounts the whole assembled page once, inside `<StrictMode>`, and verifies both the calm 0:00
+// progressive-disclosure start (Welcome plate -> Folio 0 interactive lesson with live Coach bar)
+// and full 7-tab navigation once the archive has opened.
 import { describe, expect, test } from "bun:test";
 import { fireEvent, screen } from "@testing-library/react";
 import { StrictMode } from "react";
@@ -13,24 +13,23 @@ import { game } from "../src/game/game";
 /** Every face Tilde can wear, so her statusline frame is found whatever mood she is in. */
 const FACES = Object.values(TILDE_FRAMES).flat();
 
-/** The seven tabs in reading order, with the heading each screen draws, and the tab whose screen has none. */
+/** The seven tabs in progressive discovery order, with the heading each screen draws. */
 const SCREENS = [
   { id: "make", label: TAB_NAMES.make, heading: false },
-  { id: "mosaic", label: TAB_NAMES.mosaic, heading: true },
-  { id: "expeditions", label: TAB_NAMES.expeditions, heading: true },
   { id: "tree", label: TAB_NAMES.tree, heading: true },
+  { id: "expeditions", label: TAB_NAMES.expeditions, heading: true },
+  { id: "mosaic", label: TAB_NAMES.mosaic, heading: true },
   { id: "prestige", label: TAB_NAMES.prestige, heading: true },
   { id: "challenges", label: TAB_NAMES.challenges, heading: true },
   { id: "achievements", label: TAB_NAMES.achievements, heading: true },
 ] as const;
 
-/**
- * The page over a seeded profile, mounted the way the entry point mounts it. happy-dom has no stylesheet, so
- * `useShaderTokens` finds no `--ui-*` value and says so on the console once per surface: each then draws its still
- * instead of a canvas, which is the same branch a browser without WebGL2 takes.
- */
-function mount() {
+function mount(opts?: { unlockAll?: boolean }) {
   const { store } = freshStore(game, { seed: "smoke" });
+  if (opts?.unlockAll) {
+    store.getState().settings.change({ welcomed: true });
+    store.getState().wallet.credit("seals", 1);
+  }
   const view = renderWith(
     store,
     <StrictMode>
@@ -44,42 +43,50 @@ function mount() {
 const tab = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}`) });
 
 describe("the page", () => {
-  test("mounts under StrictMode and shows the Buffer", () => {
-    mount();
+  test("mounts under StrictMode with calm 0:00 progressive start and Folio 0 interactive lesson", () => {
+    const { store } = mount();
 
-    // The header names the game.
-    expect(screen.getByText(NAME)).toBeDefined();
+    // `jk` escape defaults to off so beginners learn standard Esc first.
+    expect(store.getState().settings.jkEscape).toBe(false);
 
-    // The hero buffer: its own landmark, the Ex line's mode pill, and the editor CodeMirror mounted into it.
+    // Arrival plate is shown on a fresh save and names the game.
+    expect(screen.getAllByText(NAME).length).toBeGreaterThan(0);
+    const sitButton = screen.getByRole("button", { name: /Sit at the desk/i });
+    fireEvent.click(sitButton);
+    expect(store.getState().settings.welcomed).toBe(true);
+
+    // At 0:00 only the Buffer exists, so the secondary tab bar is hidden.
+    expect(screen.queryByRole("button", { name: /^Codex/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Mosaic/ })).toBeNull();
+
+    // The hero buffer, live Coach bar, Ex line, and Tilde statusline are all live.
     const buffer = screen.getByRole("region", { name: "The buffer" });
     expect(buffer).toBeDefined();
+    expect(screen.getByRole("region", { name: "Live mending coach" })).toBeDefined();
     expect(screen.getByText("-- NORMAL --")).toBeDefined();
     expect(document.querySelector(".cm-editor")).not.toBeNull();
 
-    // Tilde's statusline: one of her faces and her bond.
     const said = document.body.textContent ?? "";
     expect(FACES.some((face) => said.includes(face))).toBe(true);
     expect(said).toContain("BOND 0");
-    // The Ex line rests with its own words rather than a stale message.
-    expect(said).toContain(": for the console · ? for a whisper");
+    expect(said).toContain("INTERACTIVE LESSON");
+    expect(said).toContain("vellØum");
   });
 
-  test("opens every one of the seven tabs without throwing", () => {
-    mount();
+  test("opens every one of the seven tabs without throwing once unlocked", () => {
+    mount({ unlockAll: true });
 
     for (const entry of SCREENS) {
       fireEvent.click(tab(entry.label));
-      // The page is on the tab it was sent to, and its screen drew.
       expect(document.querySelector(`[data-tab="${entry.id}"]`)).not.toBeNull();
       if (entry.heading) {
         expect(screen.getByRole("heading", { level: 1, name: entry.label })).toBeDefined();
       } else {
-        // The Buffer's heading is the editor's landmark, not a title above it.
         expect(screen.getByRole("region", { name: "The buffer" })).toBeDefined();
       }
     }
 
-    // And back to the buffer, the editor rebuilt by the tab change.
+    // Back to the buffer, the editor rebuilt cleanly.
     fireEvent.click(tab(TAB_NAMES.make));
     expect(document.querySelector(".cm-editor")).not.toBeNull();
     expect(screen.getByText("-- NORMAL --")).toBeDefined();

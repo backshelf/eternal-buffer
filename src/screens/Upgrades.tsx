@@ -4,6 +4,7 @@ import { Tabs } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
 import { glyphOf } from "../app/icons";
 import { playActUnlock, playBuy } from "../app/sound";
+import { FOCUS_BUFFER_EVENT, NAV_EVENT } from "../components/BufferEditor";
 import { NODES, RUN_NODES, SEAL_NODES, type UpgradeNode } from "../content/tree";
 import {
   ACTS,
@@ -124,8 +125,15 @@ function NodeCard({ row, onBuy }: { row: NodeRow; onBuy: () => void }) {
 /** The 23 Keycap Families, Act by Act: what each claims, what it costs, and whether it may be bought. */
 function Keycaps({ st }: { st: GameState }) {
   const bound = KEY_FAMILIES.filter((family) => st.vim.unlockedFamilies[family.id] === true).length;
+  const goPractice = () => {
+    window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: { target: "make" } }));
+    window.setTimeout(() => window.dispatchEvent(new Event(FOCUS_BUFFER_EVENT)), 40);
+  };
   const unlock = (family: KeyFamilyDef) => {
-    if (st.vim.unlockFamily(family.id)) playActUnlock();
+    if (!st.vim.unlockFamily(family.id)) return;
+    playActUnlock();
+    // In guided mode, jump straight into the family's interactive Practice Rite lesson.
+    if (!st.settings.veteranMode && family.cost.amount > 0) goPractice();
   };
   return (
     <>
@@ -190,7 +198,13 @@ function Keycaps({ st }: { st: GameState }) {
                                 : "From the first night"}
                       </span>
                       {isBound ? (
-                        <span className={s.bound}>Bound</span>
+                        priced && !rite && st.vim.pendingRiteFamily === family.id ? (
+                          <Button variant="primary" onClick={goPractice}>
+                            Practice →
+                          </Button>
+                        ) : (
+                          <span className={s.bound}>Bound</span>
+                        )
                       ) : (
                         <Button
                           variant={ready && affordable ? "primary" : "secondary"}

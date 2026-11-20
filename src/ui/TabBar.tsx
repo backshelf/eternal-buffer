@@ -7,6 +7,8 @@ import s from "./TabBar.module.css";
 export interface TabBarItem<T extends string = string> {
   id: T;
   label: string;
+  /** Optional Vim `:ex` command alias displayed subtly on desktop (e.g. `:codex`). */
+  exCmd?: string;
   icon?: ReactNode;
   /** Things waiting: a figure on the tab, said in `words.count`. */
   count?: number;
@@ -65,6 +67,11 @@ export function TabBar<T extends string>({
             </span>
           )}
           <span className={s.label}>{tab.label}</span>
+          {rail && tab.exCmd && (
+            <span className={s.exCmd} aria-hidden="true">
+              {tab.exCmd}
+            </span>
+          )}
           <NavTabs.Badge className={s.count} format={badgeText} />
         </NavTabs.Item>
       ))}

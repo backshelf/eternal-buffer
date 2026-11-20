@@ -302,8 +302,8 @@ function planCharRot(g: Gen, spec: AnomalySpec, options: CharRotOptions = {}): S
     hasSnipe && hasReplace
       ? `f${rot} r${cleanChar}`
       : hasSnipe
-        ? `f${rot} x i ${cleanChar} jk`
-        : `h/j/k/l to ${rot}, then x i ${cleanChar} jk`;
+        ? `f${rot} x i ${cleanChar} Esc`
+        : `h/j/k/l to ${rot}, then x i ${cleanChar} Esc`;
   const parKeys = hasSnipe && hasReplace ? 4 : hasSnipe ? 7 : 10;
 
   return accept(g, {
@@ -351,7 +351,7 @@ function planMissingRune(g: Gen, spec: AnomalySpec): SitePlan | null {
       ? `f[ cw ${site.word} Esc`
       : hasChange
         ? `cw ${site.word} Esc`
-        : `x x x i ${site.word} jk`;
+        : `x x x i ${site.word} Esc`;
   const parKeys = (hasChange ? 6 : 9) + site.word.length;
   return accept(g, {
     draft: {

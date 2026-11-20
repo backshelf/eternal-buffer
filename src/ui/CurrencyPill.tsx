@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cx, VisuallyHidden } from "watchpot/ui";
+import { cx } from "watchpot/ui";
 import s from "./CurrencyPill.module.css";
 
 /** Props of `CurrencyPill`: which currency, its glyph, its balance and its word. */
@@ -14,7 +14,7 @@ export interface CurrencyPillProps {
   className?: string;
 }
 
-/** A balance in the header: the glyph, the figure in the number face, the word for assistive tech. */
+/** A balance in the header: the glyph, the figure in the number face, and a readable label on desktop. */
 export function CurrencyPill({ id, glyph, amount, word, className }: CurrencyPillProps) {
   return (
     <span
@@ -28,7 +28,7 @@ export function CurrencyPill({ id, glyph, amount, word, className }: CurrencyPil
         </span>
       )}
       <span className={s.amount}>{amount}</span>
-      <VisuallyHidden> {word}</VisuallyHidden>
+      <span className={s.word}>{word}</span>
     </span>
   );
 }

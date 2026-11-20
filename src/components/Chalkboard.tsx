@@ -1,8 +1,11 @@
-// The Chalkboard: the keycap strip under the buffer. It shows what you own, what is still sealed, which cap
-// you just pressed, the Practice Rite you are in, and the whisper the archive is willing to give you.
+// The Chalkboard: the interactive keycap strip under the buffer. Shows every key you own,
+// depresses whichever cap you just pressed, explains any cap on hover/focus in plain English,
+// and carries the archive's whisper line.
 import { cx } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
+import { KEY_GLOSS } from "../content/guide";
 import { ACTS, type ActDef, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
+import { Tooltip } from "../ui/Tooltip";
 import { useBufferStatus } from "./BufferEditor";
 import s from "./Chalkboard.module.css";
 
@@ -16,7 +19,7 @@ export interface ChalkboardProps {
   compact?: boolean;
 }
 
-/** One Act's row of keycaps, as the Chalkboard draws it. */
+/** One Act's row of keycaps, each with a plain-English hover tooltip. */
 function ActStrip({
   act,
   owned,
@@ -42,11 +45,16 @@ function ActStrip({
           return (
             <li key={family.id} className={s.family}>
               {compact || sameAsAct ? null : <span className={s.familyName}>{family.name}</span>}
-              {family.keys.slice(0, CAPS_PER_FAMILY).map((key) => (
-                <span key={`${family.id}-${key}`} className={s.cap} data-pressed={key === lastKey || null}>
-                  {key}
-                </span>
-              ))}
+              {family.keys.slice(0, CAPS_PER_FAMILY).map((key) => {
+                const gloss = KEY_GLOSS[key] ?? family.chalkSummary;
+                return (
+                  <Tooltip key={`${family.id}-${key}`} content={`${key} — ${gloss}`} side="top">
+                    <span className={s.cap} data-pressed={key === lastKey || null}>
+                      {key}
+                    </span>
+                  </Tooltip>
+                );
+              })}
               {extra > 0 && <span className={s.more}>+{extra}</span>}
             </li>
           );
@@ -68,7 +76,6 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
 
   if (!show) return null;
 
-  // The two families every archivist is handed at the door are free, so they read as owned from minute one.
   const owned = (id: KeyFamilyId) => unlocked[id] === true || FAMILY_BY_ID[id].cost.amount === 0;
   const started = ACTS.filter((act) =>
     KEY_FAMILIES.some((family) => family.act === act.id && owned(family.id)),
@@ -79,33 +86,34 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
 
   return (
     <figure className={cx(s.board, className)} aria-label="Chalkboard">
-      {status.riteBanner !== null && (
-        <figcaption className={s.ribbon}>
-          <span className={s.ribbonMark}>PRACTICE RITE</span> {status.riteBanner}
-        </figcaption>
-      )}
       <div className={s.acts}>
         {started.map((act) => (
           <ActStrip key={act.id} act={act} owned={owned} lastKey={status.lastKey} compact={compact} />
         ))}
         {sealed && sealedFamily && (
-          <div className={s.act} data-sealed="">
-            <span className={s.actLabel}>
-              <span className={s.actNumeral}>{sealed.numeral}</span>
-              {compact ? null : <span className={s.actTitle}>sealed</span>}
-            </span>
-            <span className={s.teaser}>
-              <span className={s.cap} data-locked="">
-                ?
+          <Tooltip
+            content={`Next Act: ${sealed.title} — unlock ${sealedFamily.name} in the Codex (:codex)`}
+            side="top"
+          >
+            <div className={s.act} data-sealed="">
+              <span className={s.actLabel}>
+                <span className={s.actNumeral}>{sealed.numeral}</span>
+                {compact ? null : <span className={s.actTitle}>sealed</span>}
               </span>
-              {sealedFamily.name}
-            </span>
-          </div>
+              <span className={s.teaser}>
+                <span className={s.cap} data-locked="">
+                  ?
+                </span>
+                {sealedFamily.name}
+              </span>
+            </div>
+          </Tooltip>
         )}
       </div>
-      {owed && (
+      {owed && !status.isRite && (
         <p className={s.nextRite}>
-          Next rite · <span className={s.nextRiteFamily}>{owed.name}</span> — {owed.chalkSummary}
+          Next interactive lesson · <span className={s.nextRiteFamily}>{owed.name}</span> —{" "}
+          {owed.chalkSummary}
         </p>
       )}
       <p
@@ -115,8 +123,8 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
       >
         {status.whisper ??
           (started.length <= 1
-            ? "Move to red rot with h j k l · x cuts a char · i enters Insert (jk or Esc exits) · ? whispers a hint"
-            : "Press ? in Normal mode for a whisper · : for the Ex console")}
+            ? "Hover any keycap for its action · ? whispers a hint · : opens the command console"
+            : "Hover any keycap for its action · ? whispers a hint · :codex / :exp / :mosaic / :help")}
       </p>
     </figure>
   );

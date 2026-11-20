@@ -31,17 +31,36 @@ export const TAB_WORDS: NavTabsWords = {
   count: (count) => `, ${count} waiting`,
 };
 
-/** The seven tabs, in order, before anything live is read off them. */
+/** The seven tabs, in progressive discovery order, with their `:ex` command aliases. */
 const SCREENS: readonly ShellTab<Tab>[] = [
-  { id: "make", label: TAB_NAMES.make, icon: TAB_ICONS.make, Screen: MakeScreen },
-  { id: "mosaic", label: TAB_NAMES.mosaic, icon: TAB_ICONS.mosaic, Screen: MosaicScreen },
-  { id: "expeditions", label: TAB_NAMES.expeditions, icon: TAB_ICONS.expeditions, Screen: ExpeditionsScreen },
-  { id: "tree", label: TAB_NAMES.tree, icon: TAB_ICONS.tree, Screen: UpgradesScreen },
-  { id: "prestige", label: TAB_NAMES.prestige, icon: TAB_ICONS.prestige, Screen: PrestigeScreen },
-  { id: "challenges", label: TAB_NAMES.challenges, icon: TAB_ICONS.challenges, Screen: ChallengesScreen },
+  { id: "make", label: TAB_NAMES.make, exCmd: ":buf", icon: TAB_ICONS.make, Screen: MakeScreen },
+  { id: "tree", label: TAB_NAMES.tree, exCmd: ":codex", icon: TAB_ICONS.tree, Screen: UpgradesScreen },
+  {
+    id: "expeditions",
+    label: TAB_NAMES.expeditions,
+    exCmd: ":exp",
+    icon: TAB_ICONS.expeditions,
+    Screen: ExpeditionsScreen,
+  },
+  { id: "mosaic", label: TAB_NAMES.mosaic, exCmd: ":mosaic", icon: TAB_ICONS.mosaic, Screen: MosaicScreen },
+  {
+    id: "prestige",
+    label: TAB_NAMES.prestige,
+    exCmd: ":vol",
+    icon: TAB_ICONS.prestige,
+    Screen: PrestigeScreen,
+  },
+  {
+    id: "challenges",
+    label: TAB_NAMES.challenges,
+    exCmd: ":trials",
+    icon: TAB_ICONS.challenges,
+    Screen: ChallengesScreen,
+  },
   {
     id: "achievements",
     label: TAB_NAMES.achievements,
+    exCmd: ":log",
     icon: TAB_ICONS.achievements,
     Screen: AchievementsScreen,
   },
@@ -71,10 +90,58 @@ const craftablePieces = (st: GameState) =>
 const openTrials = (st: GameState) =>
   CHALLENGES.reduce((n, challenge) => n + (trials.select.check(st, challenge.id) === null ? 1 : 0), 0);
 
+/** Total Scribes owned across all tiers (one Wax-Sealed Moth starts free at the desk). */
+const totalScribes = (st: GameState) =>
+  Object.values(st.generators.owned).reduce((sum, count) => sum + count, 0);
+
+/** Total Expeditions ever completed or currently active. */
+const anyExpedition = (st: GameState) =>
+  st.expeditions.active.length > 0 || Object.values(st.expeditions.done).some((count) => count > 0);
+
 /**
- * The tab bar with what is waiting behind each screen. Each count is a figure off the state or read in render
- * (never a fresh object out of a selector), and the list is rebuilt only when a count changes, so the shell's
- * screen table stays put while the game ticks.
+ * Progressive disclosure: returns whether a tab has been earned/revealed for the current save.
+ * Fresh saves start with ONLY the Buffer; each system opens as it becomes relevant, while
+ * existing/veteran saves with progress automatically see every screen they have reached.
+ */
+export function isTabRevealed(st: GameState, id: Tab): boolean {
+  if (id === "make") return true;
+  const hasPrestiged = st.wallet.sealsEver.gte(1) || st.wallet.codicesEver.gte(1);
+  if (id === "tree") {
+    return hasPrestiged || st.vim.totalFoliosCleared >= 1 || st.wallet.earned.gte(20);
+  }
+  if (id === "expeditions") {
+    return (
+      hasPrestiged ||
+      st.vim.totalFoliosCleared >= 2 ||
+      totalScribes(st) >= 2 ||
+      (st.vim.totalFoliosCleared >= 1 && st.wallet.ink.gte(3)) ||
+      anyExpedition(st)
+    );
+  }
+  if (id === "mosaic") {
+    return (
+      hasPrestiged ||
+      st.vim.totalFoliosCleared >= 3 ||
+      (st.vim.totalFoliosCleared >= 1 && st.wallet.ink.gte(10)) ||
+      st.wallet.shards.gt(0) ||
+      anyExpedition(st)
+    );
+  }
+  if (id === "prestige") {
+    return hasPrestiged || st.wallet.earned.gte(5_000);
+  }
+  if (id === "challenges") {
+    return hasPrestiged || st.vim.highestAct >= 3;
+  }
+  if (id === "achievements") {
+    return hasPrestiged || Object.keys(st.achievements.earned).length > 0;
+  }
+  return true;
+}
+
+/**
+ * The tab bar with progressive reveal and live waiting counts. Only revealed tabs appear in the
+ * bufferline, so a fresh player begins with a calm blank desk and watches the archive open around them.
  */
 export function useTabs(): readonly ShellTab<Tab>[] {
   const now = useClockNow(1000);
@@ -86,21 +153,52 @@ export function useTabs(): readonly ShellTab<Tab>[] {
   const rebindReady = useGameState((st) => codex.select.gain(st).gte(1));
   const fresh = useGameState((st) => st.achievements.fresh.length);
   const sealed = useGameState((st) => st.vim.highestAct < 3 && st.wallet.sealsEver.lt(1));
+
+  // Individual booleans keep selector results primitive so Zustand never re-renders unnecessarily.
+  const showCodex = useGameState((st) => isTabRevealed(st, "tree"));
+  const showExp = useGameState((st) => isTabRevealed(st, "expeditions"));
+  const showMosaic = useGameState((st) => isTabRevealed(st, "mosaic"));
+  const showPrestige = useGameState((st) => isTabRevealed(st, "prestige"));
+  const showTrials = useGameState((st) => isTabRevealed(st, "challenges"));
+  const showAchievements = useGameState((st) => isTabRevealed(st, "achievements"));
+
   const ready = active.reduce((n, entry) => n + (entry.endsAt <= now ? 1 : 0), 0);
   const volumesReady = volumeReady ? 1 : 0;
   const codices = rebindReady ? 1 : 0;
 
-  return useMemo(
-    () =>
-      SCREENS.map((tab): ShellTab<Tab> => {
-        if (tab.id === "make") return { ...tab, count: volumesReady };
-        if (tab.id === "mosaic") return { ...tab, count: pieces };
-        if (tab.id === "expeditions") return { ...tab, count: ready };
-        if (tab.id === "tree") return { ...tab, count: waiting };
-        if (tab.id === "prestige") return { ...tab, count: volumesReady + codices };
-        if (tab.id === "challenges") return { ...tab, count: trialsOpen, locked: sealed };
-        return { ...tab, count: fresh };
-      }),
-    [volumesReady, pieces, ready, waiting, codices, trialsOpen, sealed, fresh],
-  );
+  return useMemo(() => {
+    const visible: Record<Tab, boolean> = {
+      make: true,
+      tree: showCodex,
+      expeditions: showExp,
+      mosaic: showMosaic,
+      prestige: showPrestige,
+      challenges: showTrials,
+      achievements: showAchievements,
+    };
+    return SCREENS.filter((tab) => visible[tab.id]).map((tab): ShellTab<Tab> => {
+      if (tab.id === "make") return { ...tab, count: volumesReady };
+      if (tab.id === "mosaic") return { ...tab, count: pieces };
+      if (tab.id === "expeditions") return { ...tab, count: ready };
+      if (tab.id === "tree") return { ...tab, count: waiting };
+      if (tab.id === "prestige") return { ...tab, count: volumesReady + codices };
+      if (tab.id === "challenges") return { ...tab, count: trialsOpen, locked: sealed };
+      return { ...tab, count: fresh };
+    });
+  }, [
+    showCodex,
+    showExp,
+    showMosaic,
+    showPrestige,
+    showTrials,
+    showAchievements,
+    volumesReady,
+    pieces,
+    ready,
+    waiting,
+    codices,
+    trialsOpen,
+    sealed,
+    fresh,
+  ]);
 }

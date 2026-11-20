@@ -1,6 +1,7 @@
 import { type ReactNode, useId, useState } from "react";
+import { Tabs } from "watchpot/ui";
+import { ARCHIVE_GLOSSARY, EX_NAV_COMMANDS, KEY_GLOSS } from "../content/guide";
 import { ACTS, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
-import { NAME, PREMISE } from "../content/words";
 import { Button } from "../ui/Button";
 import { ConfirmButton, Sheet } from "../ui/Sheet";
 import s from "./app.module.css";
@@ -31,9 +32,8 @@ export interface AboutSheetProps {
 }
 
 /**
- * The about sheet, which holds the settings: the premise; sound and motion; the editor's own switches; the save as
- * text, out and in; and starting over (two presses, so it is never an accident). The sheet is a true modal: Escape
- * closes it, Tab stays inside, and focus goes back to what opened it.
+ * The Settings sheet (`:set` configuration): clean, zero boilerplate prose. Controls sound, motion,
+ * editor behaviour, live Coach bar, save export/import, and profile reset.
  */
 export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
   const store = useGameStore();
@@ -74,29 +74,28 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
 
   return (
     <Sheet
-      title={`About ${NAME}`}
-      description={PREMISE}
+      title=":set · Desk Settings"
       onClose={onClose}
       actions={
         <>
           <ConfirmButton onConfirm={startOver}>
-            {(armed) => (armed ? "Press again to start over" : "Start over")}
+            {(armed) => (armed ? "Press again to wipe save" : "Reset save")}
           </ConfirmButton>
-          <Button onClick={onHelp}>Vim reference</Button>
+          <Button onClick={onHelp}>? Help &amp; Glossary</Button>
           <Button variant="primary" onClick={onClose}>
-            Close
+            Done
           </Button>
         </>
       }
     >
-      <Group title="The desk">
+      <Group title="Desk &amp; Audio">
         <label className={s.toggle}>
           <input
             type="checkbox"
             checked={set.sound}
             onChange={(e) => change({ sound: e.currentTarget.checked })}
           />
-          <span>Sound</span>
+          <span>Mechanical key &amp; chime audio</span>
         </label>
         <label className={s.toggle}>
           <input
@@ -104,11 +103,27 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
             checked={set.motion === "reduced"}
             onChange={(e) => change({ motion: e.currentTarget.checked ? "reduced" : "system" })}
           />
-          <span>Still the motion</span>
+          <span>Reduced motion (freeze shaders &amp; animations)</span>
         </label>
       </Group>
 
-      <Group title="The editor">
+      <Group title="Editor &amp; Teaching">
+        <label className={s.toggle}>
+          <input
+            type="checkbox"
+            checked={set.showCoach}
+            onChange={(e) => change({ showCoach: e.currentTarget.checked })}
+          />
+          <span>Show live Target Coach bar above buffer</span>
+        </label>
+        <label className={s.toggle}>
+          <input
+            type="checkbox"
+            checked={set.showChalkboard}
+            onChange={(e) => change({ showChalkboard: e.currentTarget.checked })}
+          />
+          <span>Show Chalkboard keycap strip</span>
+        </label>
         <label className={s.toggle}>
           <input
             type="checkbox"
@@ -125,10 +140,10 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
             checked={set.veteranMode}
             onChange={(e) => change({ veteranMode: e.currentTarget.checked })}
           />
-          <span>Veteran mode: every Vim key from the first folio</span>
+          <span>Veteran mode (all Vim keys unlocked from line one)</span>
         </label>
         <fieldset className={s.fieldset}>
-          <legend className={s.label}>Arrow keys, once they rust</legend>
+          <legend className={s.label}>Arrow keys after training</legend>
           {ARROWS.map((arrow) => (
             <label key={arrow.value} className={s.radio}>
               <input
@@ -145,14 +160,6 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
         <label className={s.toggle}>
           <input
             type="checkbox"
-            checked={set.showChalkboard}
-            onChange={(e) => change({ showChalkboard: e.currentTarget.checked })}
-          />
-          <span>Show the Chalkboard keycaps</span>
-        </label>
-        <label className={s.toggle}>
-          <input
-            type="checkbox"
             checked={set.showLineNumbers}
             onChange={(e) => change({ showLineNumbers: e.currentTarget.checked })}
           />
@@ -165,7 +172,7 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
             disabled={!set.showLineNumbers}
             onChange={(e) => change({ relativeNumbers: e.currentTarget.checked })}
           />
-          <span>Relative line numbers</span>
+          <span>Relative line numbers (:set rnu)</span>
         </label>
         <label className={s.toggle}>
           <input
@@ -173,27 +180,27 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
             checked={set.touchKeypad}
             onChange={(e) => change({ touchKeypad: e.currentTarget.checked })}
           />
-          <span>Touch Vim keypad under the buffer</span>
+          <span>Touch Vim keypad under buffer</span>
         </label>
       </Group>
 
-      <Group title="The save">
+      <Group title="Save Transfer">
         <label className={s.label} htmlFor={boxId}>
-          Save as text
+          Save string
         </label>
         <textarea
           id={boxId}
           className={s.saveBox}
           rows={3}
           spellCheck={false}
-          placeholder="Paste a save here, then read it."
+          placeholder="Paste an exported save string here, then click Load."
           value={text}
           onChange={(e) => setText(e.currentTarget.value)}
         />
         <div className={s.row}>
           <Button onClick={copySave}>Copy save</Button>
           <Button onClick={readSave} disabled={!text.trim()}>
-            Read save
+            Load save
           </Button>
         </div>
         <p role="status" className={s.status}>
@@ -204,7 +211,7 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
   );
 }
 
-/** One Act's keycaps, as the reference lists them. */
+/** One Act's keycaps, with plain-English key-by-key definitions. */
 function ReferenceAct({
   act,
   unlocked,
@@ -219,58 +226,103 @@ function ReferenceAct({
       <h3 className={s.refActTitle}>
         ACT {act.numeral} · {act.title.toUpperCase()}
       </h3>
-      <dl className={s.refList}>
-        {families.map((family) => (
-          <div key={family.id} className={s.refItem}>
-            <dt className={s.refName}>
-              <span className={s.refKeys}>{family.keys.join(" ")}</span>
-              {family.name}
-            </dt>
-            <dd className={s.refLine}>{family.chalkSummary}</dd>
-          </div>
-        ))}
-      </dl>
+      {families.map((family) => (
+        <div key={family.id} className={s.refFamilyBlock}>
+          <p className={s.refName}>{family.name}</p>
+          <dl className={s.helpKeyGrid}>
+            {family.keys.map((key) => (
+              <div key={key} className={s.helpKeyRow}>
+                <dt className={s.helpKeyCap}>{key}</dt>
+                <dd className={s.helpKeyDesc}>{KEY_GLOSS[key] ?? family.chalkSummary}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
     </section>
   );
 }
 
 /**
- * The Vim reference: every keycap family the archive has opened, under its Act, with the keys and the chalk line.
- * It is the same sheet the `?` button, `:help`, and the settings' Vim reference button open, so there is one place
- * the player's hands are written down.
+ * The Help sheet (`? Help` / `:help`): two clear tabs — plain-English Vim Keys + `:ex` console commands,
+ * and an Archive Glossary explaining every currency and system without mystery jargon.
  */
 export function HelpSheet({ onClose }: { onClose(): void }) {
   const unlocked = useGameState((st) => st.vim.unlockedFamilies);
   const actTier = useGameState((st) => st.vim.highestAct);
-  // The two families every archivist is handed at the door are free, so they read as owned from minute one.
   const owned = (id: KeyFamilyId) => unlocked[id] === true || FAMILY_BY_ID[id].cost.amount === 0;
   const known = KEY_FAMILIES.filter((family) => owned(family.id)).length;
   const sealed = KEY_FAMILIES.length - known;
+
   return (
     <Sheet
-      title="Vim reference"
-      description="The keys the archive has opened for you, one family at a time."
+      title=":help · Reference & Glossary"
       onClose={onClose}
       actions={
         <Button variant="primary" onClick={onClose}>
-          Back to the buffer
+          Back to buffer
         </Button>
       }
     >
-      <p className={s.refNote}>
-        <code className={s.code}>?</code> in Normal mode whispers the idiom you need.{" "}
-        <code className={s.code}>:help</code> opens this page. <code className={s.code}>jk</code> leaves
-        Insert mode, as does <code className={s.code}>Esc</code>.
-      </p>
-      {ACTS.filter((act) => act.id <= actTier).map((act) => (
-        <ReferenceAct key={act.id} act={act} unlocked={owned} />
-      ))}
-      {sealed > 0 && (
-        <p className={s.refNote}>
-          {sealed} {sealed === 1 ? "family is" : "families are"} still sealed. A new Act opens as the last one
-          is practised, or early through the Volumes' <code className={s.code}>:w</code>.
-        </p>
-      )}
+      <Tabs.Root defaultValue="keys" activation="manual" controls="selected">
+        <Tabs.List className={s.helpTabs} aria-label="Help sections">
+          <Tabs.Tab value="keys" className={s.helpTab}>
+            Vim Keys ({known}/{KEY_FAMILIES.length})
+          </Tabs.Tab>
+          <Tabs.Tab value="commands" className={s.helpTab}>
+            :ex Commands
+          </Tabs.Tab>
+          <Tabs.Tab value="glossary" className={s.helpTab}>
+            Glossary
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="keys" className={s.helpPanel}>
+          <p className={s.refNote}>
+            Press <code className={s.code}>?</code> in Normal mode for a hint on the current red rot.{" "}
+            <code className={s.code}>Esc</code> (or <code className={s.code}>Ctrl-[</code>) exits Insert mode.
+          </p>
+          {ACTS.filter((act) => act.id <= actTier).map((act) => (
+            <ReferenceAct key={act.id} act={act} unlocked={owned} />
+          ))}
+          {sealed > 0 && (
+            <p className={s.refNote}>
+              {sealed} {sealed === 1 ? "key family is" : "key families are"} still sealed. Unlock new families
+              in the Codex (<code className={s.code}>:codex</code>) — each opens with a hands-on interactive
+              lesson.
+            </p>
+          )}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="commands" className={s.helpPanel}>
+          <p className={s.refNote}>
+            Press <code className={s.code}>:</code> in Normal mode to open the console, type a command, and
+            press <code className={s.code}>Enter</code>. You can also click any tab in the top bar.
+          </p>
+          <dl className={s.helpKeyGrid}>
+            {EX_NAV_COMMANDS.map((item) => (
+              <div key={item.cmd} className={s.helpKeyRow}>
+                <dt className={s.helpKeyCap}>
+                  {item.cmd}
+                  {item.aliases ? ` (${item.aliases})` : ""}
+                </dt>
+                <dd className={s.helpKeyDesc}>{item.desc}</dd>
+              </div>
+            ))}
+          </dl>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="glossary" className={s.helpPanel}>
+          <dl className={s.glossaryList}>
+            {ARCHIVE_GLOSSARY.map((entry) => (
+              <div key={entry.term} className={s.glossaryItem}>
+                <dt className={s.glossaryTerm}>{entry.term}</dt>
+                <dd className={s.glossaryDesc}>{entry.summary}</dd>
+              </div>
+            ))}
+          </dl>
+        </Tabs.Panel>
+      </Tabs.Root>
     </Sheet>
   );
 }

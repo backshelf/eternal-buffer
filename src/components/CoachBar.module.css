@@ -1,0 +1,173 @@
+/*
+ * The Coach Bar: sits flush atop the Vim buffer plate. Crisp, scannable, zero paragraphs.
+ * Highlights the exact corruption -> expected text and the exact Vim keystrokes, turning phosphor jade
+ * when the player steps into Insert mode so they always know how to get back to Normal mode.
+ */
+.coach {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+  border: var(--ui-hairline);
+  border-bottom: 0;
+  border-left: 2px solid var(--ui-accent);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.coach[data-rite] {
+  border-top: 2px solid var(--ui-accent);
+  background-image: var(--dither-accent);
+}
+.coach[data-mode="insert"],
+.coach[data-mode="replace"] {
+  border-left-color: var(--ui-mode-insert);
+}
+
+.riteHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.riteTag {
+  padding: 1px 6px;
+  background-color: var(--ui-accent);
+  color: var(--ui-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.riteTitle {
+  color: var(--ui-ink);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.newKeys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 5px 8px;
+  border: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-ground) 72%, transparent);
+  font-size: 11px;
+}
+.keyDef {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ui-ink-muted);
+}
+.keyMeaning {
+  font-family: var(--ui-font);
+  font-size: 11.5px;
+}
+
+.targetRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.lineBadge {
+  padding: 1px 5px;
+  border: 1px solid var(--ui-line);
+  background-color: var(--ui-ground);
+  color: var(--ui-accent);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.goal {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 13px;
+}
+.goalVerb {
+  color: var(--ui-ink-muted);
+}
+.rot {
+  padding: 1px 5px;
+  background-color: var(--ui-rot-bg);
+  color: var(--ui-rot-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+}
+.clean {
+  padding: 1px 5px;
+  background-color: color-mix(in srgb, var(--ui-clean-ink) 16%, transparent);
+  color: var(--ui-clean-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-weight: 600;
+}
+.arrow {
+  color: var(--ui-ink-muted);
+}
+
+.keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 11.5px;
+}
+.keysLabel {
+  color: var(--ui-ink-muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.hintCode {
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+  background-color: var(--ui-ground);
+  color: var(--ui-target-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11.5px;
+}
+.insertCue {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--ui-mode-insert);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 500;
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--ui-line);
+  background-color: var(--ui-ground);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 10.5px;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ui-ink) 20%, transparent);
+}
+.progress {
+  margin-left: auto;
+  color: var(--ui-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.targetRow .progress {
+  margin-left: 0;
+}
+
+@media (max-width: 720px) {
+  .keys {
+    margin-left: 0;
+    width: 100%;
+  }
+}

@@ -1,9 +1,8 @@
 /*
- * The tabs are ledger entries, not chips: square, hairline-separated, an icon over a letterpress name on a phone and
- * one ruled row each down a wide page's rail. The open tab takes the sunken plate, an amber stipple and a 2px edge
- * against the page — the position a mechanical key would sit at once pressed.
+ * Vim Bufferline navigation: on wide screens, a crisp horizontal bufferline under the header showing
+ * each unlocked screen with its `:ex` command alias (e.g. `Buffer :buf`, `Codex :codex`). On narrow
+ * screens, a compact touch bar docked along the foot.
  */
-/* Narrow: a bar along the foot, one equal cell per tab. */
 .bar {
   display: grid;
   grid-auto-columns: 1fr;
@@ -14,14 +13,18 @@
   background-color: var(--ui-surface);
   background-image: var(--dither-4);
 }
-/* Wide: a rail down the side, one row per tab. */
+/* Wide: horizontal Vim bufferline across the top of the workstation. */
 .bar[data-rail] {
-  grid-auto-flow: row;
-  grid-auto-rows: min-content;
-  align-content: start;
-  padding: 12px 8px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 16px;
   border-top: 0;
-  border-right: var(--ui-hairline);
+  border-bottom: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  scrollbar-width: none;
 }
 
 .tab {
@@ -30,7 +33,7 @@
   justify-items: center;
   gap: 3px;
   min-width: 0;
-  min-height: 48px;
+  min-height: 46px;
   padding: 6px 2px;
   border: 0;
   border-radius: 0;
@@ -42,42 +45,35 @@
     color var(--ui-duration) ease-out;
 }
 .bar[data-rail] .tab {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  justify-items: start;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px 9px 16px;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-right: var(--ui-hairline);
+  white-space: nowrap;
+}
+.bar[data-rail] .tab:first-child {
+  border-left: var(--ui-hairline);
 }
 .tab:hover {
   background-image: var(--dither-4);
   color: var(--ui-ink);
 }
 .tab[data-current] {
-  background-color: var(--ui-sunken);
+  background-color: var(--ui-surface);
   background-image: var(--dither-accent);
   box-shadow: inset 0 2px 0 var(--ui-accent);
   color: var(--ui-ink);
 }
 .bar[data-rail] .tab[data-current] {
-  box-shadow: inset 2px 0 0 var(--ui-accent);
-}
-/* The rail's open tab is marked in the archive's own hand. */
-.bar[data-rail] .tab[data-current]::after {
-  position: absolute;
-  top: 50%;
-  left: 3px;
-  color: var(--ui-accent);
-  font-family: var(--ui-font-num);
-  font-size: 11px;
-  line-height: 1;
-  content: "›";
-  translate: 0 -50%;
+  background-color: var(--ui-surface);
+  box-shadow: inset 0 -2px 0 var(--ui-accent);
 }
 .tab[data-locked] {
   opacity: 0.42;
   filter: saturate(0.2);
 }
-/* The ring stays inside the cell, so a bar of tabs never draws over its neighbours. */
 .tab:focus-visible {
   outline-offset: -2px;
 }
@@ -85,6 +81,10 @@
 .icon {
   display: inline-flex;
   color: currentColor;
+}
+.bar[data-rail] .icon svg {
+  width: 14px;
+  height: 14px;
 }
 .bar:not([data-rail]) .icon svg {
   width: 18px;
@@ -103,11 +103,19 @@
 .bar[data-rail] .label {
   font-family: var(--ui-font-num);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.exCmd {
+  color: color-mix(in srgb, var(--ui-ink-muted) 68%, transparent);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+.bar[data-rail] .tab[data-current] .exCmd {
+  color: var(--ui-accent);
 }
 
-/* The count: on the icon's corner in the bar, at the row's end on the rail. */
 .count {
   position: absolute;
   top: 2px;

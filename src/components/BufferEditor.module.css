@@ -9,7 +9,7 @@
   position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  min-height: 320px;
+  min-height: 360px;
   border: var(--ui-hairline);
   background-color: var(--ui-sunken);
   background-image: var(--dither-4);

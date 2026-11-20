@@ -1,17 +1,33 @@
 /*
- * The Buffer screen: the hero. One strip across the top (the folio, its Act, the trial, the Flow), then the editor
- * column and the margin rail beside it. A wide page puts the rail in 310px of its own; a narrow one folds it into a
- * `<details>` under the buffer. Every colour, face and corner comes from the registry's tokens, every frame is an
- * ASCII hairline, and no surface is rounded.
+ * The Buffer workstation:
+ * - Solo state (`data-solo`, 0:00 Folio 0): centered cleanly in the middle of the calm blank screen
+ *   so the player's eyes land directly on the glowing Vim buffer and its live Coach bar.
+ * - Full workstation (`data-wide` + `data-dock="open"`): fills the viewport height and spans up to
+ *   1480px wide, giving the hero Buffer full height & dominant width while the Margin Dock scrolls
+ *   independently beside it (never pushing the buffer up or leaving giant empty void beneath it).
  */
 .screen {
   display: grid;
-  gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1480px;
+  min-height: 100%;
   margin-inline: auto;
-  padding: 12px 16px 24px;
+  padding: 12px 18px 18px;
+}
+
+/* Fresh 0:00 start: centered hero buffer floating cleanly on the blank dithered canvas. */
+.screen[data-solo] {
+  max-width: 920px;
+  align-content: center;
+  grid-template-rows: auto auto;
+  padding-block: 24px 36px;
+}
+
+.screen[data-wide]:not([data-solo]) {
+  height: 100%;
 }
 
 /* --- The strip ------------------------------------------------------------------------------------------- */
@@ -19,9 +35,9 @@
 .strip {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 18px;
-  padding: 8px 12px 10px;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 7px 12px 8px;
   border: var(--ui-hairline);
   border-top: 2px solid var(--ui-accent);
   border-radius: var(--ui-radius);
@@ -31,13 +47,13 @@
 .folio {
   margin: 0;
   font-family: var(--ui-font-display);
-  font-size: 21px;
+  font-size: 20px;
   font-style: italic;
   line-height: 1.1;
 }
 .folioTail {
   color: var(--ui-ink-muted);
-  font-size: 15px;
+  font-size: 14px;
 }
 .act {
   display: flex;
@@ -79,6 +95,7 @@
   font-family: var(--ui-font-num);
   font-size: 12px;
   letter-spacing: 0.06em;
+  cursor: help;
 }
 .flowWord {
   letter-spacing: 0.18em;
@@ -111,25 +128,37 @@
 .rateInk {
   color: var(--ui-ink);
 }
+.dockToggle {
+  margin-left: auto;
+}
 
-/* --- The hero: the editor column and the margin rail ----------------------------------------------------- */
+/* --- The hero: the full-height editor column and independent margin dock -------------------------------- */
 
 .hero {
   display: grid;
-  gap: 12px;
-  align-items: start;
+  gap: 14px;
+  align-items: stretch;
   min-width: 0;
+  min-height: 0;
 }
-.screen[data-wide] .hero {
-  grid-template-columns: minmax(0, 1fr) 310px;
+.screen[data-wide][data-dock="open"] .hero {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+.screen[data-wide][data-dock="closed"] .hero {
+  grid-template-columns: minmax(0, 1fr);
 }
 .editor {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   min-width: 0;
+  min-height: 0;
 }
 .editor > * {
   min-width: 0;
+}
+.bufferPlate {
+  flex: 1 1 auto;
 }
 
 .rail {
@@ -137,10 +166,17 @@
   gap: 12px;
   align-content: start;
   min-width: 0;
+  min-height: 0;
   border: var(--ui-hairline);
   border-radius: var(--ui-radius);
   background-color: var(--ui-sunken);
   background-image: var(--dither-4);
+}
+.screen[data-wide] .rail {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--ui-line) 80%, transparent) transparent;
+  scrollbar-width: thin;
 }
 .railBody {
   display: grid;
@@ -171,7 +207,6 @@
   line-height: 1.45;
 }
 
-/* The `<details>` a phone gets instead of the rail: a fold that keeps the editor on the first screen. */
 .railSummary {
   padding: 10px 12px;
   color: var(--ui-ink);
@@ -185,7 +220,6 @@
   border-bottom: var(--ui-hairline);
 }
 
-/* The `:w` readiness: a quiet figure until the bind is worth a Seal, then an amber plate. */
 .bind {
   display: flex;
   flex-wrap: wrap;
@@ -209,8 +243,6 @@
 .bindGain {
   color: var(--ui-ink);
 }
-
-/* --- The Scribes' quick-buy ------------------------------------------------------------------------------ */
 
 .scribeHead {
   display: flex;
