@@ -1,0 +1,221 @@
+/*
+ * The Buffer screen: the hero. One strip across the top (the folio, its Act, the trial, the Flow), then the editor
+ * column and the margin rail beside it. A wide page puts the rail in 310px of its own; a narrow one folds it into a
+ * `<details>` under the buffer. Every colour, face and corner comes from the registry's tokens, every frame is an
+ * ASCII hairline, and no surface is rounded.
+ */
+.screen {
+  display: grid;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 12px 16px 24px;
+}
+
+/* --- The strip ------------------------------------------------------------------------------------------- */
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 18px;
+  padding: 8px 12px 10px;
+  border: var(--ui-hairline);
+  border-top: 2px solid var(--ui-accent);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+}
+.folio {
+  margin: 0;
+  font-family: var(--ui-font-display);
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.1;
+}
+.folioTail {
+  color: var(--ui-ink-muted);
+  font-size: 15px;
+}
+.act {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+.actBadge {
+  padding: 2px 8px;
+  border: 1px solid var(--ui-accent);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-sunken);
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+.trial {
+  padding: 2px 8px;
+  border: 1px solid var(--ui-danger);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-sunken);
+  color: var(--ui-danger);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+.flow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.flowWord {
+  letter-spacing: 0.18em;
+}
+.flowMult {
+  color: var(--ui-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.flow[data-live] .flowMult {
+  color: var(--ui-accent);
+}
+.flowBar {
+  letter-spacing: 1px;
+  white-space: pre;
+}
+.flow[data-live] .flowBar {
+  color: var(--ui-accent);
+}
+.rates {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.rateMain {
+  color: var(--ui-accent);
+}
+.rateInk {
+  color: var(--ui-ink);
+}
+
+/* --- The hero: the editor column and the margin rail ----------------------------------------------------- */
+
+.hero {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+.screen[data-wide] .hero {
+  grid-template-columns: minmax(0, 1fr) 310px;
+}
+.editor {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.editor > * {
+  min-width: 0;
+}
+
+.rail {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  border: var(--ui-hairline);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+}
+.railBody {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.railBlock {
+  display: grid;
+  gap: 8px;
+}
+.railBlock + .railBlock {
+  padding-top: 12px;
+  border-top: var(--ui-hairline);
+}
+.railHead {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.railQuiet {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* The `<details>` a phone gets instead of the rail: a fold that keeps the editor on the first screen. */
+.railSummary {
+  padding: 10px 12px;
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.rail[open] .railSummary {
+  border-bottom: var(--ui-hairline);
+}
+
+/* The `:w` readiness: a quiet figure until the bind is worth a Seal, then an amber plate. */
+.bind {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+}
+.bindCommand {
+  color: var(--ui-ink);
+  font-weight: 600;
+}
+.bind[data-ready] {
+  color: var(--ui-accent);
+}
+.bind[data-ready] .bindCommand {
+  color: var(--ui-accent);
+}
+.bindGain {
+  color: var(--ui-ink);
+}
+
+/* --- The Scribes' quick-buy ------------------------------------------------------------------------------ */
+
+.scribeHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

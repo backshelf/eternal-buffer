@@ -19,16 +19,84 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The ASCII rule between the name and the ledger: a hairline the page can see, not a divider it has to guess. */
+.rule {
+  color: var(--ui-line);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
 .pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+/* The Clarity figure: a pill like the balances, and the one thing in the header that answers a hover. */
+.clarity {
+  padding: 2px 8px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-sunken);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+.headActions {
+  display: flex;
+  gap: 6px;
+}
+
+/* The Clarity breakdown, in the tooltip: one row per source, the muted rows listed and not counted. */
+.breakdown {
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+}
+.breakdownHead {
+  padding-bottom: 4px;
+  border-bottom: var(--ui-hairline);
+  color: var(--ui-accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.breakdownRow[data-muted] {
+  color: var(--ui-ink-muted);
+}
+.breakdownLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.breakdownValue {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* The about sheet's groups: the settings, then the save. */
 .group {
   display: grid;
   gap: 8px;
+}
+.groupTitle {
+  margin: 0;
+  padding-bottom: 4px;
+  border-bottom: var(--ui-hairline);
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 .toggle {
   display: flex;
@@ -43,6 +111,38 @@
   margin: 0;
   accent-color: var(--ui-accent);
   cursor: pointer;
+}
+.toggle input:disabled {
+  cursor: not-allowed;
+}
+.fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 8px 10px;
+  border: var(--ui-hairline);
+  border-radius: var(--ui-radius);
+}
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.radio input {
+  margin: 0;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
+/* A key as the settings and the reference print it: the game's own, not a browser default. */
+.code {
+  padding: 1px 4px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-ground);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
 }
 .label {
   font-size: 12px;
@@ -72,6 +172,64 @@
   font-size: 13px;
 }
 
+/* The Vim reference: an Act's keycaps, one family a line. */
+.refNote {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.refAct {
+  display: grid;
+  gap: 6px;
+}
+.refActTitle {
+  margin: 0;
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+}
+.refList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.refItem {
+  display: grid;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 1px solid var(--ui-line);
+}
+.refName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.refKeys {
+  color: var(--ui-accent);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.refLine {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* The replay of the `:wq` Moment, in a development build beside the dev panel. */
+.devDock {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 40;
+}
+
 .taken {
   position: fixed;
   inset: auto 16px 16px;
@@ -80,4 +238,48 @@
   border-radius: var(--ui-radius);
   background: var(--ui-ink);
   color: var(--ui-ground);
+}
+
+/*
+ * The page when a render gives up: the Archivist's own hand, not the browser's. It sits on the ground, framed in the
+ * archive's hairline, with the save in a box the player can copy and a way back in.
+ */
+.crash {
+  box-sizing: border-box;
+  display: grid;
+  gap: 12px;
+  max-width: 620px;
+  margin: 48px auto;
+  padding: 20px;
+  border: 1px solid var(--ui-accent);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+}
+.crashTitle {
+  margin: 0;
+  font-family: var(--ui-font-display);
+  font-size: 26px;
+  font-weight: 700;
+}
+.crashLine {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.crashSave {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-ground);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  resize: vertical;
+  overflow-wrap: anywhere;
 }
