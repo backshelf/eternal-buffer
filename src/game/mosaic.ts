@@ -86,6 +86,8 @@ export const crafting = defineCrafting({
   list: MOSAIC_PIECES.map((p) => ({
     id: p.id,
     inputs: p.recipe.inputs,
+    costGrowth: p.recipe.costGrowth,
+    limit: p.limit,
     outputs: {},
     takesMs: p.recipe.takesMs,
     unlocked: (s: ActReads) => (p.recipe.minAct ?? FIRST_ACT) <= s.vim.actTier,

@@ -1,5 +1,5 @@
 // The Plugin Mosaic: fourteen pieces cut from margin ink and seal shards, and what each does from where it sits.
-import type { BoardPiece, BoardView, Effect } from "watchpot/core";
+import type { BoardPiece, BoardView, Effect, RecipeGrowth } from "watchpot/core";
 import type { Currency, Rarity, StatId } from "./words";
 
 type Fx = Effect<StatId>;
@@ -24,6 +24,8 @@ export const PIECE_TAGS = [
 /** What the bench charges to cut one, read at the moment of the cut. */
 export interface MosaicRecipe {
   inputs: Partial<Record<Currency, number>>;
+  /** What each further cut multiplies the inputs by (default 1: a flat price for unique relics). */
+  costGrowth?: RecipeGrowth<Currency>;
   /** How long the bench takes on game time; instant when left out. */
   takesMs?: number;
   /** The Act whose keycaps must be under your hands before the bench will open for it. */
@@ -88,7 +90,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "The four keys your fingers find without asking permission.",
     synergyHint: "Set a switch beside it and the cap takes the hint.",
-    recipe: { inputs: { ink: 40 } },
+    recipe: { inputs: { ink: 120 }, costGrowth: { ink: 2.8 } },
     effects: (view) => [{ stat: "output", add: 0.12 + 0.08 * besideTag(view, "switch") }],
   },
   {
@@ -99,7 +101,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "A cap that crosses a whole line in one unhurried stride.",
     synergyHint: "Lay motions beside it in the same row; it counts the company.",
-    recipe: { inputs: { ink: 100, shards: 1 } },
+    recipe: { inputs: { ink: 600, shards: 1 }, costGrowth: { ink: 2.8 } },
     effects: (view) => [
       { stat: "output", add: 0.2 + 0.08 * view.row.filter((p) => p.tags?.includes("motion")).length },
     ],
@@ -112,7 +114,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "It speaks only in verbs: delete, change, yank, and then silence.",
     synergyHint: "An operator wants motions on all four sides before it will work.",
-    recipe: { inputs: { ink: 250, shards: 2 } },
+    recipe: { inputs: { ink: 4_000, shards: 2 }, costGrowth: { ink: 3.2 } },
     effects: (view) => [{ stat: "output", add: 0.25 + 0.15 * besideTag(view, "motion") }],
   },
   {
@@ -123,7 +125,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "Brackets, words, paragraphs: anything an operator can reach into.",
     synergyHint: "Operators beside it sharpen it; the bracket does the aiming.",
-    recipe: { inputs: { ink: 400, shards: 3 } },
+    recipe: { inputs: { ink: 14_000, shards: 3 }, costGrowth: { ink: 3.4 } },
     effects: (view) => [{ stat: "output", add: 0.4 + 0.2 * besideTag(view, "operator") }],
   },
   {
@@ -134,7 +136,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "common",
     line: "Amber stem, forty-five grams, a click like a knuckle in winter.",
     synergyHint: "Caps laid around it keep the tempo up; the switch keeps the time.",
-    recipe: { inputs: { ink: 180, shards: 1 } },
+    recipe: { inputs: { ink: 1_500, shards: 1 }, costGrowth: { ink: 3 } },
     effects: (view) => [{ stat: "tempo", add: 0.08 + 0.04 * besideCaps(view) }],
   },
   {
@@ -145,7 +147,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "Brass clickbar, eighty grams, bought purely for the noise.",
     synergyHint: "Put it on the rim of the open cells, where its weight shows.",
-    recipe: { inputs: { ink: 300, shards: 2 } },
+    recipe: { inputs: { ink: 6_500, shards: 2 }, costGrowth: { ink: 3.2 } },
     effects: (view) => [{ stat: "gain", add: 0.12 + (view.edge || view.corner ? 0.08 : 0) }],
   },
   {
@@ -156,7 +158,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "A well of margin ink that refills from the space around it.",
     synergyHint: "Leave it breathing room. On this board, empty cells are machinery.",
-    recipe: { inputs: { ink: 350, shards: 2 } },
+    recipe: { inputs: { ink: 9_000, shards: 2 }, costGrowth: { ink: 3.4 } },
     effects: (view) => [{ stat: "inkRate", add: 0.25 + 0.12 * besideEmpty(view) }],
   },
   {
@@ -167,7 +169,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "rare",
     line: "Phosphor in a glass jar, hung where the archive is darkest.",
     synergyHint: "Corners are where the dark pools, and where the lantern earns its keep.",
-    recipe: { inputs: { ink: 800, shards: 5 }, takesMs: 8_000 },
+    recipe: { inputs: { ink: 45_000, shards: 5 }, costGrowth: { ink: 3.8 }, takesMs: 8_000 },
     effects: (view) =>
       view.corner
         ? [
@@ -184,7 +186,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "rare",
     line: "Tape that remembers a hundred keystrokes and repeats them badly.",
     synergyHint: "A column of spools multiplies its own noise; one spool is just loud.",
-    recipe: { inputs: { ink: 1_200, shards: 8 }, takesMs: 10_000 },
+    recipe: { inputs: { ink: 120_000, shards: 8 }, costGrowth: { ink: 4 }, takesMs: 10_000 },
     effects: (view) => [
       { stat: "tempo", add: 0.2 },
       { stat: "output", add: 0.2 * view.column.filter((p) => p.tags?.includes("macro")).length },
@@ -199,7 +201,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     limit: 1,
     line: "A velvet cushion, cat-shaped, comprehensively indented.",
     synergyHint: "Surround it. She sleeps better on a crowded shelf.",
-    recipe: { inputs: { ink: 2_500, shards: 18 }, takesMs: 20_000, minAct: 2 },
+    recipe: { inputs: { ink: 350_000, shards: 18 }, takesMs: 20_000, minAct: 2 },
     effects: (view) => {
       const crowd = 1.15 + 0.05 * view.around.length;
       return [
@@ -217,7 +219,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "rare",
     line: "A die cut from candle wax and stubbornness, still warm.",
     synergyHint: "Switches beside it press harder; wax remembers pressure.",
-    recipe: { inputs: { ink: 900, shards: 6 }, takesMs: 8_000 },
+    recipe: { inputs: { ink: 75_000, shards: 6 }, costGrowth: { ink: 3.8 }, takesMs: 8_000 },
     effects: (view) => [{ stat: "gain", add: 0.2 + 0.1 * besideTag(view, "switch") }],
   },
   {
@@ -228,7 +230,12 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "rare",
     line: "An old ex-console prism, ground to split a command into its colours.",
     synergyHint: "Variety beside it is the whole point; four alike tags waste the glass.",
-    recipe: { inputs: { ink: 1_800, shards: 9 }, takesMs: 12_000, minAct: 3 },
+    recipe: {
+      inputs: { ink: 1_200_000, shards: 9 },
+      costGrowth: { ink: 4.2 },
+      takesMs: 12_000,
+      minAct: 3,
+    },
     effects: (view) => [{ stat: "codexGain", add: 0.15 + 0.1 * besideTags(view) }],
   },
   {
@@ -239,7 +246,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     rarity: "uncommon",
     line: "Everything it looks at becomes dots, and every dot gets clearer.",
     synergyHint: "It counts the whole board, so fill the grid before you judge it.",
-    recipe: { inputs: { ink: 500, shards: 4 } },
+    recipe: { inputs: { ink: 22_000, shards: 4 }, costGrowth: { ink: 3.6 } },
     effects: (view) => [{ stat: "output", add: 0.03 * wholeBoard(view) }],
   },
   {
@@ -251,7 +258,7 @@ export const MOSAIC_PIECES: readonly MosaicPieceDef[] = [
     limit: 1,
     line: "The key that does nothing, kept because it does nothing extremely well.",
     synergyHint: "Set it beside Tilde's cushion and it finally does something.",
-    recipe: { inputs: { ink: 4_000, shards: 30 }, takesMs: 30_000, minAct: 4 },
+    recipe: { inputs: { ink: 15_000_000, shards: 30 }, takesMs: 30_000, minAct: 4 },
     effects: (view) =>
       view.beside.some((piece) => piece.id === "tilde-cushion")
         ? [

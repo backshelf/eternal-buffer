@@ -66,8 +66,8 @@ export const BANDS = [
       [3, 6],
       [3, 6],
       [5, 8],
-      // Reaching Act V by hour 8 unlocks Scribe #9 (Swapfile Weaver, `minAct: 5`).
-      [6, 9],
+      // Reaching Act V–VI by hour 8 unlocks Scribe #9–10.
+      [6, 10],
       [8, 10],
     ],
   ],

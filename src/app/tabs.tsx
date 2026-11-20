@@ -8,7 +8,7 @@ import { KEY_FAMILIES } from "../content/vimActs";
 import { TAB_NAMES } from "../content/words";
 import { trials } from "../game/challenges";
 import type { GameState } from "../game/game";
-import { crafting } from "../game/mosaic";
+import { crafting, held } from "../game/mosaic";
 import { codex, volumes } from "../game/prestige";
 import { upgrades } from "../game/tree";
 import { AchievementsScreen } from "../screens/Achievements";
@@ -82,9 +82,30 @@ const affordableNodes = (st: GameState) =>
 /** What the Codex tab has waiting: a keycap to unlock or a rank to buy. */
 const codexWaiting = (st: GameState) => affordableKeycaps(st) + affordableNodes(st);
 
-/** How many pieces the bench could cut now: the Mosaic tab's count. */
-const craftablePieces = (st: GameState) =>
-  MOSAIC_PIECES.reduce((n, piece) => n + (crafting.select.craftable(st, piece.id) > 0 ? 1 : 0), 0);
+/**
+ * How many pieces the bench has waiting for the Mosaic tab's badge: while the open plate still has empty sockets,
+ * any craftable piece counts; once the player already holds enough pieces to fill every open socket, only a
+ * newly craftable piece type they have never cut before badges the tab.
+ */
+const craftablePieces = (st: GameState) => {
+  const openCells = st.wallet.codicesEver.gte(3) ? 36 : st.wallet.sealsEver.gte(25) ? 25 : 16;
+  let totalHeldAndQueued = 0;
+  for (const piece of MOSAIC_PIECES) {
+    const job = crafting.select.job(st, piece.id);
+    const queued = job ? Math.max(0, job.times - job.done) : 0;
+    totalHeldAndQueued += held(st, piece.id) + queued;
+  }
+  const boardCovered = totalHeldAndQueued >= openCells;
+  return MOSAIC_PIECES.reduce((n, piece) => {
+    if (crafting.select.craftable(st, piece.id) <= 0) return n;
+    if (boardCovered) {
+      const cut = Math.floor(st.crafting.made[piece.id]?.toNumber() ?? 0);
+      const job = crafting.select.job(st, piece.id);
+      if (cut > 0 || job !== null) return n;
+    }
+    return n + 1;
+  }, 0);
+};
 
 /** How many trials can be entered now: the Trials tab's count. */
 const openTrials = (st: GameState) =>

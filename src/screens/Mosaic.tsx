@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useRef, useState } from "react";
-import { D, type Effect, fmt, fmtTimes } from "watchpot/core";
+import { D, type Decimal, type Effect, fmt, fmtTimes } from "watchpot/core";
 import { useClockNow } from "watchpot/react";
 import { ShaderTile, useShaderTokens } from "watchpot/shader";
 import { VisuallyHidden } from "watchpot/ui";
@@ -63,7 +63,7 @@ interface BenchRow {
   piece: MosaicPieceDef;
   held: number;
   laid: number;
-  costs: readonly { currency: Currency; amount: number }[];
+  costs: readonly { currency: Currency; amount: Decimal | number }[];
 }
 
 /** A stat's running total on the plate: every multiplier it gives, multiplied over, and every amount added. */
@@ -289,21 +289,22 @@ export function MosaicScreen() {
     return cells;
   }, [st.mosaic.cells, st.crafting.made, st.wallet.sealsEver, st.wallet.codicesEver]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the memo is keyed on what the limits read
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the memo is keyed on what the limits and scaled costs read
   const bench = useMemo(() => {
     const limits = mosaic.select.limits(st);
-    return MOSAIC_PIECES.map(
-      (piece): BenchRow => ({
+    return MOSAIC_PIECES.map((piece): BenchRow => {
+      const nextCost = crafting.select.cost(st, piece.id);
+      return {
         piece,
         held: limits.held?.(piece.id) ?? 0,
         laid: mosaic.def.board.used(st.mosaic.cells, piece.id),
-        costs: Object.entries(piece.recipe.inputs).map(([currency, amount]) => ({
+        costs: Object.entries(nextCost).map(([currency, amount]) => ({
           currency: currency as Currency,
           amount: amount ?? 0,
         })),
-      }),
-    );
-  }, [st.mosaic.cells, st.crafting.made, st.wallet.sealsEver, st.wallet.codicesEver]);
+      };
+    });
+  }, [st.mosaic.cells, st.crafting.made, st.crafting.queue, st.wallet.sealsEver, st.wallet.codicesEver]);
 
   const tally = useMemo(() => tallyOf(plate), [plate]);
   const laid = plate.filter((cell) => cell.counted).length;

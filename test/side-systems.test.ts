@@ -66,22 +66,25 @@ function freshProbe(seed: number) {
 const sourceOf = (piece: string, x: number, y: number) => `mosaic:${piece}@${x},${y}`;
 
 describe("Plugin Mosaic", () => {
-  test("the bench prices a piece and counts it as held", () => {
+  test("the bench prices a piece, scales its cost on each cut, enforces limits, and counts it as held", () => {
     const { store } = freshProbe(1);
-    store.getState().wallet.credit("ink", 1_000);
-    store.getState().wallet.credit("shards", 10);
+    store.getState().wallet.credit("ink", 100_000);
+    store.getState().wallet.credit("shards", 20);
 
     const before = store.getState();
     expect(before.crafting.craft("cap-obj")).toBe(true);
     const after = store.getState();
 
     const capObj = MOSAIC_PIECES.find((p) => p.id === "cap-obj");
-    expect(after.wallet.ink.toNumber()).toBe(before.wallet.ink.toNumber() - (capObj?.recipe.inputs.ink ?? 0));
-    expect(after.wallet.shards.toNumber()).toBe(
-      before.wallet.shards.toNumber() - (capObj?.recipe.inputs.shards ?? 0),
-    );
+    const firstInk = capObj?.recipe.inputs.ink ?? 0;
+    const firstShards = capObj?.recipe.inputs.shards ?? 0;
+    expect(after.wallet.ink.toNumber()).toBe(before.wallet.ink.toNumber() - firstInk);
+    expect(after.wallet.shards.toNumber()).toBe(before.wallet.shards.toNumber() - firstShards);
     expect(after.crafting.made["cap-obj"]?.toNumber()).toBe(1);
     expect(held(after, "cap-obj")).toBe(1);
+    // Cutting one raises the next cut's ink price while keeping the flat shard price.
+    expect(crafting.select.cost(after, "cap-obj").ink?.toNumber()).toBeGreaterThan(firstInk);
+    expect(crafting.select.cost(after, "cap-obj").shards?.toNumber()).toBe(firstShards);
     // The free cap is held before the bench cuts anything.
     expect(held(after, "cap-hjkl")).toBe(1);
 
@@ -92,7 +95,7 @@ describe("Plugin Mosaic", () => {
 
   test("a piece lays on an open inner cell and is refused the closed outer ring", () => {
     const { store } = freshProbe(2);
-    store.getState().wallet.credit("ink", 1_000);
+    store.getState().wallet.credit("ink", 50_000);
     store.getState().wallet.credit("shards", 10);
     expect(store.getState().crafting.craft("cap-obj")).toBe(true);
 
@@ -111,7 +114,7 @@ describe("Plugin Mosaic", () => {
 
   test("adjacency changes what a piece gives", () => {
     const { store } = freshProbe(3);
-    store.getState().wallet.credit("ink", 2_000);
+    store.getState().wallet.credit("ink", 50_000);
     store.getState().wallet.credit("shards", 20);
     expect(store.getState().crafting.craft("cap-obj")).toBe(true);
     expect(store.getState().crafting.craft("cap-op")).toBe(true);
@@ -135,7 +138,7 @@ describe("Plugin Mosaic", () => {
 
   test("auto-arrange lays a board at least as good as an empty one", () => {
     const { store } = freshProbe(4);
-    store.getState().wallet.credit("ink", 3_000);
+    store.getState().wallet.credit("ink", 50_000);
     store.getState().wallet.credit("shards", 30);
     expect(store.getState().crafting.craft("cap-obj")).toBe(true);
     expect(store.getState().crafting.craft("cap-hjkl")).toBe(true);
@@ -188,15 +191,15 @@ describe("Margin Expeditions", () => {
 
   test("an errand with a rebate hands ink back on claim", () => {
     const { store, play } = freshProbe(8);
-    store.getState().wallet.credit("ink", 500);
+    store.getState().wallet.credit("ink", 20_000);
     expect(store.getState().expeditions.start("burned-colophon")).toBeNull();
-    expect(store.getState().wallet.ink.toNumber()).toBe(150);
+    expect(store.getState().wallet.ink.toNumber()).toBe(2_000);
 
     const entry = store.getState().expeditions.active[0];
     if (!entry) throw new Error("the errand did not start");
     play(10 * MINUTE_MS + 1_000);
     expect(store.getState().expeditions.claim(entry.id)).toBe(true);
-    expect(store.getState().wallet.ink.toNumber()).toBe(150 + 120);
+    expect(store.getState().wallet.ink.toNumber()).toBe(2_000 + 6_000);
   });
 
   test("pay refuses without touching the wallet when the ink is short", () => {
