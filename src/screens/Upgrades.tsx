@@ -160,11 +160,13 @@ function Keycaps({ st }: { st: GameState }) {
                     <div className={s.cardHead}>
                       <span className={s.cardName}>{family.name}</span>
                       <span className={s.tag}>
-                        {rite
-                          ? `Rite passed ×${family.riteBonus}`
-                          : isBound
-                            ? "Rite owed"
-                            : `Act ${act.numeral}`}
+                        {!priced
+                          ? "Core"
+                          : rite
+                            ? `Rite passed ×${family.riteBonus}`
+                            : isBound
+                              ? "Rite owed"
+                              : `Act ${act.numeral}`}
                       </span>
                     </div>
                     <ul className={s.keys} aria-label={`Keys of ${family.name}`}>
@@ -313,9 +315,10 @@ function GrammarPage({ st }: { st: GameState }) {
   );
 }
 
-/** Act VII's `.vimrc`: the eight archive rules, toggled inside a five-slot budget. */
+/** Act VII's `.vimrc`: the eight archive rules, toggled inside the Forge's slot budget. */
 function VimrcForge({ st }: { st: GameState }) {
   const open = st.vim.actTier === 7;
+  const maxSlots = st.vim.vimrcSlots ?? VIMRC_SLOTS;
   const used = VIMRC_RULES.reduce(
     (slots, rule) => slots + (st.vim.vimrcRules[rule.id] === true ? rule.slotCost : 0),
     0,
@@ -325,21 +328,21 @@ function VimrcForge({ st }: { st: GameState }) {
     if (st.vim.toggleVimrcRule(id) !== was) playBuy();
   };
   return (
-    <Panel heading=".vimrc Forge" aside={`${used} / ${VIMRC_SLOTS} slots`}>
+    <Panel heading=".vimrc Forge" aside={`${used} / ${maxSlots} slots`}>
       <p className={`small ${s.muted}`}>
         {open
-          ? "Your own rules, written into the wall. Each one spends slots, and the Forge opens five of them."
+          ? `Your own rules, written into the wall. Each one spends slots, and the Forge holds ${maxSlots} of them.`
           : "The Forge opens with Act VII, once the Ex Console is yours. Until then these rules are brass plates on a shut door."}
       </p>
       <div className={s.slots} aria-hidden="true">
-        {Array.from({ length: VIMRC_SLOTS }, (_, slot) => (
+        {Array.from({ length: maxSlots }, (_, slot) => (
           <span key={slot} className={s.slotPip} data-lit={slot < used ? "" : undefined} />
         ))}
       </div>
       <ul className={s.cards}>
         {VIMRC_RULES.map((rule) => {
           const on = st.vim.vimrcRules[rule.id] === true;
-          const room = on || used + rule.slotCost <= VIMRC_SLOTS;
+          const room = on || used + rule.slotCost <= maxSlots;
           return (
             <li key={rule.id} className={s.card} data-state={on ? "bound" : open && room ? "open" : "locked"}>
               <div className={s.cardHead}>

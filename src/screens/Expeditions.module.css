@@ -72,11 +72,17 @@
   line-height: 1.2;
 }
 .meter {
-  color: var(--ui-accent);
+  color: var(--ui-ink-muted);
   font-family: var(--ui-font-num);
-  font-size: 13px;
-  letter-spacing: 0.02em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   white-space: pre;
+}
+.meterLit {
+  color: var(--ui-accent);
+}
+.meterDim {
+  color: color-mix(in srgb, var(--ui-ink-muted) 42%, transparent);
 }
 .run[data-state="idle"] .meter {
   color: color-mix(in srgb, var(--ui-ink-muted) 45%, transparent);

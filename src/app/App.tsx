@@ -106,8 +106,12 @@ export function App() {
   useEffect(() => wireArchiveWatch(store), [store]);
 
   // A tint is the palette's, not the component's: `:colorscheme` and the settings write it on the root element.
+  // Mirroring it onto the root class list wakes `useShaderTokens`'s observer so every WebGL2 shader repaints too.
   useEffect(() => {
-    document.documentElement.dataset.tint = tint;
+    const root = document.documentElement;
+    root.dataset.tint = tint;
+    root.classList.remove("tint-amber", "tint-jade", "tint-paper", "tint-midnight");
+    root.classList.add(`tint-${tint}`);
   }, [tint]);
 
   // The reference sheet, from `:help` (and from the `?` button). `:help 42` is the egg, not a page.

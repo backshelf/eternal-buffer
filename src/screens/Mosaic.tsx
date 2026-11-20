@@ -1,8 +1,7 @@
 import { Fragment, useMemo, useRef, useState } from "react";
 import { D, type Effect, fmt, fmtTimes } from "watchpot/core";
-import { useReducedMotion } from "watchpot/kit";
 import { useClockNow } from "watchpot/react";
-import { ShaderPool, ShaderTile, useShaderTokens } from "watchpot/shader";
+import { ShaderTile, useShaderTokens } from "watchpot/shader";
 import { VisuallyHidden } from "watchpot/ui";
 import { useGameState, useGameStore } from "../app/hooks";
 import { glyphOf } from "../app/icons";
@@ -258,7 +257,6 @@ export function MosaicScreen() {
   const store = useGameStore();
   const st = useGameState((state) => state);
   const now = useClockNow(500);
-  const reduced = useReducedMotion();
   const scope = useRef<HTMLFieldSetElement>(null);
   const palette = useShaderTokens(scope, ["--ui-ground", "--ui-ink", "--ui-accent"]);
   const [hand, setHand] = useState<Hand>(null);
@@ -434,38 +432,36 @@ export function MosaicScreen() {
                   : "Hold a piece at the bench, or press a laid piece to move it.")}
           </p>
 
-          <ShaderPool reduced={reduced} maxLive={12}>
-            <fieldset ref={scope} className={s.plate} aria-label="Plugin Mosaic board">
-              <span className={s.corner} aria-hidden="true" />
-              {HEADS.slice(0, COLUMNS).map((head) => (
-                <span key={head} className={s.head} aria-hidden="true">
-                  {head}
+          <fieldset ref={scope} className={s.plate} aria-label="Plugin Mosaic board">
+            <span className={s.corner} aria-hidden="true" />
+            {HEADS.slice(0, COLUMNS).map((head) => (
+              <span key={head} className={s.head} aria-hidden="true">
+                {head}
+              </span>
+            ))}
+            {Array.from({ length: ROWS }, (_, y) => (
+              <Fragment key={y}>
+                <span className={s.rail} aria-hidden="true">
+                  {y + 1}
                 </span>
-              ))}
-              {Array.from({ length: ROWS }, (_, y) => (
-                <Fragment key={y}>
-                  <span className={s.rail} aria-hidden="true">
-                    {y + 1}
-                  </span>
-                  {HEADS.slice(0, COLUMNS).map((head, x) => {
-                    const view = plate[y * COLUMNS + x];
-                    if (!view) return null;
-                    return (
-                      <Socket
-                        key={head}
-                        view={view}
-                        palette={palette}
-                        holding={hand}
-                        isLooked={looked === view.cell}
-                        onPress={onCell}
-                        onLook={setLooked}
-                      />
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </fieldset>
-          </ShaderPool>
+                {HEADS.slice(0, COLUMNS).map((head, x) => {
+                  const view = plate[y * COLUMNS + x];
+                  if (!view) return null;
+                  return (
+                    <Socket
+                      key={head}
+                      view={view}
+                      palette={palette}
+                      holding={hand}
+                      isLooked={looked === view.cell}
+                      onPress={onCell}
+                      onLook={setLooked}
+                    />
+                  );
+                })}
+              </Fragment>
+            ))}
+          </fieldset>
 
           <dl className={s.tally}>
             {tally.length === 0 ? (

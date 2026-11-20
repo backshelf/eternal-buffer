@@ -133,7 +133,8 @@
 }
 .twinLine {
   margin: 0;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* The touch keypad: the day-one motions as caps you can press with a thumb. */
@@ -171,6 +172,9 @@
 @media (max-width: 720px) {
   .frame {
     min-height: 260px;
+  }
+  .host :global(.cm-editor) {
+    font-size: 12px;
   }
   .panes[data-split="on"] {
     grid-template-columns: minmax(0, 1fr);

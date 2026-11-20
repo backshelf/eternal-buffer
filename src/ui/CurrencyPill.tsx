@@ -17,7 +17,11 @@ export interface CurrencyPillProps {
 /** A balance in the header: the glyph, the figure in the number face, the word for assistive tech. */
 export function CurrencyPill({ id, glyph, amount, word, className }: CurrencyPillProps) {
   return (
-    <span className={cx(s.pill, className)} data-pill={id}>
+    <span
+      className={cx(s.pill, className)}
+      data-pill={id}
+      title={typeof amount === "string" || typeof amount === "number" ? `${amount} ${word}` : word}
+    >
       {glyph && (
         <span className={s.glyph} aria-hidden="true">
           {glyph}

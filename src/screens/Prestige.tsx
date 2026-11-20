@@ -1,6 +1,6 @@
 import { type Decimal, fmt, fmtPlayed } from "watchpot/core";
 import { useGameState } from "../app/hooks";
-import { playBindVolume, playRebindCodex } from "../app/sound";
+import { playBindVolume } from "../app/sound";
 import {
   BONUS_PER_UNIT,
   CODEX_MILESTONES,
@@ -75,8 +75,8 @@ export function PrestigeScreen() {
   };
   const rebind = () => {
     if (!st.codex.rebind()) return;
+    // `MomentOverlay` cues `playRebindCodex()` once when `momentState` opens.
     momentState.trigger();
-    playRebindCodex();
   };
 
   return (

@@ -38,9 +38,10 @@ function ActStrip({
       <ul className={s.families}>
         {families.map((family) => {
           const extra = family.keys.length - CAPS_PER_FAMILY;
+          const sameAsAct = family.name.toLowerCase() === act.title.toLowerCase();
           return (
             <li key={family.id} className={s.family}>
-              {compact ? null : <span className={s.familyName}>{family.name}</span>}
+              {compact || sameAsAct ? null : <span className={s.familyName}>{family.name}</span>}
               {family.keys.slice(0, CAPS_PER_FAMILY).map((key) => (
                 <span key={`${family.id}-${key}`} className={s.cap} data-pressed={key === lastKey || null}>
                   {key}
@@ -107,8 +108,15 @@ export function Chalkboard({ className, compact = false }: ChalkboardProps) {
           Next rite · <span className={s.nextRiteFamily}>{owed.name}</span> — {owed.chalkSummary}
         </p>
       )}
-      <p className={s.whisper} data-kind={status.whisperKind} data-whisper={status.press}>
-        {status.whisper ?? "—"}
+      <p
+        className={s.whisper}
+        data-kind={status.whisper ? status.whisperKind : "idle"}
+        data-whisper={status.press}
+      >
+        {status.whisper ??
+          (started.length <= 1
+            ? "Move to red rot with h j k l · x cuts a char · i enters Insert (jk or Esc exits) · ? whispers a hint"
+            : "Press ? in Normal mode for a whisper · : for the Ex console")}
       </p>
     </figure>
   );

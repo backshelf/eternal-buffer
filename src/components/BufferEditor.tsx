@@ -34,6 +34,7 @@ import {
   type KeyThock,
   playActUnlock,
   playBindVolume,
+  playCatch,
   playEditFeedback,
   playFolioClear,
   playKeyThock,
@@ -42,6 +43,7 @@ import {
 import { EGG_BY_ID } from "../content/easterEggs";
 import type { KeyFamilyId } from "../content/vimActs";
 import { codex, volumes } from "../game/prestige";
+import { VISITOR_KIND } from "../game/visitor";
 import { BUFFER_GLOW } from "../shaders/bufferGlow";
 import { cleanCutPulse, folioClearPulse, momentState } from "../shaders/pulses";
 import { evaluateFolio, type Folio, type FolioAnomaly, generateFolio } from "../vim/folio";
@@ -410,11 +412,11 @@ function anomalyMarks(context: BufferContext): Extension {
       const lineIndex = view.state.doc.lineAt(line.from).number - 1;
       for (const span of markedSpans(view, context)) {
         if (span.line !== lineIndex) continue;
-        return new ParTag(`[${span.anomaly.label} · par ${span.anomaly.parKeys}]`);
+        return new ParTag(`[${span.anomaly.label}·${span.anomaly.parKeys}]`);
       }
       return null;
     },
-    initialSpacer: () => new ParTag("[REFRAIN · par 00]"),
+    initialSpacer: () => new ParTag("[PAW·14]"),
   });
 
   return [plugin, tag];
@@ -430,7 +432,7 @@ function anomalyMarks(context: BufferContext): Extension {
  */
 const editorTheme = EditorView.theme(
   {
-    "&": { backgroundColor: "transparent", color: "var(--ui-ink)", fontSize: "15px" },
+    "&": { backgroundColor: "transparent", color: "var(--ui-ink)", fontSize: "13.5px" },
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
       fontFamily: "var(--ui-font-num)",
@@ -438,7 +440,7 @@ const editorTheme = EditorView.theme(
       overflowX: "auto",
     },
     ".cm-content": { padding: "12px 0 20px", caretColor: "var(--ui-mode-insert)" },
-    ".cm-line": { padding: "0 16px 0 10px" },
+    ".cm-line": { padding: "0 12px 0 8px" },
     ".cm-gutters": {
       border: "none",
       backgroundColor: "transparent",
@@ -446,9 +448,9 @@ const editorTheme = EditorView.theme(
       fontFamily: "var(--ui-font-num)",
       fontSize: "11px",
     },
-    ".cm-lineNumbers .cm-gutterElement": { minWidth: "26px", padding: "0 8px 0 12px" },
-    ".eb-par-gutter": { color: "var(--ui-rot-ink)", fontSize: "10px", letterSpacing: "0.04em" },
-    ".eb-par-gutter .cm-gutterElement": { padding: "0 6px 0 0", whiteSpace: "nowrap" },
+    ".cm-lineNumbers .cm-gutterElement": { minWidth: "20px", padding: "0 6px 0 8px" },
+    ".eb-par-gutter": { color: "var(--ui-rot-ink)", fontSize: "10px", letterSpacing: "0.02em" },
+    ".eb-par-gutter .cm-gutterElement": { padding: "0 4px 0 0", whiteSpace: "nowrap" },
     ".eb-par-tag": { opacity: "0.82" },
     ".eb-span-rot": { backgroundColor: "var(--ui-rot-bg)", color: "var(--ui-rot-ink)" },
     ".eb-span-target": {
@@ -543,12 +545,17 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const showLineNumbers = useGameState((state) => state.settings.showLineNumbers);
   const relativeNumbers = useGameState((state) => state.settings.relativeNumbers);
   const jkEscape = useGameState((state) => state.settings.jkEscape);
+  const veteranMode = useGameState((state) => state.settings.veteranMode);
+  const catFamiliar = useGameState((state) => state.vim.vimrcRules["cat-familiar"] === true);
   const split = useGameState((state) => state.vim.activeSplit);
   const touchKeypad = useGameState((state) => state.settings.touchKeypad);
   const reduced = useReducedMotion();
 
   const challengeRules = useMemo(() => (rules === "" ? [] : rules.split(",")), [rules]);
   const blind = challengeRules.includes("blindGutter");
+  const pawEvery = catFamiliar ? Math.max(2, Math.floor(PAWPRINT_EVERY / 2)) : PAWPRINT_EVERY;
+  const includePawprint =
+    serial > 0 && serial % pawEvery === 0 && (unlocked["op-delete"] === true || veteranMode);
 
   const folio = useMemo(
     () =>
@@ -558,9 +565,9 @@ export function BufferEditor({ className }: BufferEditorProps) {
         actTier,
         riteFamily: riteFamily ?? undefined,
         challengeRules,
-        includePawprint: serial % PAWPRINT_EVERY === 0,
+        includePawprint,
       }),
-    [seed, unlocked, actTier, riteFamily, challengeRules, serial],
+    [seed, unlocked, actTier, riteFamily, challengeRules, includePawprint],
   );
 
   // The plugin and the gutter read the live context, so a new page or a cleared anomaly is visible without
@@ -600,7 +607,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
     "--ui-mode-replace",
   ]);
 
-  // The cursor halo: the eased caret, the mode's colour and the run's Flow, a stepped frame at a time.
+  // The cursor halo: the eased caret, the mode's colour, Clean Cut shockwave pulse and Flow, a stepped frame at a time.
   // The frame callback is read fresh on every step, so the mode colour follows a mode change with no render.
   useSteppedFrame(
     handleRef,
@@ -614,6 +621,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
       const uniforms: Record<string, number | readonly number[] | string> = {
         u_cursor: [placed.x, placed.y],
         u_flow: Math.min(1, live.vim.flow / Math.max(1, live.vim.flowCap)),
+        u_pulse: Math.max(cleanCutPulse.value(), folioClearPulse.value()),
       };
       if (tokens) uniforms.u_modeColor = tokens[modeToken(modeRef.current)];
       return uniforms;
@@ -645,11 +653,19 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
     const say = (message: string) => publishStatus({ message });
 
-    /** Records an easter egg and answers with the toast the Ex line should print. */
+    /** Records an easter egg, awards its secret Marginalia tile if it has one, and answers with the Ex toast. */
     const egg = (id: string): string => {
-      store.getState().vim.triggerEasterEgg(id);
+      const live = store.getState();
+      live.vim.triggerEasterEgg(id);
+      const tileId = EGG_BY_ID[id]?.achievementId;
+      if (tileId) live.achievements.award(tileId);
       return EGG_BY_ID[id]?.toast ?? "";
     };
+
+    /** Consecutive `u` presses that left the document untouched, for the `oldest-change` egg. */
+    let emptyUndos = 0;
+    /** Whether the last key was `g`, for `g m` (catch live Margin Moth). */
+    let pendingG = false;
 
     const resetHint = () => {
       if (hintTimer !== undefined) window.clearTimeout(hintTimer);
@@ -679,9 +695,11 @@ export function BufferEditor({ className }: BufferEditorProps) {
           const box = plate.getBoundingClientRect();
           if (box.width === 0 || box.height === 0) return null;
           const clamp = (value: number) => Math.min(1, Math.max(0, value));
+          const cx = (coords.left + coords.right) / 2;
+          const cy = (coords.top + coords.bottom) / 2;
           return {
-            x: clamp((coords.left - box.left) / box.width),
-            y: clamp(1 - (coords.top - box.top) / box.height),
+            x: clamp((cx - box.left) / box.width),
+            y: clamp(1 - (cy - box.top) / box.height),
           };
         },
         write: (placed) => {
@@ -694,16 +712,11 @@ export function BufferEditor({ className }: BufferEditorProps) {
     const payAnomaly = (view: EditorView, anomaly: FolioAnomaly) => {
       const keys = keysUsed.current.get(anomaly.id) ?? anomaly.parKeys;
       keysUsed.current.delete(anomaly.id);
+      const isPawprint = anomaly.kind === "pawprint";
       const paid = store
         .getState()
-        .vim.resolveAnomaly(
-          anomaly.id,
-          keys,
-          anomaly.parKeys,
-          anomaly.hintId,
-          anomaly.weight,
-          anomaly.kind === "pawprint",
-        );
+        .vim.resolveAnomaly(anomaly.id, keys, anomaly.parKeys, anomaly.hintId, anomaly.weight, isPawprint);
+      if (isPawprint) store.getState().achievements.award("off-the-keyboard");
       playEditFeedback(paid.grade, store.getState().vim.flow);
       cleanCutPulse.bump();
       // The corruption is gone from the page by now, so the mark lands on the line it was on. Geometry is read
@@ -799,6 +812,25 @@ export function BufferEditor({ className }: BufferEditorProps) {
           store.getState().vim.noteEscPanic();
           say(egg("esc-panic"));
         }
+      }
+
+      // `g m`: catch a live Margin Moth from Normal mode without touching the mouse (Spec §5C).
+      if (mode === "normal" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        if (pendingG && event.key === "m") {
+          pendingG = false;
+          const moth = live.visitors.kinds[VISITOR_KIND]?.live ?? null;
+          if (moth && moth.diesAt > live.gameNow()) {
+            event.preventDefault();
+            if (store.getState().visitors.catch(VISITOR_KIND) !== null) {
+              playCatch();
+              say("Margin Moth caught by hand (`g m`). The lamp flares brighter.");
+            }
+            return true;
+          }
+        }
+        pendingG = event.key === "g";
+      } else {
+        pendingG = false;
       }
 
       // `ZZ` and `ZQ`: the engine's keymap does not bind them, so the archive reads them here.
@@ -1045,13 +1077,18 @@ export function BufferEditor({ className }: BufferEditorProps) {
           // `true`, so this answers before @replit/codemirror-vim's keydown ever runs.
           Prec.highest(EditorView.domEventHandlers({ keydown: onKeyDown })),
           vim({ status: false }),
+          EditorView.lineWrapping,
           gutterCompartment.of(gutterExtension(gutterBorn.current, () => relativeRef.current)),
           anomalyMarks(context.current),
           editorTheme,
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) verify(update.view);
-            if (!update.docChanged && !update.selectionSet) return;
+            if (update.docChanged) {
+              emptyUndos = 0;
+              verify(update.view);
+            }
+            if (!update.docChanged && !update.selectionSet && !update.geometryChanged) return;
             placeCursor(update.view);
+            if (!update.docChanged && !update.selectionSet) return;
             armHint(update.view);
             const info = update.state.doc.lineAt(update.state.selection.main.head);
             publishStatus({
@@ -1066,6 +1103,16 @@ export function BufferEditor({ className }: BufferEditorProps) {
     viewRef.current = view;
     view.contentDOM.setAttribute("aria-label", "The folio. Edit it with Vim keys.");
     placeCursor(view);
+    // Keep the cursor halo synced when fonts finish loading or the plate resizes (e.g. `:vsplit`).
+    const ro =
+      typeof ResizeObserver !== "undefined" && frame ? new ResizeObserver(() => placeCursor(view)) : null;
+    if (ro && frame) ro.observe(frame);
+    document.fonts?.ready.then(() => {
+      if (viewRef.current === view) placeCursor(view);
+    });
+    if (typeof window !== "undefined" && window.matchMedia?.("(min-width: 900px)").matches) {
+      view.focus();
+    }
     publishStatus({
       mode: "normal",
       riteBanner: context.current.folio?.riteBanner ?? null,
@@ -1093,6 +1140,16 @@ export function BufferEditor({ className }: BufferEditorProps) {
       const typing = mode === "insert" || mode === "replace";
       if (!typing && recent.endsWith("ggVG")) say(egg("whole-buffer"));
       if (!typing && recent.endsWith("zz")) say(egg("zz-zen"));
+      // `u` pressed 5× with nothing left to undo: "Already at oldest change (circa 1976, Bill Joy's terminal)."
+      if (!typing && key === "u") {
+        emptyUndos += 1;
+        if (emptyUndos >= 5) {
+          emptyUndos = 0;
+          say(egg("oldest-change"));
+        }
+      } else if (!typing) {
+        emptyUndos = 0;
+      }
       const target = countTarget(view, context.current);
       if (target) keysUsed.current.set(target.id, (keysUsed.current.get(target.id) ?? 0) + 1);
       publishStatus({
@@ -1172,6 +1229,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
     return () => {
       resetHint();
+      ro?.disconnect();
       frame?.removeEventListener("keydown", onPromptKey, true);
       document.removeEventListener("pointerdown", onPointerDown, true);
       cm?.off("vim-mode-change", onModeChange);
@@ -1245,7 +1303,15 @@ export function BufferEditor({ className }: BufferEditorProps) {
   };
 
   const baseUniforms = tokens
-    ? { u_ground: tokens["--ui-ground"], u_ink: tokens["--ui-ink"], u_accent: tokens["--ui-accent"] }
+    ? {
+        u_ground: tokens["--ui-ground"],
+        u_ink: tokens["--ui-ink"],
+        u_accent: tokens["--ui-accent"],
+        u_modeColor: tokens[modeToken(modeRef.current)],
+        u_cursor: [cursorPlaced.current.x, cursorPlaced.current.y],
+        u_pulse: 0,
+        u_flow: 0,
+      }
     : undefined;
   const still = <div className={s.still} style={{ background: BUFFER_GLOW.still }} />;
 

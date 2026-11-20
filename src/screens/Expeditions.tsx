@@ -22,10 +22,15 @@ const SLOT_AT_CODICES = 2;
 /** An expedition as the list knows it, by id. */
 const EXPEDITION_BY_ID = new Map<string, ExpeditionContentDef>(EXPEDITIONS.map((run) => [run.id, run]));
 
-/** A `[▓▓▓▓░░░░]` meter: the drawn share of a run, cut into the engine's own whole steps. */
-function meterOf(done: number): string {
+/** A `[▓▓▓▓░░░░]` meter: the drawn share of a run, split into lit and dim spans so the blocks read cleanly. */
+function Meter({ done }: { done: number }) {
   const lit = Math.round(drawnShare(done, 0, 1, METER_BLOCKS) * METER_BLOCKS);
-  return `[${"▓".repeat(lit)}${"░".repeat(METER_BLOCKS - lit)}]`;
+  return (
+    <span className={s.meter} aria-hidden="true">
+      [<span className={s.meterLit}>{"█".repeat(lit)}</span>
+      <span className={s.meterDim}>{"░".repeat(METER_BLOCKS - lit)}</span>]
+    </span>
+  );
 }
 
 /** A rolled amount as the list prints it: a range, a single figure, and nothing at all for a run that gives none. */
@@ -120,9 +125,7 @@ export function ExpeditionsScreen() {
                 <li key={`slot-${index}`} className={s.run} data-state="idle">
                   <span className={s.runHead}>
                     <span className={s.runName}>An empty slot</span>
-                    <span className={s.meter} aria-hidden="true">
-                      {meterOf(0)}
-                    </span>
+                    <Meter done={0} />
                   </span>
                   <span className={s.runMeta}>
                     <span className={s.meta}>Nothing away. Send something down the stair.</span>
@@ -139,9 +142,7 @@ export function ExpeditionsScreen() {
               <li key={entry.id} className={s.run} data-state={ready ? "ready" : "away"}>
                 <span className={s.runHead}>
                   <span className={s.runName}>{content.name}</span>
-                  <span className={s.meter} aria-hidden="true">
-                    {meterOf(done)}
-                  </span>
+                  <Meter done={done} />
                 </span>
                 <span className={s.runMeta}>
                   <span className={s.meta}>{ready ? "Back at the stair" : `Back in ${fmtWait(left)}`}</span>

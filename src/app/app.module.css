@@ -27,6 +27,11 @@
   letter-spacing: 0;
   white-space: nowrap;
 }
+@media (max-width: 720px) {
+  .rule {
+    display: none;
+  }
+}
 .pills {
   display: flex;
   flex-wrap: wrap;
