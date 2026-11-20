@@ -214,7 +214,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["core-move"],
     riteBonus: 1.25,
     chalkSummary: "w b e — one word at a time. W B E — one sentence at a time.",
-    cost: { currency: "glyphs", amount: 120 },
+    cost: { currency: "glyphs", amount: 52000 },
   },
   {
     id: "line-edge",
@@ -224,7 +224,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["core-move"],
     riteBonus: 1.25,
     chalkSummary: "0 is the left margin, $ the right. ^ is the first ink on the line.",
-    cost: { currency: "glyphs", amount: 200 },
+    cost: { currency: "glyphs", amount: 67000 },
   },
   {
     id: "char-snipe",
@@ -234,7 +234,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["word-stride"],
     riteBonus: 1.25,
     chalkSummary: "f then a rune: the cursor lands on it. ; throws again. , throws back.",
-    cost: { currency: "glyphs", amount: 320 },
+    cost: { currency: "glyphs", amount: 140000 },
   },
   {
     id: "file-jump",
@@ -244,7 +244,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["line-edge"],
     riteBonus: 1.25,
     chalkSummary: "gg the first line, G the last. The folio has ends. Use them.",
-    cost: { currency: "glyphs", amount: 520 },
+    cost: { currency: "glyphs", amount: 260000 },
   },
   {
     id: "counts",
@@ -254,7 +254,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["char-snipe"],
     riteBonus: 1.25,
     chalkSummary: "8j. 3w. A number in front of a motion multiplies it.",
-    cost: { currency: "glyphs", amount: 800 },
+    cost: { currency: "glyphs", amount: 440000 },
   },
   {
     id: "op-delete",
@@ -264,7 +264,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["counts"],
     riteBonus: 1.25,
     chalkSummary: "d takes a motion and removes what it crossed. dd takes the line.",
-    cost: { currency: "glyphs", amount: 1400 },
+    cost: { currency: "glyphs", amount: 510000 },
   },
   {
     id: "op-change",
@@ -274,7 +274,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-delete"],
     riteBonus: 1.25,
     chalkSummary: "c is d that leaves a doorway. Step in, type, Esc.",
-    cost: { currency: "glyphs", amount: 2400 },
+    cost: { currency: "glyphs", amount: 590000 },
   },
   {
     id: "op-yank",
@@ -284,7 +284,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-change"],
     riteBonus: 1.25,
     chalkSummary: "y copies without cutting. p puts it after, P puts it before.",
-    cost: { currency: "glyphs", amount: 3600 },
+    cost: { currency: "glyphs", amount: 1.3e6 },
   },
   {
     id: "line-craft",
@@ -294,7 +294,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-yank"],
     riteBonus: 1.25,
     chalkSummary: "o opens a line below. r replaces one rune. J sews two lines into one.",
-    cost: { currency: "glyphs", amount: 5400 },
+    cost: { currency: "glyphs", amount: 1.3e6 },
   },
   {
     id: "text-objects",
@@ -304,7 +304,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-change", "op-yank"],
     riteBonus: 1.25,
     chalkSummary: 'iw is a word. i" is what the quotes hold. Objects are nouns you already know.',
-    cost: { currency: "seals", amount: 3 },
+    cost: { currency: "seals", amount: 6 },
   },
   {
     id: "visual-modes",
@@ -334,7 +334,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["line-edge"],
     riteBonus: 1.25,
     chalkSummary: "/ casts a lantern forward. n walks the light again.",
-    cost: { currency: "seals", amount: 12 },
+    cost: { currency: "seals", amount: 10 },
   },
   {
     id: "para-marks",
@@ -344,7 +344,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["search-jump"],
     riteBonus: 1.25,
     chalkSummary: "{ and } cross blank lines. m sets a mark; ' returns to it.",
-    cost: { currency: "seals", amount: 18 },
+    cost: { currency: "seals", amount: 13 },
   },
   {
     id: "substitute",
@@ -354,7 +354,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["search-jump"],
     riteBonus: 1.25,
     chalkSummary: ":%s/ROT/PURE/g rewrites every rot in the folio in one breath.",
-    cost: { currency: "seals", amount: 30 },
+    cost: { currency: "seals", amount: 13 },
   },
   {
     id: "dot-echo",
@@ -364,7 +364,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["op-change"],
     riteBonus: 1.25,
     chalkSummary: ". repeats the last change. The Echo Stack counts every repetition.",
-    cost: { currency: "codices", amount: 2 },
+    cost: { currency: "codices", amount: 1 },
   },
   {
     id: "registers",
@@ -374,7 +374,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["dot-echo"],
     riteBonus: 1.25,
     chalkSummary: '"a stores. "ap puts it back. Named pockets, no pockets.',
-    cost: { currency: "codices", amount: 4 },
+    cost: { currency: "codices", amount: 1 },
   },
   {
     id: "macros",
@@ -384,7 +384,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["registers"],
     riteBonus: 1.25,
     chalkSummary: "qa records into a. @a plays it back. @@ plays the last one.",
-    cost: { currency: "codices", amount: 7 },
+    cost: { currency: "codices", amount: 1 },
   },
   {
     id: "ex-power",
@@ -394,7 +394,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["substitute"],
     riteBonus: 1.25,
     chalkSummary: ":g/BLIGHT/d purges every blighted line. :sort orders the ledger.",
-    cost: { currency: "codices", amount: 10 },
+    cost: { currency: "codices", amount: 1 },
   },
   {
     id: "dual-split",
@@ -404,7 +404,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["ex-power"],
     riteBonus: 1.25,
     chalkSummary: ":vsplit opens a second folio. Ctrl-w w walks between them.",
-    cost: { currency: "codices", amount: 14 },
+    cost: { currency: "codices", amount: 1 },
   },
   {
     id: "vimrc-forge",
@@ -414,7 +414,7 @@ export const KEY_FAMILIES: KeyFamilyDef[] = [
     requires: ["dual-split"],
     riteBonus: 1.25,
     chalkSummary: "Your own rules, on your own keyboard. The Forge opens five slots.",
-    cost: { currency: "codices", amount: 20 },
+    cost: { currency: "codices", amount: 1 },
   },
 ];
 

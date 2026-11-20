@@ -1,12 +1,19 @@
+/*
+ * A tooltip is a scrap of vellum: bone ink on soot, one hairline, no corner and no tail. It is the archive's own
+ * voice, so it takes the display face for nothing and the UI face for everything.
+ */
 /* Placed by the primitive (`position` and its offsets inline); `data-side` says where it landed. */
 .tip {
   z-index: 50;
   max-width: 260px;
-  padding: 8px 10px;
-  border-radius: var(--ui-radius);
-  background: var(--ui-ink);
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--ui-ground) 45%, transparent);
+  border-radius: 0;
+  background-color: var(--ui-ink);
+  box-shadow: var(--shadow-card);
   color: var(--ui-ground);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.35;
   pointer-events: none;
 }

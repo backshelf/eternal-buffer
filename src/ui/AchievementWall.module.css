@@ -1,3 +1,8 @@
+/*
+ * Marginalia is a printed wall: one ruled row of square tiles, a complete row stippled amber and ruled, an earned
+ * tile's wax seal taking the accent's glow, a hidden one left as a dashed blank. The detail bubble is the same scrap
+ * of vellum a tooltip is.
+ */
 /* `AchievementGrid` is a grid of rows of cells: `[role="row"]` (`data-complete`), `[role="gridcell"]` tiles. */
 .wall {
   display: grid;
@@ -9,28 +14,36 @@
   grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
   gap: 6px;
   padding: 4px;
-  border-radius: var(--ui-radius);
+  border-radius: 0;
 }
 .wall > [data-complete] {
-  background: color-mix(in srgb, var(--ui-accent) 14%, transparent);
+  background-image: var(--dither-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-accent) 30%, transparent);
 }
 .wall [role="gridcell"] {
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-sunken);
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
   color: var(--ui-ink-muted);
   cursor: default;
 }
 .wall [role="gridcell"][data-earned] {
-  border-color: var(--ui-accent);
-  background: var(--ui-surface);
+  border-color: color-mix(in srgb, var(--ui-accent) 65%, var(--ui-line));
+  background-color: var(--ui-surface);
+  box-shadow: inset 0 0 14px color-mix(in srgb, var(--ui-accent) 18%, transparent);
   color: var(--ui-ink);
 }
 .wall [role="gridcell"][data-hidden] {
   border-style: dashed;
+  background-image: none;
+}
+/* A tile is a cell of the wall: the ring belongs inside it. */
+.wall [role="gridcell"]:focus-visible {
+  outline-offset: -3px;
 }
 
 /* The detail bubble: placed by the primitive, `data-earned` when its tile is. */
@@ -39,11 +52,14 @@
   display: grid;
   gap: 4px;
   max-width: 260px;
-  padding: 10px 12px;
-  border-radius: var(--ui-radius);
-  background: var(--ui-ink);
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--ui-ground) 45%, transparent);
+  border-radius: 0;
+  background-color: var(--ui-ink);
+  box-shadow: var(--shadow-card);
   color: var(--ui-ground);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.35;
 }
 /* Closed, the primitive marks it `hidden`; the `display` above would otherwise keep an empty bubble on screen. */
 .detail[hidden] {
@@ -53,5 +69,8 @@
   font-weight: 700;
 }
 .detail [data-reward] {
-  color: var(--ui-accent);
+  color: color-mix(in srgb, var(--ui-ground) 55%, var(--ui-accent));
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.02em;
 }

@@ -2,6 +2,9 @@
  * The registry's token contract: every colour, face, radius and duration the components in src/ui read. The values
  * here map the generated design tokens (src/tokens.css, from design/tokens.json) onto the contract; change the mapping
  * or a value to make the look your own. README.md beside this file lists every token and what reads it.
+ *
+ * The identity is Amber CRT Vellum: warm soot ground, bone vellum ink, one glowing amber phosphor, zero corners,
+ * ASCII box-drawing frames and a Bayer-dither stipple wherever a surface needs weight.
  */
 
 :root {
@@ -18,33 +21,90 @@
   --ui-scrim: var(--overlay);
   --ui-danger: var(--danger);
 
+  /* The Vim modes and the manuscript's own inks: Normal amber, Insert jade, Visual amethyst, Command brass,
+   * Replace vermilion, and the rot you excise against the amber target you are mending. */
+  --ui-mode-normal: var(--mode-normal);
+  --ui-mode-insert: var(--mode-insert);
+  --ui-mode-visual: var(--mode-visual);
+  --ui-mode-command: var(--mode-command);
+  --ui-mode-replace: var(--mode-replace);
+  --ui-rot-bg: var(--rot-bg);
+  --ui-rot-ink: var(--rot-ink);
+  --ui-target-bg: var(--target-bg);
+  --ui-target-ink: var(--target-ink);
+  --ui-clean-ink: var(--clean-ink);
+  --ui-tilde-fur: var(--tilde-fur);
+  --ui-tilde-eye: var(--tilde-eye);
+
   /* Type */
   --ui-font: var(--font-ui);
   --ui-font-display: var(--font-display);
   --ui-font-num: var(--font-num);
 
-  /* Shape and time */
+  /* Shape and time: the archive has no rounded corners anywhere. */
   --ui-radius: var(--radius-md);
   --ui-duration: 160ms;
+
+  /*
+   * The ASCII frame grammar. Every framed surface draws its corners from these four strings, so the whole page speaks
+   * one alphabet: a single-line frame (`┌ ┐ └ ┘`) for a section, a double-line one (`╔ ╗ ╚ ╝`) for a screen's primary
+   * panels. A component places them on its own pseudo-elements; nothing here draws.
+   */
+  --ui-frame-tl: "┌";
+  --ui-frame-tr: "┐";
+  --ui-frame-bl: "└";
+  --ui-frame-br: "┘";
+  --ui-frame-dtl: "╔";
+  --ui-frame-dtr: "╗";
+  --ui-frame-dbl: "╚";
+  --ui-frame-dbr: "╝";
+  --ui-frame-rule: "─";
+  --ui-frame-shade: "░";
+
+  /* A hairline, and the mechanical keycap's bottom bevel on a Button. */
+  --ui-hairline: 1px solid var(--ui-line);
+  --ui-bevel: 2px;
+
+  /*
+   * The two Bayer-4x4 stipples, as repeating SVG data-URIs a surface paints with `background-image`. `--dither-4` is
+   * a bone-vellum whisper for raised surfaces and sunken wells; `--dither-accent` is the amber phosphor one for header
+   * bars, dividers, progress fills and hover states. Both are 4px tiles built from the ordered-dither thresholds of a
+   * 4x4 Bayer matrix, alpha baked in, so a component only has to name the texture.
+   */
+  --dither-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%23ebe3d0' fill-opacity='0.1'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='3' y='1' width='1' height='1'/%3E%3Crect x='0' y='2' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3Crect x='3' y='3' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  --dither-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%23e59a28' fill-opacity='0.34'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-/* The page: one ground, one face, a scroll the shell owns. */
+/* The page: one soot ground under a whisper of stipple, one face, a scroll the shell owns. */
 html {
-  background: var(--ui-ground);
+  background-color: var(--ui-ground);
+  background-image:
+    radial-gradient(
+      120% 80% at 50% -10%,
+      color-mix(in srgb, var(--ui-accent) 6%, transparent),
+      transparent 70%
+    ),
+    var(--dither-4);
   color: var(--ui-ink);
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
 }
 body {
   margin: 0;
   font-family: var(--ui-font);
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 #root {
   height: 100dvh;
 }
 p {
   margin: 0;
+}
+/* The phosphor barely shows through the vellum. */
+::selection {
+  background: color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  color: var(--ui-ink);
 }
 button,
 input,
@@ -53,9 +113,60 @@ textarea {
   font: inherit;
   color: inherit;
 }
+/* Warm amber, always visible: every control in the archive says where the keyboard is. */
 :focus-visible {
   outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
+}
+
+/*
+ * `:colorscheme` (the Easter egg) writes `data-tint` on <html>. It is cosmetic only: the structure, the type and the
+ * ASCII frame stay; the soot, the vellum and the phosphor trade places. `:root` and a bare attribute tie on
+ * specificity, so these blocks win by coming later.
+ */
+[data-tint="jade"] {
+  --ui-ground: #0b1412;
+  --ui-surface: #12211d;
+  --ui-sunken: #0d1a17;
+  --ui-ink: #dff3ea;
+  --ui-ink-muted: #93b0a6;
+  --ui-line: #2f5449;
+  --ui-accent: #45b7a5;
+  --ui-on-accent: #05100d;
+  --ui-focus: #8fe3d2;
+  --ui-scrim: #000000c4;
+  --ui-mode-normal: #45b7a5;
+  --dither-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%2345b7a5' fill-opacity='0.34'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+[data-tint="paper"] {
+  --ui-ground: #e9e0cc;
+  --ui-surface: #f3ecdc;
+  --ui-sunken: #ddd2ba;
+  --ui-ink: #1a1510;
+  --ui-ink-muted: #5d5344;
+  --ui-line: #b9a988;
+  --ui-accent: #a8650f;
+  --ui-on-accent: #f7f1e3;
+  --ui-focus: #8a4f00;
+  --ui-scrim: #2b2419a6;
+  --ui-mode-normal: #a8650f;
+  --ui-mode-command: #8a6a12;
+  color-scheme: light;
+  --dither-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%231a1510' fill-opacity='0.09'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='3' y='1' width='1' height='1'/%3E%3Crect x='0' y='2' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3Crect x='3' y='3' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  --dither-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%23a8650f' fill-opacity='0.3'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+[data-tint="midnight"] {
+  --ui-ground: #0a0c14;
+  --ui-surface: #12151f;
+  --ui-sunken: #0d1018;
+  --ui-ink: #dfe3f2;
+  --ui-ink-muted: #8f95ab;
+  --ui-line: #2a3147;
+  --ui-accent: #e59a28;
+  --ui-on-accent: #0a0c14;
+  --ui-focus: #f5c26b;
+  --ui-scrim: #000000cc;
+  --dither-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cg fill='%23dfe3f2' fill-opacity='0.09'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='0' width='1' height='1'/%3E%3Crect x='1' y='1' width='1' height='1'/%3E%3Crect x='3' y='1' width='1' height='1'/%3E%3Crect x='0' y='2' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3Crect x='3' y='3' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /*

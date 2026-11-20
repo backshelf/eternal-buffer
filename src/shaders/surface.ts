@@ -5,8 +5,10 @@ import type { UniformKind } from "watchpot/shader";
  * when the fragment fails, and the frame it holds under reduced motion.
  *
  * Every backdrop takes the same uniforms (`BACKDROP_UNIFORMS`): the palette as `--ui-ground`, `--ui-ink` and
- * `--ui-accent` (read by `useShaderTokens`, so a scheme change recolours it; never a hex in the GLSL) and `u_heat`,
- * 0..1, how well the run is going.
+ * `--ui-accent` (read by `useShaderTokens`, so a scheme change recolours it; never a hex in the GLSL), `u_heat`
+ * (0..1, how well the run is going), `u_flow` (0..1, the live Vim Flow, which lets the raster fault), `u_depth`
+ * (0..1, the archive's Codex Rebinds, which wakes the golden second octave) and `u_pulse` (1 on a Clean Cut,
+ * decaying over ~550ms, which sends a dithered ring out from the lamp).
  */
 export interface Surface {
   fragment: string;
@@ -22,4 +24,7 @@ export const BACKDROP_UNIFORMS = {
   u_ink: "vec4",
   u_accent: "vec4",
   u_heat: "float",
+  u_flow: "float",
+  u_depth: "float",
+  u_pulse: "float",
 } as const satisfies Record<string, UniformKind>;

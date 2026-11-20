@@ -1,25 +1,40 @@
+/*
+ * The buy switch is a row of three keys in a sunken well: the chosen one raised on the plate with an amber base under
+ * it, the others plain and quiet until the pointer finds them.
+ */
 .modes {
   display: inline-flex;
-  padding: 2px;
   gap: 2px;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-sunken);
+  padding: 2px;
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
 }
 .option {
   min-width: 44px;
   min-height: 32px;
   padding: 0 10px;
   border: 0;
-  border-radius: var(--ui-radius);
+  border-radius: 0;
   background: transparent;
   color: var(--ui-ink-muted);
   font-family: var(--ui-font-num);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
   cursor: pointer;
+  transition:
+    background-color var(--ui-duration) ease-out,
+    color var(--ui-duration) ease-out;
+}
+.option:hover {
+  color: var(--ui-ink);
 }
 .option[data-state="checked"] {
-  background: var(--ui-surface);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-accent);
+  box-shadow: inset 0 -2px 0 var(--ui-accent);
   color: var(--ui-ink);
 }

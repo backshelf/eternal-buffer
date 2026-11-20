@@ -29,12 +29,12 @@ export interface CurrencyWords {
 }
 
 export const CURRENCY: Record<Currency, CurrencyWords> = {
-  glyphs: { name: "Glyph", plural: "Glyphs", glyph: "key" },
-  ink: { name: "Ink", plural: "Ink", glyph: "drop" },
-  seals: { name: "Seal", plural: "Seals", glyph: "flame" },
-  shards: { name: "Shard", plural: "Shards", glyph: "gem" },
-  treats: { name: "Treat", plural: "Treats", glyph: "star" },
-  codices: { name: "Codex", plural: "Codices", glyph: "shell" },
+  glyphs: { name: "Glyph", plural: "Glyphs", glyph: "glyph" },
+  ink: { name: "Ink", plural: "Ink", glyph: "ink" },
+  seals: { name: "Seal", plural: "Seals", glyph: "seal" },
+  shards: { name: "Shard", plural: "Shards", glyph: "shard" },
+  treats: { name: "Treat", plural: "Treats", glyph: "treat" },
+  codices: { name: "Codex", plural: "Codices", glyph: "codex" },
 };
 
 /** What each stat is called in the fiction. */

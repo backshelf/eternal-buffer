@@ -11,7 +11,7 @@ import {
   defineGame,
   type Effect,
 } from "watchpot/core";
-import type { KeyFamilyId } from "../src/content/vimActs";
+import { FAMILY_BY_ID, type KeyFamilyId } from "../src/content/vimActs";
 import { WORDS } from "../src/content/words";
 import { vim } from "../src/game/vim";
 import { wallet } from "../src/game/wallet";
@@ -74,14 +74,16 @@ describe("unlocking a Keycap Family", () => {
     const { store } = probeStore();
 
     expect(store.getState().vim.unlockFamily("core-move")).toBe(true);
-    // Word Stride needs 120 Glyphs, and the profile starts with none.
+    // A paid family costs the price the content sets, and the profile starts with none.
+    const price = FAMILY_BY_ID["word-stride"].cost.amount;
+    expect(price).toBeGreaterThan(0);
     expect(store.getState().vim.unlockFamily("word-stride")).toBe(false);
     // A family whose prerequisite is not bought is refused whatever the wallet holds.
     expect(store.getState().vim.unlockFamily("char-snipe")).toBe(false);
 
-    store.getState().wallet.credit("glyphs", 500);
+    store.getState().wallet.credit("glyphs", price + 20);
     expect(store.getState().vim.unlockFamily("word-stride")).toBe(true);
-    expect(store.getState().wallet.glyphs.toNumber()).toBe(380);
+    expect(store.getState().wallet.glyphs.toNumber()).toBe(20);
     expect(store.getState().vim.pendingRiteFamily).toBe("word-stride");
     expect(store.getState().vim.highestAct).toBe(2);
 

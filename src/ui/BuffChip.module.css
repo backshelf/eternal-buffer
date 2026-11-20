@@ -1,36 +1,53 @@
+/*
+ * A running bonus is a card from the archive's index: named, described, timed, with an amber stipple bar draining
+ * along its foot. In its last fifth the plate turns vermilion and the count with it.
+ */
 .chip {
   position: relative;
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
   justify-self: start;
-  padding: 6px 12px 8px;
+  padding: 7px 12px 10px;
   overflow: hidden;
-  border: 1px solid var(--ui-accent);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
-  font-size: 13px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line));
+  border-radius: 0;
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--ui-accent) 18%, transparent);
+  font-size: 12px;
+}
+.chip[data-low] {
+  border-color: color-mix(in srgb, var(--ui-danger) 60%, var(--ui-line));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--ui-danger) 22%, transparent);
 }
 /* The time left, as a bar along the foot that drains toward the start. */
 .chip::after {
   position: absolute;
   inset: auto 0 0;
   height: 3px;
-  background: var(--ui-accent);
+  background-color: var(--ui-accent);
+  background-image: var(--dither-4);
   content: "";
   transform-origin: left;
   scale: var(--left) 1;
   transition: scale 250ms linear;
 }
+.chip[data-low]::after {
+  background-color: var(--ui-danger);
+}
 .name {
   font-weight: 700;
+  letter-spacing: 0.01em;
 }
 .effect {
   color: var(--ui-ink-muted);
 }
 .time {
   font-family: var(--ui-font-num);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 .chip[data-low] .time {
   color: var(--ui-danger);

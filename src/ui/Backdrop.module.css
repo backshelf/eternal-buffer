@@ -1,9 +1,26 @@
-/* Behind the whole page: the shell is its own stacking context, so -1 sits over the ground and under everything. */
+/*
+ * Behind the whole page: the shader's room, then a static vignette and soot falloff of the game's own over it, so the
+ * masthead and the tab bar always read whichever way the light drifts. The shell is its own stacking context, so -1
+ * sits over the ground and under everything.
+ */
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+}
+.backdrop::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ui-ground) 78%, transparent), transparent 22%),
+    linear-gradient(0deg, color-mix(in srgb, var(--ui-ground) 82%, transparent), transparent 24%),
+    radial-gradient(
+      120% 100% at 50% 45%,
+      transparent 55%,
+      color-mix(in srgb, var(--ui-ground) 65%, transparent)
+    );
+  content: "";
 }
 .canvas {
   display: block;

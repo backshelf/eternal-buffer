@@ -1,34 +1,40 @@
+/*
+ * The big figure: a bone-vellum column of tabular Martian Mono digits with the phosphor's own bloom behind it, its
+ * glyph in amber, its rate ruled beneath in the machine face. Nothing about it moves but the digits.
+ */
 .counter {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin: 0;
 }
 .value {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .glyph {
   display: inline-flex;
-  color: var(--ui-ink-muted);
+  color: var(--ui-accent);
 }
 .glyph svg {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 .figure {
   font-family: var(--ui-font-num);
-  font-size: clamp(32px, 6vw, 44px);
+  font-size: clamp(30px, 5.5vw, 42px);
   /* One line at the longest figure the game prints: size it down before letting it wrap. */
-  white-space: nowrap;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 26px color-mix(in srgb, var(--ui-accent) 24%, transparent);
+  white-space: nowrap;
 }
 .rate {
   color: var(--ui-ink-muted);
   font-family: var(--ui-font-num);
-  font-size: 13px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
 }

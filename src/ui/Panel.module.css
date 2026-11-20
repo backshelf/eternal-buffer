@@ -1,13 +1,76 @@
+/*
+ * A unit of a screen: a soot plate inside one amber-soot hairline, its heading bar carrying a Bayer stipple, its
+ * corners cut as ASCII brackets. A screen's own panels (level 2) take the double-line alphabet and a second rule
+ * standing off the first; a panel inside a titled section (level 3) takes the single line, so the nesting reads at a
+ * glance without a size change.
+ *
+ * The corners come from the one alphabet in `theme.css` (`--ui-frame-*`): `::before`/`::after` hold the top pair, and
+ * the head's own pair, positioned against `.panel` because the head is not a containing block.
+ */
 .panel {
+  position: relative;
   display: grid;
   min-width: 0;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
+  border: var(--ui-hairline);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
+}
+.panel[data-level="2"] {
+  outline: 1px solid color-mix(in srgb, var(--ui-accent) 28%, transparent);
+  outline-offset: 2px;
 }
 .panel[data-tone="sunken"] {
-  border-color: transparent;
-  background: var(--ui-sunken);
+  background-color: var(--ui-sunken);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-ink) 6%, transparent);
+}
+.panel[data-tone="sunken"][data-level="2"] {
+  outline-color: color-mix(in srgb, var(--ui-line) 70%, transparent);
+}
+
+.panel::before,
+.panel::after,
+.head::before,
+.head::after {
+  position: absolute;
+  color: color-mix(in srgb, var(--ui-accent) 72%, transparent);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  content: var(--ui-frame-tl);
+  pointer-events: none;
+  user-select: none;
+}
+.panel::before {
+  top: -6px;
+  left: -5px;
+}
+.panel::after {
+  top: -6px;
+  right: -5px;
+  content: var(--ui-frame-tr);
+}
+.head::before {
+  bottom: -6px;
+  left: -5px;
+  content: var(--ui-frame-bl);
+}
+.head::after {
+  right: -5px;
+  bottom: -6px;
+  content: var(--ui-frame-br);
+}
+.panel[data-level="2"]::before {
+  content: var(--ui-frame-dtl);
+}
+.panel[data-level="2"]::after {
+  content: var(--ui-frame-dtr);
+}
+.panel[data-level="2"] .head::before {
+  content: var(--ui-frame-dbl);
+}
+.panel[data-level="2"] .head::after {
+  content: var(--ui-frame-dbr);
 }
 
 .head {
@@ -15,29 +78,49 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 9px 14px;
+  background-color: color-mix(in srgb, var(--ui-sunken) 68%, var(--ui-surface));
+  background-image: var(--dither-accent);
 }
+.panel[data-tone="sunken"] .head {
+  background-color: transparent;
+  background-image: var(--dither-4);
+}
+
 .heading {
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-family: var(--ui-font-display);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: 0.004em;
+  text-wrap: balance;
 }
+/* A section's panel is a lintel, not a title: a ruled label in the machine face. */
 .panel[data-level="3"] .heading {
-  font-family: var(--ui-font);
-  font-size: 15px;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
+
 .aside {
   flex: none;
   color: var(--ui-ink-muted);
-  font-size: 13px;
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .body {
   display: grid;
   gap: 8px;
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--ui-line);
+  padding: 12px 14px 14px;
+  border-top: var(--ui-hairline);
 }

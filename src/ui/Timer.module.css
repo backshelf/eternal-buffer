@@ -1,3 +1,7 @@
+/*
+ * A countdown is a clock face in the machine hand: the words a ruled label, the digits tabular and tight. Under its
+ * warning edge the digits turn vermilion and take a little of the plate's light with them.
+ */
 .timer {
   display: inline-flex;
   flex-wrap: wrap;
@@ -11,22 +15,26 @@
 }
 .label {
   color: var(--ui-ink-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .digits {
   font-family: var(--ui-font-num);
-  font-size: 13px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 .timer[data-size="large"] .digits {
-  font-size: 36px;
+  font-size: 32px;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .timer[data-warn] .digits {
   color: var(--ui-danger);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--ui-danger) 30%, transparent);
 }
 .timer[data-ended] {
   color: var(--ui-ink-muted);

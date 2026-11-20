@@ -1,32 +1,44 @@
+/*
+ * A balance is a ledger tab: one hairline, a 2px amber edge marking it as the currency's own, a stipple pressed into
+ * the plate, and the figure set tabular in the machine face so a row of six never shifts as they climb.
+ */
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 10px;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 9px;
   box-sizing: border-box;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
+  border: var(--ui-hairline);
+  border-left: 2px solid color-mix(in srgb, var(--ui-accent) 62%, transparent);
+  border-radius: 0;
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
   white-space: nowrap;
 }
-/* The currency flight's landing: a quick swell as its glyphs arrive. */
+/* The currency flight's landing: a quick swell and a flare as its glyphs arrive. */
 .pill[data-bump] {
-  animation: bump 160ms ease-out;
+  animation: bump 200ms ease-out;
 }
 @keyframes bump {
   35% {
-    scale: 1.1;
+    filter: brightness(1.35);
+    scale: 1.08;
   }
 }
 
 .glyph {
   display: inline-flex;
-  color: var(--ui-ink-muted);
+  color: var(--ui-accent);
+}
+.glyph svg {
+  width: 13px;
+  height: 13px;
 }
 .amount {
   font-family: var(--ui-font-num);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }

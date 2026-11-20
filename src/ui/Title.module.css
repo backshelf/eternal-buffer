@@ -1,12 +1,17 @@
+/*
+ * A screen's name is set as a title page: Cardo at its display weight, tight enough to read as printed caps, with the
+ * amber rule of the archive under it rather than a colour change.
+ */
 .title {
   margin: 0;
+  color: var(--ui-ink);
   font-family: var(--ui-font-display);
   font-size: clamp(26px, 4vw, 34px);
   font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
+  line-height: 1.02;
+  letter-spacing: -0.005em;
   text-wrap: balance;
 }
 .title[data-size="section"] {
-  font-size: 22px;
+  font-size: 21px;
 }

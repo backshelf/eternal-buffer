@@ -1,4 +1,9 @@
 /*
+ * The upgrade tree is a plate of index cards joined by ruled elbows: dashed where the path is not built, solid amber
+ * where it is. Every tile is square, hairlined and stippled; the price sits tabular on the tile's corner in muted ink
+ * until it can be paid, and then it burns.
+ */
+/*
  * `TreeGraph` places each node at `--col`/`--row` (both from 0) and its tier heading at `--col`; the root carries
  * `--cols`/`--rows`. The graph is a grid of equal cells with no gap, so the edges' SVG, stretched over the node rows,
  * lands each elbow on a cell's centre; the space between tiles is the cells' own padding.
@@ -23,8 +28,11 @@
   grid-column: calc(var(--col) + 1);
   padding: 0 8px 8px;
   color: var(--ui-ink-muted);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 /* The elbows, behind the tiles; lit from a built node. */
@@ -35,11 +43,14 @@
   height: 100%;
 }
 .tree [data-edges] line {
-  stroke: var(--ui-line);
-  stroke-width: 2px;
+  stroke: color-mix(in srgb, var(--ui-line) 85%, transparent);
+  stroke-dasharray: 3 3;
+  stroke-width: 1px;
 }
 .tree [data-edges] line[data-lit] {
   stroke: var(--ui-accent);
+  stroke-dasharray: none;
+  stroke-width: 2px;
 }
 
 .tree [data-node] {
@@ -53,37 +64,50 @@
 .tree [data-pick] {
   display: grid;
   align-content: center;
-  gap: 2px;
+  gap: 3px;
   padding: 8px 10px;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
   text-align: start;
   cursor: pointer;
+  transition: border-color var(--ui-duration) ease-out;
+}
+.tree [data-pick]:hover {
+  border-color: color-mix(in srgb, var(--ui-accent) 55%, var(--ui-line));
+}
+/* The graph scrolls sideways: keep the ring inside its own tile. */
+.tree [data-pick]:focus-visible {
+  outline-offset: -3px;
 }
 .tree [data-node][data-lit] [data-pick] {
-  border-color: var(--ui-accent);
+  border-color: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-line));
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--ui-accent) 26%, transparent);
 }
 .tree [data-node][data-chosen] [data-pick] {
   box-shadow: inset 0 0 0 1px var(--ui-ink);
 }
 .tree [data-node][data-state="locked"] [data-pick] {
   border-style: dashed;
+  background-image: none;
   color: var(--ui-ink-muted);
 }
 
 .name {
   overflow: hidden;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .rank {
   color: var(--ui-ink-muted);
   font-family: var(--ui-font-num);
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
 }
 /* The next price on the tile's corner: the accent when it can be paid now. */
 .price {
@@ -92,8 +116,9 @@
   bottom: 10px;
   color: var(--ui-ink-muted);
   font-family: var(--ui-font-num);
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 .price[data-affordable] {
   color: var(--ui-accent);
@@ -104,17 +129,21 @@
 .detail {
   display: grid;
   gap: 8px;
-  padding: 16px;
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
+  padding: 14px;
+  border: var(--ui-hairline);
+  border-radius: 0;
+  background-color: var(--ui-surface);
+  background-image: var(--dither-4);
 }
 .detailName {
   font-family: var(--ui-font-display);
   font-size: 18px;
   font-weight: 700;
+  line-height: 1.15;
 }
 .effect {
+  color: var(--ui-accent);
+  font-size: 13px;
   font-weight: 600;
 }
 .action {
