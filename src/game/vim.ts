@@ -231,14 +231,13 @@ function resolveAnomalyIn(
     return { grade, paid: D(0), shardDrop: false, treatDrop: false };
   }
 
+  // `stats.output` already carries the Grammar Codex and Practice Rite multipliers (and Tilde's bond), so the payout
+  // multiplies only the run's own Flow and tempo on top of it.
   let paid = s.vim.activeGlyphsPerEdit
     .mul(weight)
     .mul(parMultOf(grade))
     .mul(s.vim.flowMult)
     .mul(s.stats.tempo)
-    .mul(s.vim.codexPairMult)
-    .mul(s.vim.riteMult)
-    .mul(s.vim.tildeClarityMult)
     .mul(s.stats.output);
 
   // One-Shot Surgeon: slop pays nothing at all.
@@ -278,12 +277,7 @@ function completeFolioIn(s: VimHost, isRite: boolean, riteFamily?: string): Foli
   const seed = s.vim.folioSeed;
   if (Object.keys(s.vim.resolvedAnomalyIds).length === 0) return { bonus: D(0), nextSeed: seed };
 
-  const bonus = s.vim.activeGlyphsPerEdit
-    .mul(FOLIO_CLEAR_MULT)
-    .mul(s.vim.flowMult)
-    .mul(s.vim.codexPairMult)
-    .mul(s.vim.riteMult)
-    .mul(s.stats.output);
+  const bonus = s.vim.activeGlyphsPerEdit.mul(FOLIO_CLEAR_MULT).mul(s.vim.flowMult).mul(s.stats.output);
   wallet.draft.credit(s, "glyphs", bonus);
 
   s.vim.totalFoliosCleared += 1;
@@ -403,8 +397,9 @@ export const vim = defineFeature({
       activeGlyphsPerEdit: (s) => D(BASE_EDIT_GLYPHS).mul(D(1 + 0.35 * (s.vim.actTier - 1))),
     },
     {
-      expectedActivePerSec: (s) =>
-        s.vim.activeGlyphsPerEdit.mul(s.vim.flowMult).mul(s.vim.codexPairMult).mul(s.vim.riteMult),
+      // What a player at a steady pace makes a second: one anomaly about every five seconds, at the run's own Flow.
+      // `stats.output` (which carries the Codex pairs and rites) is applied by `income.ts`, never here.
+      expectedActivePerSec: (s) => s.vim.activeGlyphsPerEdit.mul(s.vim.flowMult).mul(D(0.2)),
     },
   ],
   reset: (before, fresh) => {

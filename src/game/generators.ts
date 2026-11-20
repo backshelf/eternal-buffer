@@ -8,6 +8,7 @@ import {
 import { OFFLINE_CAP_MS } from "../content/economy";
 import { GENERATORS, type GeneratorDef } from "../content/generators";
 import { type Currency, MAIN } from "../content/words";
+import { idleGlyphRateOf } from "./income";
 import { wallet } from "./wallet";
 
 /**
@@ -17,7 +18,12 @@ import { wallet } from "./wallet";
  */
 interface Reads {
   readonly stats: { readonly output: Decimal; readonly inkRate: Decimal; readonly offline: Decimal };
-  readonly vim: { readonly flow: number; readonly flowCap: number; readonly actTier: number };
+  readonly vim: {
+    readonly flow: number;
+    readonly flowCap: number;
+    readonly actTier: number;
+    readonly expectedActivePerSec: Decimal;
+  };
   readonly trials: { readonly rules: string[] };
 }
 
@@ -63,11 +69,11 @@ export const scribeTrickle = defineFeature({
       trickle: {
         pass: "both",
         run: (s, ctx) => {
-          if (ctx.dtMs === 0 || s.trials.rules.includes("noScribes")) return;
-          let rate = 0;
-          for (const g of GENERATORS) rate += (s.generators.owned[g.id] ?? 0) * g.glyphTrickle;
-          if (rate <= 0) return;
-          wallet.draft.credit(s, "glyphs", s.stats.output.mul(rate * resonance(s) * (ctx.dtMs / 1000)));
+          if (ctx.dtMs === 0) return;
+          // The same capped rate the page and the economy test read, so nothing can drift between them.
+          const glyphs = idleGlyphRateOf(s).mul(ctx.dtMs / 1000);
+          if (glyphs.lte(0)) return;
+          wallet.draft.credit(s, "glyphs", glyphs);
         },
       },
     },

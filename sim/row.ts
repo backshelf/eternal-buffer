@@ -36,7 +36,7 @@ export function readRow(s: GameState, hours: number): Row {
     main: main.gt(0) ? main.log10().toNumber() : 0,
     kinds,
     ranks: Object.values(s.upgrades.ranks).reduce((a, b) => a + b, 0),
-    runs: s.prestige.runs,
+    runs: s.volumes.runs,
     earned: Object.keys(s.achievements.earned).length,
   };
 }

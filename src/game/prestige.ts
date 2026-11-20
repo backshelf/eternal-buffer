@@ -2,12 +2,10 @@ import { type Decimal, definePrestige, type PrestigeMilestoneDef, powerGain, rea
 import {
   CODEX_GAIN,
   CODEX_MILESTONES,
-  GAIN,
   type PrestigeMilestone,
   VOLUME_GAIN,
   VOLUME_MILESTONES,
 } from "../content/prestige";
-import { stats } from "./stats";
 import { wallet } from "./wallet";
 
 /** What the prestige gain is read from: the run's earnings and the gain stat. */
@@ -21,9 +19,6 @@ interface CodexReads {
   readonly volumes: { readonly lifetime: Decimal };
   readonly stats: { readonly codexGain: Decimal };
 }
-
-/** What the layer pays now: the run's earnings on the curve in `content/prestige.ts`, times the gain stat. */
-export const prestigeGain = (s: GainReads) => powerGain(s.wallet.earned, { ...GAIN, mult: s.stats.gain });
 
 /**
  * What a volume pays now: the run's Glyphs on `VOLUME_GAIN`, times the gain stat. Both layers' curves are pure, so a
@@ -82,21 +77,4 @@ export const codex = definePrestige({
   gain: (s) => codexGain(s),
   canReset: (s) => s.wallet.sealsEver.gte(250) && codexGain(s).gte(1),
   worth: (s) => worthOf(codexGain(s), s.wallet.codices),
-});
-
-/**
- * The scaffold's single layer, kept until the game wires the two above: `ascend()` pays the gain into
- * `prestige.currency` and resets the run. Each unit held raises output for good. Its slice also says when a run is
- * past its best (`s.prestige.pastPeak`), for a light on the page.
- */
-export const ascension = definePrestige({
-  key: "prestige",
-  action: "ascend",
-  reach: [wallet, stats],
-  gain: (s) => prestigeGain(s),
-  // The auto-player ascends once a reset would at least double what it holds (and pays at least one).
-  worth: (s) => {
-    const gain = prestigeGain(s);
-    return gain.gte(1) && gain.gte(s.prestige.currency) ? gain.toNumber() : 0;
-  },
 });
