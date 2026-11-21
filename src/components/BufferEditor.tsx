@@ -876,6 +876,8 @@ export function BufferEditor({ className }: BufferEditorProps) {
     let pendingNormalKey: { key: string; at: number } | null = null;
     /** Deadline until which a leaked newline from closing the `:` Ex prompt is suppressed. */
     let suppressNewlineUntil = 0;
+    /** Preserves an arrow-training/rust whisper published in `onKeyDown` across the immediate `vim-keypress`. */
+    let preserveWhisperOnce = false;
 
     const resetHint = () => {
       if (hintTimer !== undefined) window.clearTimeout(hintTimer);
@@ -1129,6 +1131,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
         playKeyThock("rust");
         store.getState().vim.noteArrowRust();
         const message = decision.message ?? "Use h j k l — the arrows have rusted.";
+        preserveWhisperOnce = decision.allowed;
         publishStatus({
           whisper: message,
           whisperKind: "rust",
@@ -1145,6 +1148,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
       if (decision.allowed) {
         if (/^Arrow(Up|Down|Left|Right)$/.test(event.key) && mode === "normal") {
+          preserveWhisperOnce = true;
           publishStatus({
             whisper: "Arrows work for now — try h j k l to build muscle memory.",
             whisperKind: "rust",
@@ -1655,10 +1659,12 @@ export function BufferEditor({ className }: BufferEditorProps) {
       }
       const target = countTarget(view, context.current);
       if (target) keysUsed.current.set(target.id, (keysUsed.current.get(target.id) ?? 0) + 1);
+      const keepWhisper = preserveWhisperOnce;
+      preserveWhisperOnce = false;
       publishStatus({
         lastKey: keycapOf(key),
         press: status.press + 1,
-        whisper: null,
+        ...(keepWhisper ? {} : { whisper: null }),
         pending: pendingOf(cm?.state.vim),
         recording,
       });
