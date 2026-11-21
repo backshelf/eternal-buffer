@@ -41,11 +41,14 @@ export function Button({
     >
       <span className={s.label}>{children}</span>
       {cost !== undefined && cost !== null && (
-        <span className={s.cost}>
-          {glyph}
-          <span className={s.figure}>{cost}</span>
-          {unit && <VisuallyHidden> {unit}</VisuallyHidden>}
-        </span>
+        <>
+          <VisuallyHidden> · </VisuallyHidden>
+          <span className={s.cost}>
+            {glyph}
+            <span className={s.figure}>{cost}</span>
+            {unit && <VisuallyHidden> {unit}</VisuallyHidden>}
+          </span>
+        </>
       )}
     </button>
   );

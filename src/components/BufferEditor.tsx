@@ -43,7 +43,12 @@ import {
 } from "../app/sound";
 import { EGG_BY_ID } from "../content/easterEggs";
 import { GENERATORS } from "../content/generators";
-import { FIRST_LESSON_FOLIO, FOLIO_1_APPEND_LESSON, FOLIO_2_EDGE_LESSON } from "../content/guide";
+import {
+  FIRST_LESSON_FOLIO,
+  FOLIO_1_APPEND_LESSON,
+  FOLIO_2_EDGE_LESSON,
+  visibleAct1Keys,
+} from "../content/guide";
 import { resolveThemeId, THEMES, type ThemeId } from "../content/themes";
 import { ACT_BY_ID, type ActId, type KeyFamilyId } from "../content/vimActs";
 import { producers } from "../game/generators";
@@ -503,20 +508,23 @@ const mendedFlash = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field),
 });
 
-/** A `[ROT · par 3]` tag in the margin, one per line that holds part of an unresolved anomaly. */
+/** A `[ROT·10]` tag in the margin, one per line that holds part of an unresolved anomaly. */
 class ParTag extends GutterMarker {
   readonly text: string;
-  constructor(text: string) {
+  readonly hintTitle: string;
+  constructor(text: string, hintTitle = "Glitch tag · [KIND·parKeystrokes] for a Clean Cut") {
     super();
     this.text = text;
+    this.hintTitle = hintTitle;
   }
   eq(other: GutterMarker): boolean {
-    return other instanceof ParTag && other.text === this.text;
+    return other instanceof ParTag && other.text === this.text && other.hintTitle === this.hintTitle;
   }
   toDOM(): Node {
     const el = document.createElement("span");
     el.className = "eb-par-tag";
     el.textContent = this.text;
+    el.title = this.hintTitle;
     return el;
   }
 }
@@ -570,7 +578,10 @@ function anomalyMarks(context: BufferContext): Extension {
       const lineIndex = view.state.doc.lineAt(line.from).number - 1;
       for (const span of markedSpans(view, context)) {
         if (span.line !== lineIndex) continue;
-        return new ParTag(`[${span.anomaly.label}·${span.anomaly.parKeys}]`);
+        return new ParTag(
+          `[${span.anomaly.label}·${span.anomaly.parKeys}]`,
+          `${span.anomaly.label} glitch · par ${span.anomaly.parKeys} keystrokes for a Clean Cut bonus`,
+        );
       }
       return null;
     },
@@ -660,23 +671,32 @@ const REFUSALS = {
   treat: "Tilde has no treats left to accept. (`:help` will not conjure one.)",
 } as const;
 
-/** The touch keypad's caps: the day-one motions and the two ways into a mode. */
-const TOUCH_KEYS = [
-  { id: "h", label: "h", vim: "h" },
-  { id: "j", label: "j", vim: "j" },
-  { id: "k", label: "k", vim: "k" },
-  { id: "l", label: "l", vim: "l" },
-  { id: "w", label: "w", vim: "w" },
-  { id: "b", label: "b", vim: "b" },
-  { id: "0", label: "0", vim: "0" },
-  { id: "dollar", label: "$", vim: "$" },
-  { id: "x", label: "x", vim: "x" },
-  { id: "p", label: "p", vim: "p" },
-  { id: "i", label: "i", vim: "i" },
-  { id: "esc", label: "Esc", vim: "<Esc>" },
+/** The touch keypad's caps: gated to the keys the player has unlocked so far. */
+const TOUCH_KEYS: readonly {
+  id: string;
+  label: string;
+  vim: string;
+  act1Key?: string;
+  family?: KeyFamilyId;
+}[] = [
+  { id: "h", label: "h", vim: "h", act1Key: "h" },
+  { id: "j", label: "j", vim: "j", act1Key: "j" },
+  { id: "k", label: "k", vim: "k", act1Key: "k" },
+  { id: "l", label: "l", vim: "l", act1Key: "l" },
+  { id: "w", label: "w", vim: "w", family: "word-stride" },
+  { id: "b", label: "b", vim: "b", family: "word-stride" },
+  { id: "0", label: "0", vim: "0", family: "line-edge" },
+  { id: "dollar", label: "$", vim: "$", family: "line-edge" },
+  { id: "x", label: "x", vim: "x", act1Key: "x" },
+  { id: "p", label: "p", vim: "p", family: "op-yank" },
+  { id: "i", label: "i", vim: "i", act1Key: "i" },
+  { id: "a", label: "a", vim: "a", act1Key: "a" },
+  { id: "I", label: "I", vim: "I", act1Key: "I" },
+  { id: "A", label: "A", vim: "A", act1Key: "A" },
+  { id: "esc", label: "Esc", vim: "<Esc>", act1Key: "Esc" },
   { id: "colon", label: ":", vim: ":" },
-  { id: "u", label: "u", vim: "u" },
-] as const;
+  { id: "u", label: "u", vim: "u", act1Key: "u" },
+];
 
 // ---------------------------------------------------------------------------------------------
 // The component
@@ -852,6 +872,10 @@ export function BufferEditor({ className }: BufferEditorProps) {
     let emptyUndos = 0;
     /** Whether the last key was `g`, for `g m` (catch live Margin Moth). */
     let pendingG = false;
+    /** Last single-char key pressed in Normal/Visual mode, to block any stray `beforeinput` if mode flips to Insert/Replace. */
+    let pendingNormalKey: { key: string; at: number } | null = null;
+    /** Deadline until which a leaked newline from closing the `:` Ex prompt is suppressed. */
+    let suppressNewlineUntil = 0;
 
     const resetHint = () => {
       if (hintTimer !== undefined) window.clearTimeout(hintTimer);
@@ -1028,6 +1052,12 @@ export function BufferEditor({ className }: BufferEditorProps) {
       const mode = modeOf(cm);
       const live = store.getState();
 
+      if (mode === "insert" || mode === "replace" || mode === "command") {
+        pendingNormalKey = null;
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.length === 1) {
+        pendingNormalKey = { key: event.key, at: performance.now() };
+      }
+
       // Escape, mashed in Normal mode.
       if (event.key === "Escape" && mode === "normal") {
         const now = performance.now();
@@ -1113,7 +1143,15 @@ export function BufferEditor({ className }: BufferEditorProps) {
         return false;
       }
 
-      if (decision.allowed) return false;
+      if (decision.allowed) {
+        if (/^Arrow(Up|Down|Left|Right)$/.test(event.key) && mode === "normal") {
+          publishStatus({
+            whisper: "Arrows work for now — try h j k l to build muscle memory.",
+            whisperKind: "rust",
+          });
+        }
+        return false;
+      }
 
       event.preventDefault();
       playKeyThock("locked");
@@ -1427,6 +1465,36 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
     // --- the view --------------------------------------------------------------------------
 
+    /** Blocks stray browser `beforeinput` text insertion in Normal/Visual mode or from a mode-entering key. */
+    const onBeforeInput = (event: InputEvent, view: EditorView): boolean => {
+      if (
+        suppressNewlineUntil > performance.now() &&
+        (event.inputType === "insertLineBreak" ||
+          event.inputType === "insertParagraph" ||
+          event.data === "\n")
+      ) {
+        event.preventDefault();
+        return true;
+      }
+      const mode = modeOf(getCM(view));
+      if (mode === "normal" || mode === "visual" || mode === "visual-line" || mode === "visual-block") {
+        if (!event.isComposing && event.inputType !== "insertCompositionText") {
+          event.preventDefault();
+          return true;
+        }
+      } else if (
+        (mode === "insert" || mode === "replace") &&
+        pendingNormalKey !== null &&
+        performance.now() - pendingNormalKey.at < 80 &&
+        event.data === pendingNormalKey.key
+      ) {
+        pendingNormalKey = null;
+        event.preventDefault();
+        return true;
+      }
+      return false;
+    };
+
     const view = new EditorView({
       state: EditorState.create({
         doc: (context.current.folio ? pageOf(context.current.folio, context.current.resolved) : ["~"]).join(
@@ -1436,7 +1504,32 @@ export function BufferEditor({ className }: BufferEditorProps) {
           history(),
           // Highest precedence: CodeMirror runs DOM handlers in plugin order and stops at the first
           // `true`, so this answers before @replit/codemirror-vim's keydown ever runs.
-          Prec.highest(EditorView.domEventHandlers({ keydown: onKeyDown })),
+          Prec.highest(EditorView.domEventHandlers({ keydown: onKeyDown, beforeinput: onBeforeInput })),
+          Prec.high(
+            EditorView.inputHandler.of((view, _from, _to, text) => {
+              if (suppressNewlineUntil > performance.now() && text.includes("\n")) return true;
+              const mode = modeOf(getCM(view));
+              if (
+                (mode === "normal" ||
+                  mode === "visual" ||
+                  mode === "visual-line" ||
+                  mode === "visual-block") &&
+                !view.composing
+              ) {
+                return true;
+              }
+              if (
+                (mode === "insert" || mode === "replace") &&
+                pendingNormalKey !== null &&
+                performance.now() - pendingNormalKey.at < 80 &&
+                text === pendingNormalKey.key
+              ) {
+                pendingNormalKey = null;
+                return true;
+              }
+              return false;
+            }),
+          ),
           vim({ status: false }),
           EditorView.lineWrapping,
           gutterCompartment.of(gutterExtension(gutterBorn.current, () => relativeRef.current)),
@@ -1590,6 +1683,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
       if (event.key !== "Enter") return;
       const target = event.target;
       if (!(target instanceof HTMLInputElement) || !target.closest(".cm-vim-panel")) return;
+      suppressNewlineUntil = performance.now() + 120;
       const input = target.value.trim();
       const live = store.getState();
       const closePrompt = () => {
@@ -1732,9 +1826,42 @@ export function BufferEditor({ className }: BufferEditorProps) {
     const view = viewRef.current;
     const cm = view ? getCM(view) : null;
     if (!view || !cm) return;
+    const live = store.getState();
+    const mode = modeOf(cm);
+    const gateKey = key === "<Esc>" ? "Escape" : key;
+    const decision = gateKeystroke({
+      key: gateKey,
+      ctrlKey: false,
+      mode,
+      pendingKeys: pendingOf(cm.state.vim),
+      unlocked: live.vim.unlockedFamilies,
+      challengeRules: live.trials.rules,
+      veteranMode: live.settings.veteranMode,
+      arrowTrainingLeft: Math.max(0, ARROW_TRAINING - live.vim.totalCleanCuts),
+      arrowShame: live.settings.arrowShame,
+      onboardingStep: live.vim.onboardingStep,
+    });
+    if (!decision.allowed) {
+      playKeyThock("locked");
+      publishStatus({
+        message: decision.message ?? "",
+        whisper: decision.message ?? null,
+        whisperKind: "lock",
+        lastKey: keycapOf(key),
+        press: status.press + 1,
+      });
+      return;
+    }
     view.focus();
     Vim.handleKey(cm, key, "user");
   };
+
+  const visibleAct1 = visibleAct1Keys(onboardingStep, veteranMode, jkEscape);
+  const visibleTouchKeys = TOUCH_KEYS.filter((cap) => {
+    if (cap.act1Key) return visibleAct1.includes(cap.act1Key);
+    if (cap.family) return veteranMode || unlocked[cap.family] === true;
+    return true;
+  });
 
   const baseUniforms = tokens
     ? {
@@ -1809,7 +1936,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
       </div>
       {touchKeypad && (
         <fieldset className={s.keypad} aria-label="Touch Vim keypad">
-          {TOUCH_KEYS.map((cap) => (
+          {visibleTouchKeys.map((cap) => (
             <button key={cap.id} type="button" className={s.keypadKey} onClick={() => typeKey(cap.vim)}>
               {cap.label}
             </button>

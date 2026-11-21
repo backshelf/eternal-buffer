@@ -11,7 +11,7 @@
 import { useEffect, useState } from "react";
 import { D, fmt } from "watchpot/core";
 import { useClockNow } from "watchpot/react";
-import { type BuyMode, VisuallyHidden } from "watchpot/ui";
+import { type BuyMode, Popover, Portal, VisuallyHidden } from "watchpot/ui";
 import { BufferEditor, FOCUS_BUFFER_EVENT } from "../components/BufferEditor";
 import { Chalkboard } from "../components/Chalkboard";
 import { CoachBar } from "../components/CoachBar";
@@ -32,6 +32,7 @@ import { Button } from "../ui/Button";
 import { BuyAmount } from "../ui/BuyAmount";
 import type { ShellTab } from "../ui/Shell";
 import { Tooltip } from "../ui/Tooltip";
+import tipStyles from "../ui/Tooltip.module.css";
 import { useGameState, useGameStore } from "./hooks";
 import { glyphOf } from "./icons";
 import { isScribesRevealed, type Tab, totalScribes } from "./tabs";
@@ -214,13 +215,24 @@ export function Workstation({
             )}
 
             {clarityVisible && (
-              <Tooltip content={<ClarityTip rows={clarityRows} />} side="right">
-                <button type="button" className={s.clarityRow}>
-                  <span className={s.ledgerName}>Clarity</span>
-                  <span className={s.clarityAmt}>×{fmt(st.stats.output, { decimals: 2 }).text}</span>
-                  <span className={s.ledgerSub}>Glyph multiplier</span>
-                </button>
-              </Tooltip>
+              <Popover.Root side="right">
+                <Popover.Trigger asChild>
+                  <button type="button" className={s.clarityRow}>
+                    <span className={s.ledgerName}>Clarity</span>
+                    <span className={s.clarityAmt}>×{fmt(st.stats.output, { decimals: 2 }).text}</span>
+                    <span className={s.ledgerSub}>Glyph multiplier · click for breakdown</span>
+                  </button>
+                </Popover.Trigger>
+                <Portal>
+                  <Popover.Content
+                    className={tipStyles.tip}
+                    style={{ pointerEvents: "auto" }}
+                    aria-label="Clarity breakdown"
+                  >
+                    <ClarityTip rows={clarityRows} />
+                  </Popover.Content>
+                </Portal>
+              </Popover.Root>
             )}
 
             {extraCurrencies.map((c) => (

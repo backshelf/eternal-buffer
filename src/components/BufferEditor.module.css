@@ -194,3 +194,9 @@
     display: none;
   }
 }
+
+@media (max-width: 520px) {
+  .host :global(.eb-par-gutter) {
+    display: none;
+  }
+}

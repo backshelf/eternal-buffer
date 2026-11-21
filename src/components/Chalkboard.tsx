@@ -45,8 +45,8 @@ function ActStrip({
             {act1Keys.map((key) => {
               const gloss = KEY_GLOSS[key] ?? "Core Vim key";
               return (
-                <Tooltip key={`act1-${key}`} content={`${key} — ${gloss}`} side="top">
-                  <span className={s.cap} data-pressed={key === lastKey || null}>
+                <Tooltip key={`act1-${key}`} content={`${key} — ${gloss}`} side="top" delay={100}>
+                  <span className={s.cap} data-pressed={key === lastKey || null} title={`${key} — ${gloss}`}>
                     {key}
                   </span>
                 </Tooltip>
@@ -74,8 +74,12 @@ function ActStrip({
               {family.keys.slice(0, CAPS_PER_FAMILY).map((key) => {
                 const gloss = KEY_GLOSS[key] ?? family.chalkSummary;
                 return (
-                  <Tooltip key={`${family.id}-${key}`} content={`${key} — ${gloss}`} side="top">
-                    <span className={s.cap} data-pressed={key === lastKey || null}>
+                  <Tooltip key={`${family.id}-${key}`} content={`${key} — ${gloss}`} side="top" delay={100}>
+                    <span
+                      className={s.cap}
+                      data-pressed={key === lastKey || null}
+                      title={`${key} — ${gloss}`}
+                    >
                       {key}
                     </span>
                   </Tooltip>

@@ -210,7 +210,11 @@ function Socket({
           {"[  ]"}
         </span>
       ) : (
-        <span className={s.ringText} aria-hidden="true">
+        <span
+          className={s.ringText}
+          aria-hidden="true"
+          title={`Opens once you have bound ${opensAtFive(view.x, view.y) ? RING_FIVE : RING_SIX}`}
+        >
           {opensAtFive(view.x, view.y) ? RING_FIVE : RING_SIX}
         </span>
       )}

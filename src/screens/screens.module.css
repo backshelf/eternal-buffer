@@ -414,6 +414,29 @@
 }
 
 /* --- Marginalia: the wall's own rail --------------------------------------------------------------------- */
+.inspectBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  padding: 8px 12px;
+  border: var(--ui-hairline);
+  background-color: var(--ui-sunken);
+  font-size: 12.5px;
+}
+.inspectName {
+  font-weight: 600;
+  color: var(--ui-accent);
+}
+.inspectLine {
+  color: var(--ui-ink-muted);
+}
+.inspectReward {
+  margin-left: auto;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  color: var(--ui-ink);
+}
 .archiveWall.archiveWall {
   max-width: calc(var(--columns) * 78px + 132px);
 }

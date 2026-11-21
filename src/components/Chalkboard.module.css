@@ -5,6 +5,8 @@
  */
 .board {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 4px;
   margin: 0;
   padding: 7px 10px 6px;
@@ -78,6 +80,7 @@
 
 .family {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 3px;
 }
@@ -193,5 +196,10 @@
   }
   .actTitle {
     display: none;
+  }
+  .whisper {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 }

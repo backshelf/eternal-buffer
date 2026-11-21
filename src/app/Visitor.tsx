@@ -31,11 +31,14 @@ const MOTH_FACE: CSSProperties = {
 /** The stack of chips: no stylesheet of its own, a grid of one column. */
 const CHIPS: CSSProperties = { display: "grid", gap: 6 };
 
-/** Where an arrival sits: read off its id, so it stays put across renders and reloads, and clear of the edges. */
+/** Where an arrival sits: in the outer margins (left, right, or top band) so it never blocks the buffer. */
 const placeOf = (id: string) => {
-  const [x, next] = nextFloat(seedRng(id));
-  const [y] = nextFloat(next);
-  return { x: 0.15 + x * 0.7, y: 0.2 + y * 0.6 };
+  const [zone, r1] = nextFloat(seedRng(id));
+  const [a, r2] = nextFloat(r1);
+  const [b] = nextFloat(r2);
+  if (zone < 0.35) return { x: 0.04 + a * 0.09, y: 0.16 + b * 0.68 };
+  if (zone < 0.7) return { x: 0.87 + a * 0.09, y: 0.16 + b * 0.68 };
+  return { x: 0.22 + a * 0.56, y: 0.06 + b * 0.07 };
 };
 
 /** What a buff is worth, said the way the ledger says it: a multiple or a share of one stat. */

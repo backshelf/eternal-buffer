@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { fmt } from "watchpot/core";
-import type { AchievementRow, AchievementRowAside, AchievementWords } from "watchpot/ui";
+import type { AchievementRow, AchievementRowAside, AchievementTile, AchievementWords } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
 import { tileMark } from "../app/icons";
 import { ACHIEVEMENTS, POWER, ROW_TITLES, WALL_NAME, type When } from "../content/achievements";
@@ -68,6 +69,7 @@ function rowAside(aside: AchievementRowAside) {
 /** The wall: every achievement in six rows of eight, with the row's own rail and what the earned ones give. */
 export function AchievementsScreen() {
   const earned = useGameState((st) => st.achievements.earned);
+  const [inspected, setInspected] = useState<AchievementTile | null>(null);
   const rows: AchievementRow[] = wall.def.board.rows(earned).map((row) => ({
     complete: row.complete,
     tiles: row.tiles.map((tile) => ({
@@ -85,6 +87,7 @@ export function AchievementsScreen() {
   }));
   const count = wall.def.board.count(earned);
   const full = wall.def.board.rowsComplete(earned);
+  const secret = inspected ? Boolean(inspected.hidden) && !inspected.earned : false;
   return (
     <div className={s.screen}>
       <Title>{TAB_NAMES.achievements}</Title>
@@ -92,12 +95,33 @@ export function AchievementsScreen() {
         {count} of {ACHIEVEMENTS.length} tiles struck · {full} of {ROW_TITLES.length} rows full · Clarity ×
         {fmt(wall.def.board.power(earned, POWER), { decimals: 2 }).text}
       </p>
+      <div className={s.inspectBar} aria-live="polite">
+        {inspected ? (
+          secret ? (
+            <>
+              <span className={s.inspectName}>???</span>
+              <span className={s.inspectLine}>A secret seal. Keep playing to uncover it.</span>
+            </>
+          ) : (
+            <>
+              <span className={s.inspectName}>
+                {inspected.name} · {inspected.earned ? "Struck" : "Unstruck"}
+              </span>
+              <span className={s.inspectLine}>{inspected.line}</span>
+              <span className={s.inspectReward}>{inspected.reward}</span>
+            </>
+          )
+        ) : (
+          <span className={s.inspectLine}>Click or hover any seal to inspect its condition and reward.</span>
+        )}
+      </div>
       <AchievementWall
         label={WALL_NAME}
         className={s.archiveWall}
         rows={rows}
         words={WORDS}
         icon={(tile) => tileMark(tile.earned, tile.hidden ?? false)}
+        onActivate={setInspected}
         renderRowAside={rowAside}
       />
     </div>

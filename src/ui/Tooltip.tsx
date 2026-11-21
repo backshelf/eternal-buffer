@@ -9,13 +9,14 @@ export interface TooltipProps {
   /** The one element it describes; it takes the trigger's behaviour (hover, focus, a touch hold). */
   children: ReactElement;
   side?: Side;
+  delay?: number;
   className?: string;
 }
 
 /** A tooltip on `Tooltip`: portalled out of any clipping, flipped and shifted to stay on screen. */
-export function Tooltip({ content, children, side = "top", className }: TooltipProps) {
+export function Tooltip({ content, children, side = "top", delay, className }: TooltipProps) {
   return (
-    <Tip.Root side={side}>
+    <Tip.Root side={side} delay={delay}>
       <Tip.Trigger asChild>{children}</Tip.Trigger>
       <Portal>
         <Tip.Content className={cx(s.tip, className)}>{content}</Tip.Content>

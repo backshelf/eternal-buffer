@@ -197,7 +197,12 @@ export const ARCHIVE_GLOSSARY: readonly { term: string; summary: string }[] = [
   {
     term: "Glyphs & Clarity",
     summary:
-      "Glyphs are your main currency from active editing. Clarity is the global multiplier applied to every Glyph you earn (hover Clarity in the top bar for a breakdown).",
+      "Glyphs are your main currency from active editing. Clarity is the global multiplier applied to every Glyph you earn (click Clarity in the Ledger for a breakdown).",
+  },
+  {
+    term: "Gutter Tags ([CUT·12], [INS·16])",
+    summary:
+      "The tag beside a glitching line names the glitch kind and its par keystroke budget (e.g. par 12). Fixing it within par scores a Clean Cut.",
   },
   {
     term: "Scribes & Ink",

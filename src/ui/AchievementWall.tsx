@@ -19,6 +19,7 @@ export interface AchievementWallProps {
   words: AchievementWords;
   /** A rail beside each row (its name, how full it is, what a full one gives): the caller's own markup. */
   renderRowAside?: (aside: AchievementRowAside) => ReactNode;
+  onActivate?: (tile: AchievementTile) => void;
   className?: string;
 }
 
@@ -33,6 +34,7 @@ export function AchievementWall({
   icon,
   words,
   renderRowAside,
+  onActivate,
   className,
 }: AchievementWallProps) {
   return (
@@ -44,6 +46,7 @@ export function AchievementWall({
       words={words}
       renderIcon={(tile) => icon(tile)}
       renderRowAside={renderRowAside}
+      onActivate={onActivate}
       detailProps={{ className: s.detail }}
     />
   );

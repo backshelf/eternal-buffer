@@ -90,11 +90,11 @@ export function ExpeditionsScreen() {
   const nextThreshold =
     slots < 3 ? (
       <span>
-        Next slot at {SLOT_AT_SEALS} Seals: {fmt(seals).text} of {fmt(SLOT_AT_SEALS).text}
+        Next slot at {SLOT_AT_SEALS} Seals (from :w Volumes): {fmt(seals).text} of {fmt(SLOT_AT_SEALS).text}
       </span>
     ) : slots < 4 ? (
       <span>
-        Next slot at {SLOT_AT_CODICES} Codices: {fmt(codices).text} of {fmt(SLOT_AT_CODICES).text}
+        Next slot at {SLOT_AT_CODICES} Codices (from :wq): {fmt(codices).text} of {fmt(SLOT_AT_CODICES).text}
       </span>
     ) : (
       <span>Every slot is open. Four errands can be away at once.</span>

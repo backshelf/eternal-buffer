@@ -249,6 +249,12 @@ export function TildeBar({ className }: TildeBarProps) {
           <Button
             variant={firstTreatReady ? "primary" : "secondary"}
             onClick={feed}
+            disabled={treatsCount.lt(cost)}
+            title={
+              treatsCount.lt(cost)
+                ? "No Treats left — earn Treats from Errata Slips or Expeditions"
+                : "Feed Tilde 1 Treat for permanent +10% Clarity & Ink"
+            }
             cost={cost}
             glyph={glyphOf("treat", 12)}
             unit={CURRENCY.treats.plural}

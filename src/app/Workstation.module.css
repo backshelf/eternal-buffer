@@ -645,6 +645,7 @@
   }
   .centerStage {
     justify-content: flex-start;
+    padding: 8px 6px;
   }
   .mobileFoot {
     display: flex;

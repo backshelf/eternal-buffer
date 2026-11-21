@@ -21,12 +21,13 @@
   top: 50%;
   left: 50%;
   translate: -50% -50%;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
   box-sizing: border-box;
   width: min(480px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
-  overflow-y: auto;
+  overflow: hidden;
   padding: 16px 20px;
   border: var(--ui-hairline);
   border-radius: 0;
@@ -69,6 +70,7 @@
 
 /* The title is a machine label on a ruled bar, not a serif headline: serif is for the hero, never for a surface. */
 .head {
+  flex: 0 0 auto;
   display: grid;
   gap: 6px;
   padding-bottom: 10px;
@@ -90,10 +92,15 @@
   line-height: 1.4;
 }
 .body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
   display: grid;
   gap: 10px;
 }
 .actions {
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
