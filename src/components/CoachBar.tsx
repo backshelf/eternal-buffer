@@ -1,16 +1,25 @@
 // The Coach Bar: live, reactive, keystroke-by-keystroke interactive guidance docked flush above the Vim buffer.
 // During Act I's interactive onboarding (Folios 0-2), it tracks the exact cursor position, mode, and line text
 // to light up the single next keycap to press — teaching by doing, never by lecturing.
+import { useEffect, useRef, useState } from "react";
 import { cx } from "watchpot/ui";
 import { useGameState } from "../app/hooks";
 import { FIRST_LESSON_FOLIO, FOLIO_1_APPEND_LESSON, FOLIO_2_EDGE_LESSON } from "../content/guide";
 import { FAMILY_BY_ID, type KeyFamilyId } from "../content/vimActs";
-import { type ActiveCoachTarget, type BufferStatus, useBufferStatus } from "./BufferEditor";
+import {
+  type ActiveCoachTarget,
+  type BufferStatus,
+  type LastClearSummary,
+  useBufferStatus,
+} from "./BufferEditor";
 import s from "./CoachBar.module.css";
 
 export interface CoachBarProps {
   className?: string;
 }
+
+/** How long the Par/Golf strip holds after a clear before the bar returns to the next target's own hint. */
+const PAR_TIP_MS = 4_000;
 
 interface LiveStep {
   key: string;
@@ -209,6 +218,73 @@ function goalCopy(target: ActiveCoachTarget): { verb: string; from?: string; to?
   return { verb: "Fix", from: target.corrupt, to: target.clean };
 }
 
+/**
+ * The last clear's Par/Golf strip, armed once per `seq` and let go after four seconds. A clear that lands while the
+ * bar is coaching (Act I's reactive beats) is marked seen and never queued, so the tip neither interrupts a lesson
+ * nor surfaces late when the lesson hands the bar back. The arming step is idempotent per `seq`, so StrictMode's
+ * double-run of the effect still shows the tip exactly once.
+ */
+function useParTip(clear: LastClearSummary | null, coaching: boolean): LastClearSummary | null {
+  const seq = clear?.seq ?? null;
+  const [armed, setArmed] = useState<number | null>(null);
+  const seen = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (seq === null) {
+      seen.current = null;
+      setArmed(null);
+      return;
+    }
+    if (seen.current === seq) return;
+    seen.current = seq;
+    if (!coaching) setArmed(seq);
+  }, [seq, coaching]);
+
+  // One timer per armed clear: it clears the badge, and its cleanup restarts it if the same clear is re-armed.
+  useEffect(() => {
+    if (armed === null) return;
+    const timer = window.setTimeout(() => setArmed(null), PAR_TIP_MS);
+    return () => window.clearTimeout(timer);
+  }, [armed]);
+
+  return clear !== null && armed === clear.seq ? clear : null;
+}
+
+/**
+ * The compact Par/Golf strip: the anomaly just mended, what it took against its par. A brute-forced mend also names
+ * the faster way, so the next cut of the same shape is a shorter one. It never animates, and it is deliberately not a
+ * live region: the Ex line is the buffer's one voice, and it has already read the clear out.
+ */
+function ParTip({ clear }: { clear: LastClearSummary }) {
+  if (clear.grade === "mended") {
+    return (
+      <span className={cx(s.golfTip, s.golfMended)}>
+        <span className={s.golfStat}>
+          YOU {clear.keysUsed} <span className={s.golfPar}>(PAR {clear.parKeys})</span>
+        </span>
+        <span className={s.golfDot} aria-hidden="true">
+          ·
+        </span>
+        <span className={s.golfFaster}>Faster:</span>
+        <code className={s.golfHint}>{clear.optimalHint}</code>
+      </span>
+    );
+  }
+  return (
+    <span className={cx(s.golfTip, clear.grade === "clean" ? s.golfClean : s.golfTidy)}>
+      <span className={s.golfStat}>PAR {clear.parKeys}</span>
+      <span className={s.golfDot} aria-hidden="true">
+        ·
+      </span>
+      <span className={s.golfStat}>YOU {clear.keysUsed}</span>
+      <span className={s.golfDot} aria-hidden="true">
+        ·
+      </span>
+      <span className={s.golfVerdict}>{clear.grade === "clean" ? "CLEAN CUT" : "TIDY"}</span>
+    </span>
+  );
+}
+
 export function CoachBar({ className }: CoachBarProps) {
   const showCoach = useGameState((st) => st.settings.showCoach);
   const jkEscape = useGameState((st) => st.settings.jkEscape);
@@ -217,14 +293,17 @@ export function CoachBar({ className }: CoachBarProps) {
   const blind = useGameState((st) => st.trials.rules.includes("blindGutter"));
   const status = useBufferStatus();
 
+  // Act I's reactive beats own the bar, so the Par/Golf strip stands down while one is live.
+  const target = status.activeTarget;
+  const liveStep = !veteran && target ? reactiveStepFor(status, target, onboardingStep, jkEscape) : null;
+  const tip = useParTip(status.lastClear, liveStep !== null);
+
   if (blind) return null;
   if (!showCoach && !status.isRite) return null;
 
-  const target = status.activeTarget;
   const family = status.riteFamily ? FAMILY_BY_ID[status.riteFamily as KeyFamilyId] : undefined;
   const isInsert = status.mode === "insert" || status.mode === "replace";
   const goal = target ? goalCopy(target) : null;
-  const liveStep = !veteran && target ? reactiveStepFor(status, target, onboardingStep, jkEscape) : null;
 
   return (
     <section
@@ -284,7 +363,9 @@ export function CoachBar({ className }: CoachBarProps) {
                 )}
               </span>
               <span className={s.keys}>
-                {isInsert ? (
+                {tip ? (
+                  <ParTip clear={tip} />
+                ) : isInsert ? (
                   <span className={s.insertCue}>
                     INSERT — type clean text, then <kbd className={s.kbd}>Esc</kbd>
                     {jkEscape && (
@@ -310,6 +391,11 @@ export function CoachBar({ className }: CoachBarProps) {
           ) : (
             <div className={s.targetRow}>
               <span className={s.goalVerb}>Folio clear — turning to the next page…</span>
+              {tip && (
+                <span className={s.keys}>
+                  <ParTip clear={tip} />
+                </span>
+              )}
             </div>
           )}
         </>

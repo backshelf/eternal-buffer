@@ -1,11 +1,13 @@
 // Proves the whisper network the archive keeps: every Easter egg is triggerable exactly once and carries its words,
-// its treats and its secret tile; the eight secret tiles exist and can be earned; and all forty-eight Marginalia
-// tiles are definitions this build can read. Rule and content only: a fresh seeded store, no DOM, no wall clock.
+// its treats and its secret tile; the eight secret tiles exist and can be earned; all forty-eight Marginalia
+// tiles are definitions this build can read; and the Help sheet's Ex index documents the Beta's keyboard-first
+// commands. Rule and content only: a fresh seeded store, no DOM, no wall clock.
 import { describe, expect, test } from "bun:test";
 import { D } from "watchpot/core";
 import { freshStore } from "watchpot/test";
 import { ACHIEVEMENTS, COLUMNS, ROW_TITLES } from "../src/content/achievements";
 import { EASTER_EGGS, EGG_BY_ID } from "../src/content/easterEggs";
+import { EX_NAV_COMMANDS } from "../src/content/guide";
 import { met, type WallReads, wall } from "../src/game/achievements";
 import { game } from "../src/game/game";
 
@@ -173,5 +175,25 @@ describe("the wall", () => {
       // The build understands every condition: `met` answers false at zero, and never throws on one.
       expect(met(entry.when, ZERO)).toBe(false);
     }
+  });
+});
+
+describe("the Ex console's index", () => {
+  test("documents the Beta's keyboard-first commands, each once and with its words", () => {
+    const cmds = EX_NAV_COMMANDS.map((entry) => entry.cmd);
+
+    // The Help sheet prints this list as it stands: no repeats and nothing without a description.
+    expect(new Set(cmds).size).toBe(cmds.length);
+    for (const entry of EX_NAV_COMMANDS) {
+      expect(entry.cmd.startsWith(":")).toBe(true);
+      expect(entry.cmd.trim()).toBe(entry.cmd);
+      expect(entry.desc.trim()).not.toBe("");
+    }
+
+    // `:zen` folds the desk, `:stats` opens the record, `:buy` hires by seat and `:colorscheme` reprints the page.
+    expect(cmds).toContain(":zen");
+    expect(cmds).toContain(":stats");
+    expect(cmds).toContain(":buy <scribe>");
+    expect(cmds).toContain(":colorscheme <name>");
   });
 });

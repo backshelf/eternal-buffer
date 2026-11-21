@@ -9,7 +9,7 @@
   padding: 9px 12px;
   border: var(--ui-hairline);
   border-bottom: 0;
-  border-left: 2px solid var(--ui-accent);
+  border-left: 2px solid var(--ui-mode-normal);
   background-color: var(--ui-surface);
   background-image: var(--dither-4);
   font-family: var(--ui-font-num);
@@ -19,8 +19,22 @@
 .coach[data-rite] {
   background-image: var(--dither-accent);
 }
-.coach[data-mode="insert"],
-.coach[data-mode="replace"],
+/* The left rule names the mode the buffer is in, so the bar reads as part of the editor and not as furniture. */
+.coach[data-mode="insert"] {
+  border-left-color: var(--ui-mode-insert);
+}
+.coach[data-mode="visual"],
+.coach[data-mode="visual-line"],
+.coach[data-mode="visual-block"] {
+  border-left-color: var(--ui-mode-visual);
+}
+.coach[data-mode="replace"] {
+  border-left-color: var(--ui-mode-replace);
+}
+.coach[data-mode="command"] {
+  border-left-color: var(--ui-mode-command);
+}
+/* A reactive beat outranks the mode: the bar is teaching a key, so it wears that key's ink. */
 .coach[data-tone="insert"] {
   border-left-color: var(--ui-mode-insert);
 }
@@ -153,6 +167,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   margin-left: auto;
   font-size: 11.5px;
 }
@@ -202,9 +217,82 @@
   margin-left: 0;
 }
 
+/* --- The Par/Golf strip: the anomaly just mended, against its par, for four seconds ----------------------- */
+
+/*
+ * It sits in the target row's own right-hand slot, where `Try` normally teaches the next key, so it can arrive and
+ * go without moving the editor a pixel. It carries no transition and no animation at all, so there is nothing for
+ * reduced motion to switch off; a brute-forced mend keeps only the ink of a nudge, never a pulse.
+ */
+.golfTip {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  max-width: min(100%, 52ch);
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background-color: var(--ui-ground);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* A cut at or under par is the jade of a clean mend; a tidy one still gets the bar's own amber. */
+.golfClean {
+  color: var(--ui-clean-ink);
+}
+.golfTidy {
+  color: var(--ui-accent);
+}
+/* Over par is quiet ink, so the hint is the only thing that raises its voice. */
+.golfMended {
+  color: var(--ui-ink-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.golfStat {
+  font-variant-numeric: tabular-nums;
+}
+.golfPar {
+  color: color-mix(in srgb, var(--ui-ink-muted) 78%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.golfDot {
+  opacity: 0.55;
+}
+.golfFaster {
+  color: var(--ui-accent);
+  letter-spacing: 0.07em;
+}
+.golfVerdict {
+  letter-spacing: 0.1em;
+}
+/* The faster way, ruled like the bar's other keycaps and allowed to ellipsis rather than wrap the bar. */
+.golfHint {
+  min-width: 0;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+  background-color: color-mix(in srgb, var(--ui-accent) 14%, var(--ui-ground));
+  color: var(--ui-target-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media (max-width: 720px) {
   .keys {
     margin-left: 0;
     width: 100%;
+  }
+  .golfTip {
+    max-width: 100%;
   }
 }

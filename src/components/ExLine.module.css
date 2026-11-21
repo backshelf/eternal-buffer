@@ -17,27 +17,39 @@
   line-height: 1.5;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  /* The mode the pill wears; each `data-mode` below swaps it for that mode's own ink. */
+  --ex-mode: var(--ui-mode-normal);
+}
+.line[data-mode="insert"] {
+  --ex-mode: var(--ui-mode-insert);
+}
+.line[data-mode="visual"],
+.line[data-mode="visual-line"],
+.line[data-mode="visual-block"] {
+  --ex-mode: var(--ui-mode-visual);
+}
+.line[data-mode="replace"] {
+  --ex-mode: var(--ui-mode-replace);
+}
+.line[data-mode="command"] {
+  --ex-mode: var(--ui-mode-command);
 }
 
+/*
+ * The mode pill: the mode's own ink on a ground lifted a shade toward that ink, ruled in it. The tint is mixed over
+ * an opaque `--ui-ground`, so the pill keeps its contrast over the page's dither and behind the translucent line,
+ * in all eight vellums. It fills rather than inverting because `--ui-on-accent` only pairs with `--ui-accent`; on a
+ * pale vellum it collapses against the dark mode inks (solarized light's olive Insert, for one).
+ */
 .pill {
   flex: none;
-  color: var(--ui-mode-normal);
-  font-weight: 600;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--ex-mode) 55%, var(--ui-line));
+  background-color: color-mix(in srgb, var(--ex-mode) 16%, var(--ui-ground));
+  color: var(--ex-mode);
+  font-weight: 700;
   letter-spacing: 0.08em;
-}
-.line[data-mode="insert"] .pill {
-  color: var(--ui-mode-insert);
-}
-.line[data-mode="visual"] .pill,
-.line[data-mode="visual-line"] .pill,
-.line[data-mode="visual-block"] .pill {
-  color: var(--ui-mode-visual);
-}
-.line[data-mode="replace"] .pill {
-  color: var(--ui-mode-replace);
-}
-.line[data-mode="command"] .pill {
-  color: var(--ui-mode-command);
+  line-height: 1.45;
 }
 
 /* The keys of the command in flight, ruled like a keycap so `5d` reads as one object. */
