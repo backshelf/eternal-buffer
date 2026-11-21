@@ -29,7 +29,8 @@ export interface ActiveContractState {
 /** One row of the slip table: the words, the work, and what the desk pays for it. */
 interface ContractBlueprint {
   readonly kind: ContractKind;
-  readonly title: string;
+  /** Formats the concise slip title from the Act-scaled target so copy never disagrees with the counter. */
+  readonly title: (target: number) => string;
   /** The work asked for on the Act that first hands the slip out. */
   readonly target: number;
   /** Extra units of work per Act past `minAct`. Zero means the ask never grows. */
@@ -48,7 +49,7 @@ interface ContractBlueprint {
  */
 const PET_TILDE_SLIP: ContractBlueprint = {
   kind: "pet-tilde",
-  title: "Pet the Cat Once",
+  title: () => "Pet Tilde once",
   target: 1,
   growth: 0,
   ceiling: 1,
@@ -64,7 +65,7 @@ const PET_TILDE_SLIP: ContractBlueprint = {
 const BLUEPRINTS: readonly ContractBlueprint[] = [
   {
     kind: "clean-cuts",
-    title: "Three Clean Cuts, Pinned",
+    title: (n) => `Land ${n} Clean Cuts`,
     target: 3,
     growth: 0,
     ceiling: 3,
@@ -74,7 +75,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "clean-cuts",
-    title: "Cut Until the Margin Holds",
+    title: (n) => `Pin ${n} Clean Cuts`,
     target: 4,
     growth: 0,
     ceiling: 4,
@@ -84,7 +85,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "clean-cuts",
-    title: "A Margin of Five Clean Cuts",
+    title: (n) => `Hold ${n} Clean Cuts`,
     target: 5,
     growth: 0,
     ceiling: 5,
@@ -94,7 +95,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "folio-clear",
-    title: "Two Folios, Closed",
+    title: (n) => `Clear ${n} Folios`,
     target: 2,
     growth: 0,
     ceiling: 2,
@@ -104,7 +105,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "folio-clear",
-    title: "Three Folios, No Exceptions",
+    title: (n) => `Close ${n} Folios`,
     target: 3,
     growth: 0,
     ceiling: 3,
@@ -114,7 +115,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "no-hjkl-folio",
-    title: "One Folio, No HJKL",
+    title: () => "Clear 1 Folio without HJKL",
     target: 1,
     growth: 0,
     ceiling: 1,
@@ -124,7 +125,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "flow-reach",
-    title: "Hold Flow at Eight",
+    title: (n) => `Reach Flow ${n}`,
     target: 8,
     growth: 1,
     ceiling: 12,
@@ -134,7 +135,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "flow-reach",
-    title: "Flow Without a Stutter",
+    title: (n) => `Hold Flow ${n} steady`,
     target: 12,
     growth: 1,
     ceiling: 15,
@@ -145,7 +146,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   PET_TILDE_SLIP,
   {
     kind: "pet-tilde",
-    title: "Leave the Cat Purring",
+    title: (n) => `Pet Tilde ${n} times`,
     target: 2,
     growth: 0,
     ceiling: 2,
@@ -155,7 +156,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "anomaly-clear",
-    title: "Six Anomalies, Mended",
+    title: (n) => `Mend ${n} Anomalies`,
     target: 6,
     growth: 1,
     ceiling: 10,
@@ -165,7 +166,7 @@ const BLUEPRINTS: readonly ContractBlueprint[] = [
   },
   {
     kind: "anomaly-clear",
-    title: "Ten Anomalies, Signed Off",
+    title: (n) => `Sign off ${n} Anomalies`,
     target: 10,
     growth: 0,
     ceiling: 10,
@@ -203,13 +204,14 @@ export function rollContract(serial: number, actTier: number): ActiveContractSta
   const eligible = BLUEPRINTS.filter((row) => row.minAct <= tier);
   const pool = eligible.length > 0 ? eligible : [PET_TILDE_SLIP];
   const row = pool[hashSerial(safeSerial) % pool.length] ?? PET_TILDE_SLIP;
+  const target = scaledTarget(row, tier);
 
   return {
     id: `errata-${safeSerial}`,
     serial: safeSerial,
     kind: row.kind,
-    title: row.title,
-    target: scaledTarget(row, tier),
+    title: row.title(target),
+    target,
     progress: 0,
     rewardCurrency: row.rewardCurrency,
     rewardAmount: row.rewardAmount,

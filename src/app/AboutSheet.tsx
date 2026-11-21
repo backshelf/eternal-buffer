@@ -2,7 +2,7 @@ import { Fragment, type ReactNode, useEffect, useId, useState } from "react";
 import { Tabs } from "watchpot/ui";
 import { StatsPanel } from "../components/StatsPanel";
 import { ARCHIVE_GLOSSARY, EX_NAV_COMMANDS, KEY_GLOSS, visibleAct1Keys } from "../content/guide";
-import { THEMES } from "../content/themes";
+import { resolveThemeId, THEMES } from "../content/themes";
 import { ACTS, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
 import { Button } from "../ui/Button";
 import { ConfirmButton, Sheet } from "../ui/Sheet";
@@ -96,6 +96,7 @@ export interface AboutSheetProps {
 export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
   const store = useGameStore();
   const set = useGameState((st) => st.settings);
+  const activeTint = resolveThemeId(set.tintPreset) ?? "amber";
   const [text, setText] = useState("");
   const [said, setSaid] = useState("");
   const boxId = useId();
@@ -161,7 +162,7 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
                     key={theme.id}
                     type="button"
                     role="radio"
-                    aria-checked={set.tintPreset === theme.id}
+                    aria-checked={activeTint === theme.id}
                     className={s.themeBtn}
                     onClick={() => change({ tintPreset: theme.id })}
                   >

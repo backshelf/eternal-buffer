@@ -1,28 +1,36 @@
 /*
- * The Trials: a stack of rule cards, each with its pips, its restriction in a margin rule and the door in and out of
- * the run. Colour and type are the registry's tokens; the frame is `Panel`'s.
+ * The Trials: a hairline-divided stack of rule rows, each with its pips, its restriction in a left-ruled
+ * accent strip and the door in and out of the run. Colour and type are the registry's tokens; the room pane
+ * already carries the outer frame and dither.
  */
 .cards {
   display: grid;
-  gap: 10px;
+  gap: 0;
   margin: 0;
   padding: 0;
+  border-top: var(--ui-hairline);
   list-style: none;
 }
 .card {
   display: grid;
   gap: 8px;
-  padding: 12px 14px;
-  border: var(--ui-hairline);
-  background-color: var(--ui-surface);
-  background-image: var(--dither-4);
+  padding: 12px 8px 12px 12px;
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  border-left: 2px solid transparent;
+  background-color: transparent;
+  transition:
+    background-color var(--ui-duration) ease-out,
+    border-color var(--ui-duration) ease-out;
+}
+.card:hover {
+  background-color: color-mix(in srgb, var(--ui-surface) 55%, transparent);
 }
 .card[data-state="open"] {
-  border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line));
+  border-left-color: var(--ui-accent);
 }
 .card[data-state="locked"] {
-  background-color: var(--ui-sunken);
-  opacity: 0.72;
+  opacity: 0.62;
 }
 .head {
   display: flex;
@@ -33,10 +41,10 @@
 }
 .name {
   margin: 0;
-  font-family: var(--ui-font-display);
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.15;
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 .pips {
   display: flex;

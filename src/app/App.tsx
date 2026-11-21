@@ -8,7 +8,7 @@ import { AwayModal } from "../components/AwayModal";
 import { FOCUS_BUFFER_EVENT, HELP_EVENT, NAV_EVENT, publishStatus } from "../components/BufferEditor";
 import { MomentOverlay } from "../components/MomentOverlay";
 import { LATE_RATE } from "../content/economy";
-import { THEME_BY_ID } from "../content/themes";
+import { resolveThemeId, THEME_BY_ID } from "../content/themes";
 import { NAME } from "../content/words";
 import { incomeOf } from "../game/income";
 import type { GameStore } from "../game/store";
@@ -22,7 +22,7 @@ import s from "./app.module.css";
 import { ArchiveShows, EarnedToasts } from "./Earned";
 import { marks, wireArchiveWatch } from "./feel";
 import { useGameState, useGameStore } from "./hooks";
-import { setSoundVolumes, sound } from "./sound";
+import { setSoundEnabled, setSoundVolumes, sound } from "./sound";
 import { isTabRevealed, type Tab, useTabs } from "./tabs";
 import { VisitorLayer } from "./Visitor";
 import { Workstation } from "./Workstation";
@@ -84,8 +84,8 @@ export function App() {
   const depth = useGameState((st) => depthOf(st.wallet.codicesEver));
   const flow = useGameState((st) => flowShare(st.vim.flow, st.vim.flowCap));
 
-  // The vellum the save names — or Midnight Amber when it names one this build has never heard of.
-  const activeTheme = THEME_BY_ID[tint] ?? THEME_BY_ID.amber;
+  // Resolve legacy aliases (such as pre-Beta `midnight` -> `catppuccin-mocha`) before falling back to amber.
+  const activeTheme = THEME_BY_ID[resolveThemeId(tint) ?? "amber"];
 
   const { taken, reduced } = useGameRuntime(store, {
     motion,
@@ -98,10 +98,17 @@ export function App() {
   useEffect(() => {
     const rootEl = document.documentElement;
     rootEl.dataset.tint = activeTheme.id;
+    // Also mirror onto `data-theme` so `useShaderTokens` re-reads CSS variables across all WebGL2 surfaces
+    // (`ARCHIVE_BACKDROP`, `BUFFER_GLOW`, `TILE_FOIL`, `CODEX_MOMENT`) on same-scheme theme switches.
+    rootEl.dataset.theme = activeTheme.id;
     rootEl.style.colorScheme = activeTheme.scheme;
   }, [activeTheme]);
 
-  // The settings' three faders, pushed into the mix the moment they change.
+  // Keep `sound.ts`'s own gate and three faders in sync with the settings slice.
+  useEffect(() => {
+    setSoundEnabled(soundOn);
+  }, [soundOn]);
+
   useEffect(() => {
     setSoundVolumes({ master: volumeMaster, keys: volumeKeys, chimes: volumeChimes });
   }, [volumeMaster, volumeKeys, volumeChimes]);
@@ -146,7 +153,13 @@ export function App() {
   useEffect(() => {
     const onNav = (event: Event) => {
       const target = (event as CustomEvent<{ target?: string }>).detail?.target;
-      if (!target || target === "scribes") return;
+      if (!target) return;
+      if (target === "scribes") {
+        publishStatus({
+          message: "Scribes sit in the right rail — use :buy <scribe or #> to hire from the keyboard.",
+        });
+        return;
+      }
       const valid: readonly Tab[] = [
         "make",
         "tree",
@@ -172,7 +185,7 @@ export function App() {
   return (
     <ShaderPool maxLive={12} reduced={reduced}>
       <PageRootContext.Provider value={root}>
-        <div ref={setRoot} className={s.pageRoot}>
+        <div ref={setRoot} className={s.pageRoot} data-theme={activeTheme.id}>
           {BACKDROP && (
             <Backdrop
               fragment={BACKDROP.fragment}

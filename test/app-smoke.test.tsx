@@ -122,8 +122,9 @@ describe("the desk settings", () => {
     fireEvent.click(within(vellums).getByRole("radio", { name: /Gruvbox Light/ }));
 
     expect(store.getState().settings.tintPreset).toBe("gruvbox-light");
-    // The page's own tint follows the choice; the sheet does not merely hold it.
+    // Both `data-tint` (CSS) and `data-theme` (WebGL2 shader tokens) follow the choice.
     expect(document.documentElement.dataset.tint).toBe("gruvbox-light");
+    expect(document.documentElement.dataset.theme).toBe("gruvbox-light");
     expect(
       within(vellums)
         .getByRole("radio", { name: /Gruvbox Light/ })
@@ -157,6 +158,28 @@ describe("the desk settings", () => {
     expect(store.getState().settings.volumeMaster).toBeCloseTo(0.4);
     expect(store.getState().settings.volumeKeys).toBeCloseTo(0.25);
     expect(store.getState().settings.volumeChimes).toBe(0);
+  });
+
+  test("resolves a legacy midnight save preset to Catppuccin Mocha across DOM and Settings", () => {
+    const { store } = mount({ seed: "smoke-legacy-midnight" });
+
+    act(() => {
+      store.setState((s) => {
+        // Simulate a pre-Beta save carrying the retired `midnight` tint id.
+        (s.settings as { tintPreset: string }).tintPreset = "midnight";
+      });
+    });
+
+    expect(document.documentElement.dataset.tint).toBe("catppuccin-mocha");
+    expect(document.documentElement.dataset.theme).toBe("catppuccin-mocha");
+
+    openSettings();
+    const vellums = screen.getByRole("radiogroup", { name: "Color theme" });
+    expect(
+      within(vellums)
+        .getByRole("radio", { name: /Catppuccin Mocha/ })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
   });
 });
 

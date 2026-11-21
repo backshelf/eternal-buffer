@@ -1,9 +1,10 @@
 // The Errata Slip: the one piece of short work the desk hands out at a time.
 //
-// It is not a card. It is a two-line strip in the right rail, above the Scribes: the slip's title and
-// what it pays on the first line, its progress and the one press it is owed on the second. The slip
-// itself is rolled by the Vim feature, so this component never invents work — it only draws the slip
-// already on the desk, asks for one once the desk is open, and presses the two actions.
+// It is not a card. It is a compact hairline strip in the right rail, above the Scribes: the ERRATA
+// tag and reward on the micro-header line, the full readable objective below it, and the progress bar
+// with Claim/Skip on the foot. The slip itself is rolled by the Vim feature, so this component never
+// invents work — it only draws the slip already on the desk, asks for one once the desk is open, and
+// presses the two actions.
 import { useEffect } from "react";
 import { cx, VisuallyHidden } from "watchpot/ui";
 import { useGameState, useGameStore } from "../app/hooks";
@@ -66,14 +67,14 @@ export function ErrataSlip({ className }: ErrataSlipProps) {
       aria-label="Errata slip"
       data-ready={active.completed ? "" : undefined}
     >
-      <p className={s.head}>
+      <div className={s.head}>
         <span className={s.tag}>ERRATA</span>
-        <span className={s.title}>{active.title}</span>
         <span className={s.reward}>
           {glyphOf(word.glyph, 12)}
           <span className={s.rewardText}>{reward}</span>
         </span>
-      </p>
+      </div>
+      <p className={s.title}>{active.title}</p>
       <div className={s.foot}>
         <span className={s.meter} aria-hidden="true">
           <span className={s.meterLit}>{"█".repeat(filled)}</span>

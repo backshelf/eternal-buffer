@@ -28,12 +28,31 @@
     position: absolute;
     inset: 0;
     box-sizing: border-box;
-    width: min(100%, 1520px);
-    height: min(100dvh - 32px, 940px);
+    width: min(calc(100vw - 48px), 1780px);
+    height: min(calc(100dvh - 40px), 1060px);
     margin: auto;
     border: var(--ui-hairline);
+    border-top: 2px solid color-mix(in srgb, var(--ui-accent) 55%, var(--ui-line));
     background-color: color-mix(in srgb, var(--ui-ground) 90%, transparent);
     background-image: var(--dither-4);
+    box-shadow: 0 24px 72px color-mix(in srgb, var(--ui-scrim) 55%, transparent);
+  }
+  .grid {
+    grid-template-columns: 280px minmax(0, 1fr) 336px;
+  }
+  .leftWing,
+  .rightWing {
+    padding: 20px 18px;
+  }
+  .centerStage {
+    padding: 24px 36px;
+  }
+  .terminal,
+  .zenBar {
+    width: min(100%, 920px);
+  }
+  .bufferPlate {
+    min-height: 400px;
   }
 }
 
@@ -267,6 +286,7 @@
 .utilRow {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: 6px;
 }
 .veteranLink {

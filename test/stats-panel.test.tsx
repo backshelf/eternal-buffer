@@ -50,6 +50,7 @@ describe("the Vim mastery panel", () => {
     expect(figureOf("Best Clean Streak")).toBe("7");
     expect(figureOf("Best Flow")).toBe("34");
     expect(figureOf("Folios Mended")).toBe("12");
+    expect(figureOf("Anomalies Mended")).toBe("4");
     expect(figureOf("Grammar Pairs")).toBe(`1 / ${GRAMMAR_CODEX.length}`);
     expect(figureOf("Errata Slips Completed")).toBe("2");
     expect(figureOf("Easter Eggs")).toBe(`1 / ${EASTER_EGGS.length}`);

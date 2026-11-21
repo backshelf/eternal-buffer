@@ -432,10 +432,10 @@
   gap: 1px;
 }
 .rowTitle {
-  font-family: var(--ui-font-display);
+  font-family: var(--ui-font);
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.25;
 }
 .rowBonus {
   color: var(--ui-ink-muted);

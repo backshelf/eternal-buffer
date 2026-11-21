@@ -160,7 +160,7 @@ export const CURRENCY_HELP: Readonly<Record<Currency, { title: string; summary: 
 /** Ex-console navigation and desk commands, shown in Help and wired in BufferEditor. */
 export const EX_NAV_COMMANDS: readonly { cmd: string; aliases: string; desc: string }[] = [
   { cmd: ":buf", aliases: ":buffer", desc: "Return to the mending Buffer" },
-  { cmd: ":scribes", aliases: ":desk", desc: "Toggle the Scribes margin dock" },
+  { cmd: ":scribes", aliases: ":desk", desc: "Check the Scribes right rail (use :buy to hire)" },
   { cmd: ":codex", aliases: ":tree", desc: "Open the Codex (new Vim keys & upgrades)" },
   { cmd: ":exp", aliases: ":expeditions", desc: "Open Margin Expeditions" },
   { cmd: ":mosaic", aliases: ":board", desc: "Open the Plugin Mosaic" },
@@ -172,6 +172,11 @@ export const EX_NAV_COMMANDS: readonly { cmd: string; aliases: string; desc: str
   { cmd: ":pet", aliases: ":treat", desc: "Pet or feed Tilde (~) from the console" },
   { cmd: ":buy <scribe>", aliases: ":hire", desc: "Hire a Scribe by seat number or name" },
   { cmd: ":colorscheme <name>", aliases: ":colo", desc: "Print the page on another vellum (no arg cycles)" },
+  {
+    cmd: ":set fontsize=md",
+    aliases: ":set glow=warm",
+    desc: "Set buffer type (sm|md|lg) or glow (off|subtle|warm)",
+  },
   { cmd: ":zen", aliases: "", desc: "Fold the desk to the buffer alone" },
   { cmd: ":w", aliases: "ZZ", desc: "Bind Volume when ready (+Seals)" },
   { cmd: ":wq", aliases: "", desc: "Rebind Codex when ready (+Codices)" },

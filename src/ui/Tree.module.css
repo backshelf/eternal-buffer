@@ -136,10 +136,10 @@
   background-image: var(--dither-4);
 }
 .detailName {
-  font-family: var(--ui-font-display);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.15;
+  font-family: var(--ui-font);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 .effect {
   color: var(--ui-accent);

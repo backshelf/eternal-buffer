@@ -50,6 +50,7 @@ export function StatsPanel({ className }: StatsPanelProps) {
     { label: "Best Clean Streak", value: fmtCount(bestCleanStreak) },
     { label: "Best Flow", value: fmtCount(bestFlow) },
     { label: "Folios Mended", value: fmtCount(totalFoliosCleared) },
+    { label: "Anomalies Mended", value: fmtCount(totalAnomaliesCleared) },
     { label: "Grammar Pairs", value: `${fmtCount(pairsFound)} / ${fmtCount(GRAMMAR_CODEX.length)}` },
     { label: "Errata Slips Completed", value: fmtCount(contractsCompleted) },
     { label: "Easter Eggs", value: `${fmtCount(eggsFound)} / ${fmtCount(EASTER_EGGS.length)}` },

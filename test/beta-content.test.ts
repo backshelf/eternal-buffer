@@ -157,6 +157,7 @@ describe("Errata Slips", () => {
         const [low, high] = TARGET_RANGE[slip.kind];
         expect(slip.target).toBeGreaterThanOrEqual(low);
         expect(slip.target).toBeLessThanOrEqual(high);
+        if (slip.target > 1) expect(slip.title).toContain(String(slip.target));
       }
     }
   });

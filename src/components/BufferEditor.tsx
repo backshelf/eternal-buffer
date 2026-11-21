@@ -1221,7 +1221,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
         return;
       }
       const order = THEMES.map((entry) => entry.id);
-      const current = order.indexOf(live.settings.tintPreset);
+      const current = order.indexOf(resolveThemeId(live.settings.tintPreset) ?? "amber");
       const next: ThemeId = order[(current + 1) % order.length] ?? "amber";
       live.settings.change({ tintPreset: next });
       say(`${egg("phosphor-cycle")} (${next})`);
@@ -1381,25 +1381,33 @@ export function BufferEditor({ className }: BufferEditorProps) {
         }
         case "buffer":
         case "codex":
+        case "tree":
         case "expeditions":
         case "mosaic":
+        case "board":
         case "volumes":
         case "trials":
+        case "challenges":
         case "marginalia":
         case "log":
-        case "scribes": {
+        case "scribes":
+        case "desk": {
           const target =
             name === "buffer"
               ? "make"
-              : name === "codex"
+              : name === "codex" || name === "tree"
                 ? "tree"
-                : name === "volumes"
-                  ? "prestige"
-                  : name === "trials"
-                    ? "challenges"
-                    : name === "marginalia" || name === "log"
-                      ? "achievements"
-                      : name;
+                : name === "mosaic" || name === "board"
+                  ? "mosaic"
+                  : name === "volumes"
+                    ? "prestige"
+                    : name === "trials" || name === "challenges"
+                      ? "challenges"
+                      : name === "marginalia" || name === "log"
+                        ? "achievements"
+                        : name === "desk"
+                          ? "scribes"
+                          : name;
           window.dispatchEvent(new CustomEvent(NAV_EVENT, { detail: { target } }));
           return;
         }
@@ -1740,7 +1748,17 @@ export function BufferEditor({ className }: BufferEditorProps) {
         u_glowIntensity: GLOW_OF[glowIntensity],
       }
     : undefined;
-  const still = <div className={s.still} style={{ background: BUFFER_GLOW.still }} />;
+  const resolvedTint = resolveThemeId(tintPreset) ?? "amber";
+  const still = (
+    <div
+      className={s.still}
+      style={
+        glowIntensity === "off"
+          ? undefined
+          : { background: BUFFER_GLOW.still, opacity: glowIntensity === "subtle" ? 0.55 : 1 }
+      }
+    />
+  );
 
   return (
     <section
@@ -1750,7 +1768,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
       // The vellum this plate is printed on. Flipping it is also what makes the tokens hook re-read the
       // palette: it watches `data-theme` changes on the frame, and a same-scheme switch (amber → jade)
       // touches no other attribute the page sets, so the halo re-inks in the same frame as the CSS.
-      data-theme={tintPreset}
+      data-theme={resolvedTint}
       data-font={bufferFontSize}
       aria-label="The folio buffer"
       onClick={(event) => {
@@ -1859,13 +1877,17 @@ function bindExOnce(router: ExRouter): void {
     ["vsplit", "vs"],
     ["buffer", "buf"],
     ["codex", "codex"],
+    ["tree", "tree"],
     ["expeditions", "exp"],
     ["mosaic", "mosaic"],
+    ["board", "board"],
     ["volumes", "vol"],
     ["trials", "trials"],
+    ["challenges", "challenges"],
     ["marginalia", "marg"],
     ["log", "log"],
     ["scribes", "scribes"],
+    ["desk", "desk"],
     ["!", "!"],
   ];
   for (const [name, prefix] of BINDINGS) Vim.defineEx(name, prefix, answer(name));

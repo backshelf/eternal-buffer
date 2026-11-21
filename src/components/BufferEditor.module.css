@@ -97,9 +97,8 @@
 }
 
 /*
- * The mended span's brief afterglow: the clean ink flares once where the rot stood, then fades toward
- * the page's own light. The mark is gone again within MENDED_FLASH_MS; under reduced motion the editor
- * never lays it at all.
+ * The mended span's brief afterglow: a clean-ink highlight wash flares once where the rot stood, then fades
+ * cleanly back into the page while keeping the mended text at full contrast throughout.
  */
 .host :global(.eb-mended-flash) {
   animation: ebMendedFlash 450ms ease-out forwards;
@@ -107,11 +106,13 @@
 
 @keyframes ebMendedFlash {
   from {
+    background-color: color-mix(in srgb, var(--ui-clean-ink) 32%, transparent);
     color: var(--ui-clean-ink);
-    text-shadow: 0 0 8px color-mix(in srgb, var(--ui-clean-ink) 55%, transparent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--ui-clean-ink) 45%, transparent);
   }
   to {
-    color: color-mix(in srgb, var(--ui-clean-ink) 32%, transparent);
+    background-color: transparent;
+    color: var(--ui-ink);
     text-shadow: none;
   }
 }

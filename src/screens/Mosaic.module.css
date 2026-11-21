@@ -11,7 +11,7 @@
   width: 100%;
   max-width: 1080px;
   margin-inline: auto;
-  padding: 20px 16px 32px;
+  padding: 10px 16px 24px;
 }
 .standing {
   max-width: 62ch;
@@ -21,7 +21,7 @@
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 12px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -234,8 +234,9 @@
   text-transform: uppercase;
 }
 .detailName {
-  font-family: var(--ui-font-display);
-  font-size: 15px;
+  font-family: var(--ui-font);
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .rarity {
   color: var(--ui-ink-muted);
@@ -256,12 +257,13 @@
   color: var(--ui-ink-muted);
 }
 
-/* The bench: one row a piece, the hold button at the start and the cut at the end. */
+/* The bench: hairline-divided rows, the hold button at the start and the cut at the end. */
 .bench {
   display: grid;
-  gap: 6px;
+  gap: 0;
   margin: 0;
   padding: 0;
+  border-top: var(--ui-hairline);
   list-style: none;
 }
 .benchRow {
@@ -269,15 +271,16 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  padding: 6px;
-  border: var(--ui-hairline);
-  background-color: var(--ui-sunken);
-  background-image: var(--dither-4);
+  padding: 8px 4px 8px 6px;
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  background-color: transparent;
 }
 .name {
-  font-family: var(--ui-font-display);
-  font-size: 15px;
-  line-height: 1.2;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 .line {
   color: var(--ui-ink-muted);
@@ -347,7 +350,7 @@
 .cut {
   min-height: 30px;
   padding: 0 10px;
-  font-size: 13px;
+  font-size: 12px;
 }
 .locked {
   color: var(--ui-ink-muted);
