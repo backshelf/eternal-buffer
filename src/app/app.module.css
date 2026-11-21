@@ -198,6 +198,114 @@
   font-size: 13px;
 }
 
+/* The appearance section: the eight vellums as a swatch grid, then the editor's own two steps. */
+.themeField {
+  display: grid;
+  gap: 6px;
+}
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 6px;
+}
+/* The shelf's own line, spanning the grid: Archive first, then the borrowed Editor palettes. */
+.themeShelfLabel {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.themeBtn {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border: var(--ui-hairline);
+  border-left: 2px solid transparent;
+  border-radius: var(--ui-radius);
+  background-color: var(--ui-sunken);
+  background-image: var(--dither-4);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.themeBtn:hover {
+  color: var(--ui-accent);
+}
+.themeBtn[aria-checked="true"] {
+  border-left-color: var(--ui-accent);
+  background-color: var(--ui-surface);
+  background-image: var(--dither-accent);
+  color: var(--ui-accent);
+}
+/* The four blocks of a vellum, in the theme's own order: ground, surface, accent, ink. */
+.swatches {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 1px;
+}
+.swatch {
+  inline-size: 8px;
+  block-size: 8px;
+  border: 1px solid var(--ui-line);
+}
+.themeName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.schemeTag {
+  padding: 1px 3px;
+  border: 1px solid var(--ui-line);
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+.themeBtn[aria-checked="true"] .schemeTag {
+  color: var(--ui-accent);
+}
+
+/* The audio faders: the label, the range, and the figure a drag lands on. */
+.sliderRows {
+  display: grid;
+  gap: 4px;
+  padding-block: 2px;
+}
+.sliderRow {
+  display: grid;
+  grid-template-columns: minmax(74px, auto) minmax(0, 1fr) 4ch;
+  align-items: center;
+  gap: 10px;
+}
+.sliderRow label {
+  font-size: 12px;
+  cursor: pointer;
+}
+.sliderRow input[type="range"] {
+  inline-size: 100%;
+  margin: 0;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
+.sliderRow input[type="range"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.sliderValue {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* The Vim reference: an Act's keycaps, one family a line. */
 .refNote {
   margin: 0;

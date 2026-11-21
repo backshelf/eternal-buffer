@@ -6,6 +6,8 @@
  */
 .frame {
   --caret: var(--ui-mode-normal);
+  /* The editor's type size, a named step the settings set through `data-font` on this frame. */
+  --eb-buffer-font-size: 15px;
   position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
@@ -15,6 +17,12 @@
   background-image: var(--dither-4);
   isolation: isolate;
   overflow: hidden;
+}
+.frame[data-font="sm"] {
+  --eb-buffer-font-size: 13px;
+}
+.frame[data-font="lg"] {
+  --eb-buffer-font-size: 18px;
 }
 .frame[data-mode="insert"] {
   --caret: var(--ui-mode-insert);
@@ -29,30 +37,6 @@
 }
 .frame[data-mode="command"] {
   --caret: var(--ui-mode-command);
-}
-
-/* The plate's own ASCII corners, in the one alphabet theme.css defines. */
-.frame::before,
-.frame::after {
-  position: absolute;
-  z-index: 2;
-  color: color-mix(in srgb, var(--ui-accent) 72%, transparent);
-  font-family: var(--ui-font-num);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1;
-  content: var(--ui-frame-tl);
-  pointer-events: none;
-  user-select: none;
-}
-.frame::before {
-  top: 2px;
-  left: 4px;
-}
-.frame::after {
-  top: 2px;
-  right: 4px;
-  content: var(--ui-frame-tr);
 }
 
 .glow {
@@ -110,6 +94,32 @@
 .frame[data-mode="insert"] :global(.cm-content),
 .frame[data-mode="replace"] :global(.cm-content) {
   caret-color: var(--caret);
+}
+
+/*
+ * The mended span's brief afterglow: the clean ink flares once where the rot stood, then fades toward
+ * the page's own light. The mark is gone again within MENDED_FLASH_MS; under reduced motion the editor
+ * never lays it at all.
+ */
+.host :global(.eb-mended-flash) {
+  animation: ebMendedFlash 450ms ease-out forwards;
+}
+
+@keyframes ebMendedFlash {
+  from {
+    color: var(--ui-clean-ink);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--ui-clean-ink) 55%, transparent);
+  }
+  to {
+    color: color-mix(in srgb, var(--ui-clean-ink) 32%, transparent);
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host :global(.eb-mended-flash) {
+    animation: none;
+  }
 }
 
 /* The twin margin: the page as it was bound, for the Act VII split. Clicking it returns you to the page. */

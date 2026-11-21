@@ -8,6 +8,7 @@ import { AwayModal } from "../components/AwayModal";
 import { FOCUS_BUFFER_EVENT, HELP_EVENT, NAV_EVENT, publishStatus } from "../components/BufferEditor";
 import { MomentOverlay } from "../components/MomentOverlay";
 import { LATE_RATE } from "../content/economy";
+import { THEME_BY_ID } from "../content/themes";
 import { NAME } from "../content/words";
 import { incomeOf } from "../game/income";
 import type { GameStore } from "../game/store";
@@ -16,18 +17,18 @@ import { cleanCutPulse, momentState } from "../shaders/pulses";
 import { Backdrop } from "../ui/Backdrop";
 import { Button } from "../ui/Button";
 import { PageRootContext } from "../ui/pageRoot";
-import { AboutSheet, HelpSheet } from "./AboutSheet";
+import { AboutSheet, HelpSheet, type HelpTab } from "./AboutSheet";
 import s from "./app.module.css";
 import { ArchiveShows, EarnedToasts } from "./Earned";
 import { marks, wireArchiveWatch } from "./feel";
 import { useGameState, useGameStore } from "./hooks";
-import { sound } from "./sound";
+import { setSoundVolumes, sound } from "./sound";
 import { isTabRevealed, type Tab, useTabs } from "./tabs";
 import { VisitorLayer } from "./Visitor";
 import { Workstation } from "./Workstation";
 
-/** The global sheets, by kind. */
-export type Sheet = { kind: "about" } | { kind: "help" };
+/** The global sheets, by kind; a help sheet may open straight onto one of its tabs. */
+export type Sheet = { kind: "about" } | { kind: "help"; tab?: HelpTab };
 
 /** Whether this build is a development one: Bun folds the constant, so a production bundle drops the dev tools. */
 const DEV = process.env.NODE_ENV !== "production";
@@ -62,9 +63,9 @@ function useHash() {
 }
 
 /**
- * The game page: mounts the bespoke symmetrical 3-zone TUI Workstation over the archive's WebGL2
- * backdrop, with secondary rooms opening as overlay panes and Help/Settings as sheets. No template header
- * bar and no blocking welcome modal — a brand-new player lands straight in the live centered Vim buffer.
+ * The game page: mounts the bespoke 3-zone TUI Workstation over the archive's WebGL2 backdrop, with
+ * secondary rooms opening as overlay panes and Help/Settings as sheets. No template header bar and no
+ * blocking welcome modal — a brand-new player lands straight in the live centered Vim buffer.
  */
 export function App() {
   const store = useGameStore();
@@ -76,12 +77,19 @@ export function App() {
   const motion = useGameState((st) => st.settings.motion);
   const soundOn = useGameState((st) => st.settings.sound);
   const tint = useGameState((st) => st.settings.tintPreset);
+  const volumeMaster = useGameState((st) => st.settings.volumeMaster);
+  const volumeKeys = useGameState((st) => st.settings.volumeKeys);
+  const volumeChimes = useGameState((st) => st.settings.volumeChimes);
   const heat = useGameState((st) => heatOf(incomeOf(st)));
   const depth = useGameState((st) => depthOf(st.wallet.codicesEver));
   const flow = useGameState((st) => flowShare(st.vim.flow, st.vim.flowCap));
+
+  // The vellum the save names — or Midnight Amber when it names one this build has never heard of.
+  const activeTheme = THEME_BY_ID[tint] ?? THEME_BY_ID.amber;
+
   const { taken, reduced } = useGameRuntime(store, {
     motion,
-    scheme: "system",
+    scheme: activeTheme.scheme,
     sound: { engine: sound, on: soundOn },
   });
 
@@ -89,16 +97,20 @@ export function App() {
 
   useEffect(() => {
     const rootEl = document.documentElement;
-    rootEl.dataset.tint = tint;
-    rootEl.classList.remove("tint-amber", "tint-jade", "tint-paper", "tint-midnight");
-    rootEl.classList.add(`tint-${tint}`);
-  }, [tint]);
+    rootEl.dataset.tint = activeTheme.id;
+    rootEl.style.colorScheme = activeTheme.scheme;
+  }, [activeTheme]);
+
+  // The settings' three faders, pushed into the mix the moment they change.
+  useEffect(() => {
+    setSoundVolumes({ master: volumeMaster, keys: volumeKeys, chimes: volumeChimes });
+  }, [volumeMaster, volumeKeys, volumeChimes]);
 
   useEffect(() => {
     const hear = (event: Event) => {
-      const topic = (event as CustomEvent<{ topic: string | null }>).detail?.topic ?? null;
-      if (topic === "42") return;
-      setSheet({ kind: "help" });
+      const detail = (event as CustomEvent<{ topic?: string | null; tab?: HelpTab }>).detail;
+      if (detail?.topic === "42") return;
+      setSheet({ kind: "help", tab: detail?.tab });
     };
     window.addEventListener(HELP_EVENT, hear);
     return () => window.removeEventListener(HELP_EVENT, hear);
@@ -211,7 +223,7 @@ export function App() {
         {sheet?.kind === "about" && (
           <AboutSheet onClose={() => setSheet(null)} onHelp={() => setSheet({ kind: "help" })} />
         )}
-        {sheet?.kind === "help" && <HelpSheet onClose={() => setSheet(null)} />}
+        {sheet?.kind === "help" && <HelpSheet onClose={() => setSheet(null)} initialTab={sheet.tab} />}
       </PageRootContext.Provider>
     </ShaderPool>
   );

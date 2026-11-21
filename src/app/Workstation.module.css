@@ -1,7 +1,11 @@
 /*
- * Midnight Archivist Symmetrical 3-Zone TUI Workstation:
- * Zero template header bar. Center Vim buffer is permanently anchored dead-center (760px) inside
- * symmetric left/right wings so unlocking Ledger, Rooms, or Scribes never shifts the editor by 1px.
+ * Midnight Archivist 3-Zone TUI Workstation:
+ * Zero template header bar. One bounded desk shell: hairline-split wings pinned left and right of a
+ * breathing center Vim buffer, so unlocking Ledger, Rooms, or Scribes never shifts the editor by 1px.
+ * On an ultrawide the shell centers itself as a bounded desk (at most 1520px x 940px) over the page's
+ * backdrop instead of floating loose, and `:zen` folds both wings away leaving the buffer and a quiet
+ * status strip. The Bayer `--dither-4` stipple runs continuously across the whole shell, so no single
+ * card inside it needs a box of its own to feel like a surface.
  */
 .workstation {
   position: relative;
@@ -12,35 +16,60 @@
   overflow: hidden;
 }
 
+/*
+ * The 21:9 fix. Standard viewports keep the edge-to-edge desk above. On an ultrawide/tall viewport the
+ * workstation becomes one bounded desk shell: absolute inset plus auto margins center it on the page
+ * both ways (the page root is a plain block, so flow-level auto margins could only ever center it
+ * sideways), the hairline frames it, and the dithered 90%-ground lets the backdrop glow through at
+ * its edges.
+ */
+@media (min-width: 1561px) {
+  .workstation {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    width: min(100%, 1520px);
+    height: min(100dvh - 32px, 940px);
+    margin: auto;
+    border: var(--ui-hairline);
+    background-color: color-mix(in srgb, var(--ui-ground) 90%, transparent);
+    background-image: var(--dither-4);
+  }
+}
+
 .grid {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(208px, 1fr) minmax(0, 760px) minmax(208px, 1fr);
+  grid-template-columns: 256px minmax(0, 1fr) 288px;
   align-items: stretch;
-  gap: 24px;
-  padding: 20px 24px;
+  gap: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-/* --- Symmetrical Left & Right Wings ---------------------------------------------------------------------- */
+/* --- Hairline-Split Left & Right Wings -------------------------------------------------------------------- */
 
 .leftWing,
 .rightWing {
   min-width: 0;
   min-height: 0;
   width: 100%;
-  max-width: 264px;
+  max-width: none;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--ui-line) 70%, transparent) transparent;
   scrollbar-width: thin;
 }
 .leftWing {
-  justify-self: end;
+  box-sizing: border-box;
+  padding: 16px 14px;
+  border-right: var(--ui-hairline);
 }
 .rightWing {
-  justify-self: start;
+  box-sizing: border-box;
+  padding: 16px 14px;
+  border-left: var(--ui-hairline);
 }
 
 .wingInner {
@@ -48,7 +77,6 @@
   flex-direction: column;
   gap: 18px;
   min-height: 100%;
-  padding: 4px 2px;
   box-sizing: border-box;
 }
 
@@ -90,11 +118,12 @@
   text-transform: uppercase;
 }
 
-/* --- Archive Ledger (Left Wing) -------------------------------------------------------------------------- */
+/* --- Archive Ledger (Left Wing): a hairline-divided tabular list, not a stack of cards --------------------- */
 
 .ledger {
   display: grid;
-  gap: 6px;
+  gap: 0;
+  border-top: var(--ui-hairline);
 }
 .ledgerRow,
 .clarityRow {
@@ -102,10 +131,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 2px 8px;
-  padding: 7px 9px;
-  border: var(--ui-hairline);
-  background-color: color-mix(in srgb, var(--ui-surface) 85%, transparent);
-  background-image: var(--dither-4);
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  padding: 6px 4px 6px 8px;
+  background: transparent;
   text-align: left;
   cursor: help;
 }
@@ -113,7 +142,7 @@
   border-left: 2px solid var(--ui-accent);
 }
 .ledgerRow[data-compact] {
-  padding: 5px 9px;
+  padding: 4px 4px 4px 8px;
 }
 .clarityRow {
   width: 100%;
@@ -153,11 +182,11 @@
   color: var(--ui-ink-muted);
 }
 
-/* --- Archive Rooms Nav (Left Wing) ----------------------------------------------------------------------- */
+/* --- Archive Rooms Nav (Left Wing): borderless rows on one shared left rail ------------------------------- */
 
 .roomList {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -167,9 +196,10 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 7px 9px;
-  border: var(--ui-hairline);
-  background-color: color-mix(in srgb, var(--ui-sunken) 85%, transparent);
+  padding: 6px 8px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
   color: var(--ui-ink);
   font-family: var(--ui-font-num);
   font-size: 11.5px;
@@ -180,17 +210,16 @@
     background-color var(--ui-duration) ease-out;
 }
 .roomBtn:hover {
-  border-color: var(--ui-accent);
-  background-color: var(--ui-surface);
+  border-left-color: var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-surface) 55%, transparent);
 }
 .roomBtn[data-current] {
-  border-color: var(--ui-accent);
-  border-left: 2px solid var(--ui-accent);
-  background-color: var(--ui-surface);
+  border-left-color: var(--ui-accent);
+  background-color: color-mix(in srgb, var(--ui-surface) 80%, transparent);
   background-image: var(--dither-accent);
 }
 .roomBtn[data-fresh] {
-  border-color: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-line));
+  color: var(--ui-accent);
 }
 .roomIcon {
   display: inline-flex;
@@ -254,24 +283,65 @@
   color: var(--ui-accent);
 }
 
-/* --- Center Hero Vim Terminal (ALWAYS dead-center) ------------------------------------------------------- */
+/* --- Center Hero Vim Terminal (always dead-center, breathing on a wide desk) ------------------------------- */
 
 .centerStage {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   min-width: 0;
   min-height: 0;
   width: 100%;
+  box-sizing: border-box;
+  padding: 16px 24px;
 }
 
 .terminal {
   display: flex;
   flex-direction: column;
   gap: 0;
-  width: 100%;
+  width: min(100%, 840px);
   max-height: 100%;
   min-height: 0;
+}
+
+/* --- Zen Mode (:zen): fold the wings, keep one quiet status strip above the buffer -------------------------- */
+
+.workstation[data-zen] .leftWing,
+.workstation[data-zen] .rightWing {
+  display: none;
+}
+.workstation[data-zen] .grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.zenBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 18px;
+  width: min(100%, 840px);
+  margin-bottom: 12px;
+}
+.zenStat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  color: var(--ui-ink-muted);
+}
+.zenAmt {
+  color: var(--ui-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.zenLabel {
+  letter-spacing: 0.14em;
+}
+.zenStat[data-primary] .zenAmt {
+  color: var(--ui-accent);
 }
 
 .termBar {
@@ -429,7 +499,7 @@
   white-space: nowrap;
 }
 
-/* --- Secondary Room Overlay Pane ------------------------------------------------------------------------- */
+/* --- Secondary Room Overlay Pane: a spacious Telescope-style floating pane --------------------------------- */
 
 .roomScrim {
   position: fixed;
@@ -445,14 +515,19 @@
 .mobileDrawerPane {
   display: flex;
   flex-direction: column;
-  width: min(100%, 980px);
-  max-height: 88dvh;
-  border: 1px solid var(--ui-accent);
+  border: 1px solid var(--ui-line);
+  border-top: 2px solid var(--ui-accent);
   background-color: var(--ui-ground);
-  box-shadow: 0 24px 64px color-mix(in srgb, #000 70%, transparent);
+  background-image: var(--dither-4);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--ui-scrim) 70%, transparent);
+}
+.roomPane {
+  width: min(94vw, 1100px);
+  height: min(86dvh, 780px);
 }
 .mobileDrawerPane {
   width: min(100%, 420px);
+  max-height: 88dvh;
 }
 .roomTop {
   display: flex;

@@ -1,9 +1,11 @@
-// The Midnight Archivist Workstation: a bespoke symmetrical 3-zone TUI layout with NO template header bar.
+// The Midnight Archivist Workstation: a bespoke 3-zone TUI desk with NO template header bar.
 //
 // Desktop (>= 1060px):
-//   [Left Wing: Brand, Ledger, Rooms, Help/Settings] | [CENTER: Always-centered 760px Vim Buffer] | [Right Wing: Scribes & Desk]
-// Because the left and right wings share symmetric tracks around the center column, the Vim buffer stays
-// locked dead-center from 0:00 through hour 12 — whether 0, 1, or 2 wings have woken up.
+//   [Left Wing: Brand, Ledger, Rooms, Help/Settings] | [CENTER: Centered Vim Buffer] | [Right Wing: Scribes & Desk]
+// The wings are fixed hairline-split tracks around the center column, so the Vim buffer stays
+// dead-center from 0:00 through hour 12 — whether 0, 1, or 2 wings have woken up. On an ultrawide the
+// whole desk centers itself as one bounded shell, and `:zen` (settings.zenMode) folds the wings away,
+// leaving the buffer with a quiet Glyphs/Flow strip and an Exit Zen button.
 // Secondary archive rooms (Codex, Expeditions, Mosaic, Volumes, Trials, Marginalia) open as crisp ASCII
 // overlay panes over the dimmed desk, and Esc snaps the cursor straight back into Vim.
 import { useEffect, useState } from "react";
@@ -13,6 +15,7 @@ import { type BuyMode, VisuallyHidden } from "watchpot/ui";
 import { BufferEditor, FOCUS_BUFFER_EVENT } from "../components/BufferEditor";
 import { Chalkboard } from "../components/Chalkboard";
 import { CoachBar } from "../components/CoachBar";
+import { ErrataSlip } from "../components/ErrataSlip";
 import { ExLine } from "../components/ExLine";
 import { TildeBar } from "../components/TildeBar";
 import { CHALLENGES } from "../content/challenges";
@@ -127,6 +130,7 @@ export function Workstation({
   const clarityVisible = ledgerOpen && (st.vim.totalFoliosCleared > 0 || st.stats.output.gt(1.001));
   const showFlow = st.vim.flow > 0 || st.vim.totalFoliosCleared >= 1 || st.settings.veteranMode;
   const bindRevealed = st.wallet.earned.gte(15_000) || st.wallet.sealsEver.gte(1);
+  const zenMode = st.settings.zenMode;
 
   const activeRate = activeVimRateOf(st);
   const inkRate = inkRateOf(st);
@@ -162,6 +166,12 @@ export function Workstation({
   const selectRoom = (id: Tab) => {
     setMobileDrawer("none");
     onSelectRoom(id);
+  };
+
+  // `:zen` off: back to the full desk, with the cursor straight back in the buffer.
+  const exitZen = () => {
+    store.getState().settings.change({ zenMode: false });
+    window.setTimeout(() => window.dispatchEvent(new Event(FOCUS_BUFFER_EVENT)), 30);
   };
 
   const leftContent = (
@@ -321,6 +331,8 @@ export function Workstation({
         </section>
       )}
 
+      <ErrataSlip />
+
       <section className={s.section} aria-label="Margin desk scribes">
         <div className={s.scribeBar}>
           <p className={s.sectionHead}>SCRIBES</p>
@@ -341,7 +353,7 @@ export function Workstation({
   const RoomScreen = openRoom?.Screen;
 
   return (
-    <div className={s.workstation}>
+    <div className={s.workstation} data-zen={zenMode ? "" : undefined}>
       {/* Compact mobile-only TUI top strip (< 1060px) */}
       <div className={s.mobileBar}>
         <span className={s.mobileTitle}>{NAME}</span>
@@ -360,13 +372,31 @@ export function Workstation({
         </div>
       </div>
 
-      {/* Symmetrical 3-zone grid: Center Vim buffer NEVER shifts off-center */}
+      {/* The 3-zone split-pane grid: fixed hairline wings, center Vim buffer never shifts off-center */}
       <div className={s.grid}>
         <aside className={s.leftWing} aria-label="Archive ledger and rooms">
           {leftContent}
         </aside>
 
         <main className={s.centerStage} aria-label="The buffer" data-tab="make">
+          {zenMode && (
+            <div className={s.zenBar}>
+              <span className={s.zenStat} data-primary="">
+                {glyphOf(CURRENCY.glyphs.glyph, 12)}
+                <span className={s.zenAmt}>{fmt(st.wallet.glyphs).text}</span>
+                <span>Glyphs</span>
+              </span>
+              {showFlow && (
+                <span className={s.zenStat}>
+                  <span className={s.zenLabel}>FLOW</span>
+                  <span className={s.zenAmt}>×{fmt(flowMult, { decimals: 2 }).text}</span>
+                </span>
+              )}
+              <Button variant="ghost" onClick={exitZen}>
+                Exit Zen (:zen)
+              </Button>
+            </div>
+          )}
           <div className={s.terminal}>
             <header className={s.termBar}>
               <span className={s.termLeft}>

@@ -11,7 +11,7 @@
 //   4. Nothing is registered twice. The `:ex` handlers are module-level and bound once; the editor view is
 //      destroyed on unmount and every listener it added goes with it (React StrictMode mounts twice in dev).
 import { history } from "@codemirror/commands";
-import { Compartment, EditorState, type Extension, Prec, StateEffect } from "@codemirror/state";
+import { Compartment, EditorState, type Extension, Prec, StateEffect, StateField } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -34,6 +34,7 @@ import {
   type KeyThock,
   playActUnlock,
   playBindVolume,
+  playBuy,
   playCatch,
   playEditFeedback,
   playFolioClear,
@@ -41,10 +42,13 @@ import {
   playTildePurr,
 } from "../app/sound";
 import { EGG_BY_ID } from "../content/easterEggs";
+import { GENERATORS } from "../content/generators";
 import { FIRST_LESSON_FOLIO, FOLIO_1_APPEND_LESSON, FOLIO_2_EDGE_LESSON } from "../content/guide";
 import { resolveThemeId, THEMES, type ThemeId } from "../content/themes";
-import type { KeyFamilyId } from "../content/vimActs";
+import { ACT_BY_ID, type ActId, type KeyFamilyId } from "../content/vimActs";
+import { producers } from "../game/generators";
 import { codex, volumes } from "../game/prestige";
+import type { GlowIntensity } from "../game/settings";
 import { VISITOR_KIND } from "../game/visitor";
 import { BUFFER_GLOW } from "../shaders/bufferGlow";
 import { cleanCutPulse, folioClearPulse, momentState } from "../shaders/pulses";
@@ -60,6 +64,15 @@ export const NAV_EVENT = "eternal-buffer:nav";
 /** Fired when the welcome plate or a tab wants to put focus directly into the Vim buffer. */
 export const FOCUS_BUFFER_EVENT = "eternal-buffer:focus";
 
+/** The drawer `HELP_EVENT` can open on: the Vim keys, the console's commands, the glossary, or the stats. */
+export type HelpEventTab = "keys" | "commands" | "glossary" | "stats";
+
+/** What `HELP_EVENT` carries: a topic to look up (`:help ciw`), and the tab to open (`:stats`). */
+export interface HelpEventDetail {
+  readonly topic: string | null;
+  readonly tab?: HelpEventTab;
+}
+
 /** How often the folio carries a pawprint: one page in seventeen, by the serial, so a reload repeats it. */
 const PAWPRINT_EVERY = 17;
 /** Silence on one anomaly before the idiom is whispered, ms. */
@@ -73,6 +86,18 @@ const RUST_EGG_AT = 10;
 const ARROW_TRAINING = 3;
 /** Anomalies are short; eight marks is a column-rot and then some. */
 const MAX_MARKS = 8;
+/** How long the mended span keeps its phosphor afterglow, ms. */
+const MENDED_FLASH_MS = 450;
+/** The halo's burn for each glow setting: `off` is truly dark (uniform 0), `warm` is the full phosphor. */
+const GLOW_OF: Readonly<Record<GlowIntensity, number>> = { off: 0, subtle: 0.55, warm: 1 };
+/** Rises by one every anomaly cleared, so `lastClear.seq` tells a new summary from a repeated one. */
+let clearSeq = 0;
+
+/** The next clear's serial, and the tick that keeps it moving. */
+function nextClearSeq(): number {
+  clearSeq += 1;
+  return clearSeq;
+}
 
 // ---------------------------------------------------------------------------------------------
 // The tiny store the Ex line and the Chalkboard read
@@ -101,6 +126,22 @@ export interface ActiveCoachTarget {
   parKeys: number;
 }
 
+/**
+ * The Par/Golf summary of the anomaly just mended: what it was, what the fix took against its par, and what
+ * it paid. Published on `BufferStatus.lastClear` every clear; `seq` rises so a repeated read is still news.
+ */
+export interface LastClearSummary {
+  readonly anomalyId: string;
+  readonly label: string;
+  readonly keysUsed: number;
+  readonly parKeys: number;
+  readonly grade: "clean" | "tidy" | "mended";
+  readonly optimalHint: string;
+  /** The payout as the Ex line would print it, e.g. `"1.24K"`. */
+  readonly paidText: string;
+  readonly seq: number;
+}
+
 /** What the buffer publishes for the lines beneath it, once per mode change or cursor move. */
 export interface BufferStatus {
   mode: BufferMode;
@@ -127,6 +168,8 @@ export interface BufferStatus {
   resolvedCount: number;
   totalAnomalies: number;
   activeTarget: ActiveCoachTarget | null;
+  /** Par/Golf telemetry of the last mended anomaly, or null before the first clear of the session. */
+  lastClear: LastClearSummary | null;
 }
 
 const STATUS_EMPTY: BufferStatus = {
@@ -147,6 +190,7 @@ const STATUS_EMPTY: BufferStatus = {
   resolvedCount: 0,
   totalAnomalies: 0,
   activeTarget: null,
+  lastClear: null,
 };
 
 let status: BufferStatus = STATUS_EMPTY;
@@ -435,6 +479,30 @@ function pageOf(folio: Folio, resolved: Readonly<Record<string, true>>): string[
 /** Tells the decoration plugin the page or the cleared set changed. It carries nothing: it is a nudge. */
 const annotate = StateEffect.define<null>();
 
+/** Sets the mended span's brief afterglow (a page range), or clears it (`null`). */
+const flashMend = StateEffect.define<{ from: number; to: number } | null>();
+
+/**
+ * One `eb-mended-flash` mark at a time: the phosphor that flares on the span a clear just fixed and fades
+ * over `MENDED_FLASH_MS`. Any later edit ends it early rather than mapping its range through the change,
+ * since the span it marks may not survive one.
+ */
+const mendedFlash = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update: (held, tr) => {
+    let next = tr.docChanged ? Decoration.none : held;
+    for (const fx of tr.effects) {
+      if (!fx.is(flashMend)) continue;
+      next =
+        fx.value === null
+          ? Decoration.none
+          : Decoration.set([Decoration.mark({ class: "eb-mended-flash" }).range(fx.value.from, fx.value.to)]);
+    }
+    return next;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
 /** A `[ROT · par 3]` tag in the margin, one per line that holds part of an unresolved anomaly. */
 class ParTag extends GutterMarker {
   readonly text: string;
@@ -522,7 +590,12 @@ function anomalyMarks(context: BufferContext): Extension {
  */
 const editorTheme = EditorView.theme(
   {
-    "&": { backgroundColor: "transparent", color: "var(--ui-ink)", fontSize: "15px" },
+    "&": {
+      backgroundColor: "transparent",
+      color: "var(--ui-ink)",
+      // The plate's `data-font` step; the fallback is what `md` prints at.
+      fontSize: "var(--eb-buffer-font-size, 15px)",
+    },
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
       fontFamily: "var(--ui-font-num)",
@@ -638,6 +711,9 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const relativeNumbers = useGameState((state) => state.settings.relativeNumbers);
   const jkEscape = useGameState((state) => state.settings.jkEscape);
   const veteranMode = useGameState((state) => state.settings.veteranMode);
+  const glowIntensity = useGameState((state) => state.settings.glowIntensity);
+  const bufferFontSize = useGameState((state) => state.settings.bufferFontSize);
+  const tintPreset = useGameState((state) => state.settings.tintPreset);
   const catFamiliar = useGameState((state) => state.vim.vimrcRules["cat-familiar"] === true);
   const split = useGameState((state) => state.vim.activeSplit);
   const touchKeypad = useGameState((state) => state.settings.touchKeypad);
@@ -689,6 +765,11 @@ export function BufferEditor({ className }: BufferEditorProps) {
   const applying = useRef(false);
   /** Set between a folio clear and the next page landing, so the cleared page cannot pay twice. */
   const clearing = useRef(false);
+  /** Whether any of `h j k l` moved the caret on this folio: the Errata slip's "no HJKL" witness. */
+  const usedHjklThisFolio = useRef(false);
+  /** Reduced motion as the view's closures need it, fresh every render. */
+  const reducedRef = useRef(reduced);
+  reducedRef.current = reduced;
   const gutterCompartment = useRef(new Compartment()).current;
   const cursorTarget = useRef({ x: 0.5, y: 0.5 });
   const cursorPlaced = useRef({ x: 0.5, y: 0.5 });
@@ -725,6 +806,8 @@ export function BufferEditor({ className }: BufferEditorProps) {
         u_cursor: [placed.x, placed.y],
         u_flow: Math.min(1, live.vim.flow / Math.max(1, live.vim.flowCap)),
         u_pulse: Math.max(cleanCutPulse.value(), folioClearPulse.value()),
+        // `off` pushes 0, so the halo truly disappears rather than dimming.
+        u_glowIntensity: GLOW_OF[glowIntensity],
       };
       if (tokens) uniforms.u_modeColor = tokens[modeToken(modeRef.current)];
       return uniforms;
@@ -822,6 +905,20 @@ export function BufferEditor({ className }: BufferEditorProps) {
       if (isPawprint) store.getState().achievements.award("off-the-keyboard");
       playEditFeedback(paid.grade, store.getState().vim.flow);
       cleanCutPulse.bump();
+      // The mended span's phosphor afterglow — skipped under reduced motion. `verify` runs inside the
+      // update listener, where a synchronous dispatch would throw, so the mark goes on in a microtask.
+      if (!reducedRef.current) {
+        queueMicrotask(() => {
+          if (viewRef.current !== view) return;
+          const info = view.state.doc.line(Math.min(anomaly.line + 1, view.state.doc.lines));
+          const from = info.from + Math.min(anomaly.colStart, info.length);
+          const to = Math.max(from + 1, info.from + Math.min(anomaly.colEnd, info.length));
+          view.dispatch({ effects: flashMend.of({ from, to }) });
+          window.setTimeout(() => {
+            if (viewRef.current === view) view.dispatch({ effects: flashMend.of(null) });
+          }, MENDED_FLASH_MS);
+        });
+      }
       // The corruption is gone from the page by now, so the mark lands on the line it was on. Geometry is read
       // in a measure, as CodeMirror asks: a listener may not lay the page out.
       view.requestMeasure<{ x: number; y: number } | null>({
@@ -836,15 +933,28 @@ export function BufferEditor({ className }: BufferEditorProps) {
             kind: paid.grade,
             text:
               paid.grade === "clean"
-                ? `+${fmt(paid.paid).text} Glyphs · CLEAN CUT`
+                ? `+${fmt(paid.paid).text} · PAR ${anomaly.parKeys} · CLEAN CUT`
                 : paid.grade === "tidy"
-                  ? `+${fmt(paid.paid).text} Glyphs · TIDY`
-                  : `+${fmt(paid.paid).text} Glyphs`,
+                  ? `+${fmt(paid.paid).text} · ${keys}/${anomaly.parKeys} KEYS · TIDY`
+                  : `+${fmt(paid.paid).text} · ${keys}/${anomaly.parKeys} KEYS`,
           });
         },
       });
+      // Par/Golf telemetry for whatever reads the status: the cut against its par, in one summary.
+      publishStatus({
+        lastClear: {
+          anomalyId: anomaly.id,
+          label: anomaly.label,
+          keysUsed: keys,
+          parKeys: anomaly.parKeys,
+          grade: paid.grade,
+          optimalHint: anomaly.optimalHint,
+          paidText: fmt(paid.paid).text,
+          seq: nextClearSeq(),
+        },
+      });
       say(
-        `${anomaly.label} ${paid.grade === "clean" ? "cut clean" : "mended"} — +${fmt(paid.paid).text} Glyphs.`,
+        `${anomaly.label} ${paid.grade === "clean" ? "cut clean" : "mended"} — +${fmt(paid.paid).text} Glyphs, ${keys}/${anomaly.parKeys} keys.`,
       );
     };
 
@@ -870,6 +980,9 @@ export function BufferEditor({ className }: BufferEditorProps) {
       const cleared = store
         .getState()
         .vim.completeFolio(page.isRite, page.riteFamily as KeyFamilyId | undefined);
+      // The Errata slip's witness: a folio closed without h j k l counts, and the watch resets for the next page.
+      if (!usedHjklThisFolio.current) store.getState().vim.noteNoHjklFolio();
+      usedHjklThisFolio.current = false;
       // A rite is a family confirmed, so it gets the brass; an ordinary page gets the paper-turn arpeggio.
       if (page.isRite) playActUnlock();
       playFolioClear();
@@ -1043,7 +1156,36 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
     const setOption = (args: string[]): void => {
       const live = store.getState();
-      const name = (args[0] ?? "").toLowerCase();
+      const raw = (args[0] ?? "").toLowerCase();
+      // `:set fontsize=sm` (or `fs=`) and `:set glow=warm`: the editor's two named steps.
+      const at = raw.indexOf("=");
+      const option = (at >= 0 ? raw.slice(0, at) : raw).trim();
+      const value = (at >= 0 ? raw.slice(at + 1) : "").trim();
+      if (option === "fontsize" || option === "fs") {
+        if (value !== "sm" && value !== "md" && value !== "lg") {
+          say("E474: Invalid argument. Try :set fontsize=sm | md | lg.");
+          return;
+        }
+        live.settings.change({ bufferFontSize: value });
+        say(
+          `Type set to ${value === "sm" ? "small" : value === "md" ? "medium" : "large"} (${value}). The page reprints itself.`,
+        );
+        return;
+      }
+      if (option === "glow") {
+        if (value !== "off" && value !== "subtle" && value !== "warm") {
+          say("E474: Invalid argument. Try :set glow=off | subtle | warm.");
+          return;
+        }
+        live.settings.change({ glowIntensity: value });
+        say(
+          value === "off"
+            ? "The phosphor is dark; the halo sleeps."
+            : `Glow set to ${value}. The phosphor breathes.`,
+        );
+        return;
+      }
+      const name = raw;
       if (name === "number" || name === "nu") {
         live.settings.change({ showLineNumbers: true });
         say(egg("gutter-numbers"));
@@ -1061,19 +1203,76 @@ export function BufferEditor({ className }: BufferEditorProps) {
       }
     };
 
-    const cycleScheme = (arg: string): void => {
+    /**
+     * `:colorscheme` with a name prints the page on that vellum; without one it cycles. A name the archive
+     * has never heard of lists the shelves rather than guessing.
+     */
+    const colorscheme = (arg: string): void => {
       const live = store.getState();
-      const order = THEMES.map((theme) => theme.id);
-      const asked = resolveThemeId(arg.trim());
-      let next: ThemeId;
-      if (asked !== null) {
-        next = asked;
-      } else {
-        const at = order.indexOf(live.settings.tintPreset);
-        next = order[(at + 1) % order.length] ?? "amber";
+      const asked = arg.trim();
+      if (asked !== "") {
+        const theme = resolveThemeId(asked);
+        if (theme === null) {
+          say(`Unknown theme. Try: ${THEMES.map((entry) => entry.id).join(", ")}.`);
+          return;
+        }
+        live.settings.change({ tintPreset: theme });
+        say(`${egg("phosphor-cycle")} (${theme})`);
+        return;
       }
+      const order = THEMES.map((entry) => entry.id);
+      const current = order.indexOf(live.settings.tintPreset);
+      const next: ThemeId = order[(current + 1) % order.length] ?? "amber";
       live.settings.change({ tintPreset: next });
       say(`${egg("phosphor-cycle")} (${next})`);
+    };
+
+    /**
+     * `:buy`/`:hire`: one Scribe from the console. The argument is a seat's 1-based number or a loose name;
+     * with no argument the first Scribe whose chair is open and whose price the wallet covers takes the seat.
+     * A name that matches only a locked chair still answers, with the Act that opens it.
+     */
+    const hireScribe = (arg: string): void => {
+      const live = store.getState();
+      const open = (id: string) => producers.select.open(live, id);
+      const asked = arg.trim().toLowerCase();
+      let def: (typeof GENERATORS)[number] | undefined;
+      if (asked === "") {
+        def = GENERATORS.filter((entry) => open(entry.id)).find((entry) =>
+          live.wallet.glyphs.gte(producers.select.price(live, entry.id)),
+        );
+        if (!def) {
+          say("Usage: :buy <scribe name or number>");
+          return;
+        }
+      } else if (/^\d+$/.test(asked)) {
+        def = GENERATORS[Number(asked) - 1];
+      } else {
+        const matches = (entry: (typeof GENERATORS)[number]) =>
+          entry.id.toLowerCase().includes(asked) || entry.name.toLowerCase().includes(asked);
+        def = GENERATORS.find((entry) => open(entry.id) && matches(entry)) ?? GENERATORS.find(matches);
+      }
+      if (!def) {
+        say(`No scribe answers to "${arg.trim()}". Usage: :buy <scribe name or number>`);
+        return;
+      }
+      const price = producers.select.price(live, def.id);
+      if (!open(def.id)) {
+        say(
+          `${def.name} is not yet taking work — the desk calls for Act ${ACT_BY_ID[(def.minAct ?? 1) as ActId]?.numeral ?? def.minAct}.`,
+        );
+        return;
+      }
+      if (live.wallet.glyphs.lt(price)) {
+        say(`${def.name} wants ${fmt(price).text} Glyphs; the wallet holds ${fmt(live.wallet.glyphs).text}.`);
+        return;
+      }
+      if (!store.getState().generators.buy(def.id, 1)) {
+        say(`${def.name} could not be hired — the desk refused.`);
+        return;
+      }
+      playBuy();
+      say(`${def.name} takes the chair — ${fmt(price).text} Glyphs. ${def.line}`);
     };
 
     /** Every `:ex` command the archive answers itself. The engine keeps `:s`, `:g`, `:v`, `:norm`, `:sort`. */
@@ -1112,10 +1311,28 @@ export function BufferEditor({ className }: BufferEditorProps) {
           const topic = (args[0] ?? "").trim();
           say(topic === "42" ? egg("meaning-of-42") : egg("codex-drawer"));
           window.dispatchEvent(
-            new CustomEvent(HELP_EVENT, { detail: { topic: topic === "" ? null : topic } }),
+            new CustomEvent<HelpEventDetail>(HELP_EVENT, {
+              detail: { topic: topic === "" ? null : topic },
+            }),
           );
           return;
         }
+        case "stats":
+          say("The ledger of your hands, opened from the console.");
+          window.dispatchEvent(
+            new CustomEvent<HelpEventDetail>(HELP_EVENT, { detail: { topic: null, tab: "stats" } }),
+          );
+          return;
+        case "zen": {
+          const on = !live.settings.zenMode;
+          store.getState().settings.change({ zenMode: on });
+          say(on ? "Zen mode on — type :zen to restore the desk." : "Desk restored.");
+          return;
+        }
+        case "buy":
+        case "hire":
+          hireScribe(argString);
+          return;
         case "smile":
           say(`${egg("bram-smile")}  ☺`);
           store.getState().vim.petTilde();
@@ -1147,7 +1364,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
           say(egg("electron-vellum"));
           return;
         case "colorscheme":
-          cycleScheme(body);
+          colorscheme(body);
           return;
         case "set":
           setOption(args);
@@ -1216,6 +1433,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
           EditorView.lineWrapping,
           gutterCompartment.of(gutterExtension(gutterBorn.current, () => relativeRef.current)),
           anomalyMarks(context.current),
+          mendedFlash,
           editorTheme,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -1310,6 +1528,12 @@ export function BufferEditor({ className }: BufferEditorProps) {
       playKeyThock(thockOf(key, mode));
       recent = `${recent}${key}`.slice(-6);
       typed.push(key);
+      // Every Normal-mode key that reached the engine passed the gate, so the mastery panel counts it here.
+      // Operator-pending reads as Normal to `modeOf`, which is what "Normal/Operator keystrokes" wants.
+      if (mode === "normal") {
+        store.getState().vim.recordKeyUsage(key);
+        if (key.length === 1 && "hjkl".includes(key)) usedHjklThisFolio.current = true;
+      }
       // A macro: `q` arms the recorder, the next key names its register, and a later `q` stops it.
       if (key === "q" && recording === null) recording = "";
       else if (recording === "" && key.length === 1 && key !== "q") recording = key;
@@ -1429,6 +1653,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
     applying.current = true;
     clearing.current = false;
     keysUsed.current.clear();
+    usedHjklThisFolio.current = false;
     // Always return to Normal mode when a fresh folio lands so finishing a page in Insert mode
     // never leaves the next folio stuck in Insert mode.
     const cm = getCM(view);
@@ -1512,6 +1737,7 @@ export function BufferEditor({ className }: BufferEditorProps) {
         u_cursor: [cursorPlaced.current.x, cursorPlaced.current.y],
         u_pulse: 0,
         u_flow: 0,
+        u_glowIntensity: GLOW_OF[glowIntensity],
       }
     : undefined;
   const still = <div className={s.still} style={{ background: BUFFER_GLOW.still }} />;
@@ -1521,6 +1747,11 @@ export function BufferEditor({ className }: BufferEditorProps) {
       ref={frameRef}
       className={cx(s.frame, className)}
       data-mode="normal"
+      // The vellum this plate is printed on. Flipping it is also what makes the tokens hook re-read the
+      // palette: it watches `data-theme` changes on the frame, and a same-scheme switch (amber → jade)
+      // touches no other attribute the page sets, so the halo re-inks in the same frame as the CSS.
+      data-theme={tintPreset}
+      data-font={bufferFontSize}
       aria-label="The folio buffer"
       onClick={(event) => {
         // A click anywhere on the plate that is not on the page or a keypad button puts the caret back.
@@ -1619,6 +1850,10 @@ function bindExOnce(router: ExRouter): void {
     ["emacs", "emacs"],
     ["nano", "nano"],
     ["vscode", "vscode"],
+    ["zen", "zen"],
+    ["buy", "buy"],
+    ["hire", "hire"],
+    ["stats", "stats"],
     ["colorscheme", "colo"],
     ["set", "set"],
     ["vsplit", "vs"],

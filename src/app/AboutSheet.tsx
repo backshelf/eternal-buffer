@@ -1,6 +1,8 @@
-import { type ReactNode, useId, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useId, useState } from "react";
 import { Tabs } from "watchpot/ui";
+import { StatsPanel } from "../components/StatsPanel";
 import { ARCHIVE_GLOSSARY, EX_NAV_COMMANDS, KEY_GLOSS, visibleAct1Keys } from "../content/guide";
+import { THEMES } from "../content/themes";
 import { ACTS, FAMILY_BY_ID, KEY_FAMILIES, type KeyFamilyId } from "../content/vimActs";
 import { Button } from "../ui/Button";
 import { ConfirmButton, Sheet } from "../ui/Sheet";
@@ -14,6 +16,26 @@ const ARROWS = [
   { value: "off", label: "Off" },
 ] as const;
 
+/** The two shelves the vellums are grouped on, in the sheet's words. */
+const THEME_SHELVES = [
+  { group: "archive", label: "Archive" },
+  { group: "editor", label: "Editor" },
+] as const;
+
+/** How hard the buffer's glow burns, in the sheet's words. */
+const GLOWS = [
+  { value: "off", label: "Off" },
+  { value: "subtle", label: "Subtle" },
+  { value: "warm", label: "Warm" },
+] as const;
+
+/** The buffer's type size, in the sheet's words. */
+const FONT_SIZES = [
+  { value: "sm", label: "Small" },
+  { value: "md", label: "Medium" },
+  { value: "lg", label: "Large" },
+] as const;
+
 /** A titled group of settings: a heading, then its controls. */
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -21,6 +43,42 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
       <h3 className={s.groupTitle}>{title}</h3>
       {children}
     </section>
+  );
+}
+
+/**
+ * One fader of the audio mix: the setting keeps `0..1`, the slider shows and takes `0..100`, and a drag writes the
+ * fraction back so `0` is a volume the player can actually reach.
+ */
+function VolumeSlider({
+  id,
+  label,
+  value,
+  disabled,
+  onValueChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  disabled: boolean;
+  onValueChange(next: number): void;
+}) {
+  const percent = Math.round(value * 100);
+  return (
+    <div className={s.sliderRow}>
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={percent}
+        disabled={disabled}
+        onChange={(e) => onValueChange(Number(e.currentTarget.value) / 100)}
+      />
+      <span className={s.sliderValue}>{percent}%</span>
+    </div>
   );
 }
 
@@ -88,6 +146,72 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
         </>
       }
     >
+      <Group title="Appearance">
+        <div className={s.themeField}>
+          <span className={s.label}>Color theme</span>
+          <div className={s.themeGrid} role="radiogroup" aria-label="Color theme">
+            {THEME_SHELVES.map((shelf) => (
+              <Fragment key={shelf.group}>
+                <span className={s.themeShelfLabel} aria-hidden="true">
+                  {shelf.label}
+                </span>
+                {THEMES.filter((theme) => theme.group === shelf.group).map((theme) => (
+                  // biome-ignore lint/a11y/useSemanticElements: the row is a full-width swatch button in the sheet's radio group, not a bare input
+                  <button
+                    key={theme.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={set.tintPreset === theme.id}
+                    className={s.themeBtn}
+                    onClick={() => change({ tintPreset: theme.id })}
+                  >
+                    <span className={s.swatches} aria-hidden="true">
+                      {theme.swatches.map((swatch) => (
+                        <span key={swatch} className={s.swatch} style={{ backgroundColor: swatch }} />
+                      ))}
+                    </span>
+                    <span className={s.themeName}>{theme.name}</span>
+                    <span className={s.schemeTag}>{theme.scheme === "dark" ? "DARK" : "LIGHT"}</span>
+                  </button>
+                ))}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+
+        <fieldset className={s.fieldset}>
+          <legend className={s.label}>Buffer glow</legend>
+          {GLOWS.map((glow) => (
+            <label key={glow.value} className={s.radio}>
+              <input
+                type="radio"
+                name="glowIntensity"
+                value={glow.value}
+                checked={set.glowIntensity === glow.value}
+                onChange={() => change({ glowIntensity: glow.value })}
+              />
+              <span>{glow.label}</span>
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className={s.fieldset}>
+          <legend className={s.label}>Buffer font size</legend>
+          {FONT_SIZES.map((size) => (
+            <label key={size.value} className={s.radio}>
+              <input
+                type="radio"
+                name="bufferFontSize"
+                value={size.value}
+                checked={set.bufferFontSize === size.value}
+                onChange={() => change({ bufferFontSize: size.value })}
+              />
+              <span>{size.label}</span>
+            </label>
+          ))}
+        </fieldset>
+      </Group>
+
       <Group title="Desk &amp; Audio">
         <label className={s.toggle}>
           <input
@@ -97,6 +221,29 @@ export function AboutSheet({ onClose, onHelp }: AboutSheetProps) {
           />
           <span>Mechanical key &amp; chime audio</span>
         </label>
+        <div className={s.sliderRows}>
+          <VolumeSlider
+            id={`${boxId}-master`}
+            label="Master"
+            value={set.volumeMaster}
+            disabled={!set.sound}
+            onValueChange={(next) => change({ volumeMaster: next })}
+          />
+          <VolumeSlider
+            id={`${boxId}-keys`}
+            label="Key thocks"
+            value={set.volumeKeys}
+            disabled={!set.sound}
+            onValueChange={(next) => change({ volumeKeys: next })}
+          />
+          <VolumeSlider
+            id={`${boxId}-chimes`}
+            label="Chimes & SFX"
+            value={set.volumeChimes}
+            disabled={!set.sound}
+            onValueChange={(next) => change({ volumeChimes: next })}
+          />
+        </div>
         <label className={s.toggle}>
           <input
             type="checkbox"
@@ -272,10 +419,24 @@ function ReferenceAct({
   );
 }
 
+/** The four sections the Help sheet can open on. */
+export type HelpTab = "keys" | "commands" | "glossary" | "stats";
+
+/** Props of `HelpSheet`: the close, and which tab it opens on. */
+export interface HelpSheetProps {
+  onClose(): void;
+  /** The section to open on; defaults to the Vim keys. */
+  initialTab?: HelpTab;
+}
+
 /**
- * The Help sheet (`? Help` / `:help`): plain-English Vim Keys + `:ex` console commands + Archive Glossary.
+ * The Help sheet (`? Help` / `:help`): plain-English Vim Keys, `:ex` console commands, the Archive Glossary, and the
+ * player's own Vim record. `initialTab` is what `:stats` and the other deep links open on.
  */
-export function HelpSheet({ onClose }: { onClose(): void }) {
+export function HelpSheet({ onClose, initialTab = "keys" }: HelpSheetProps) {
+  // Controlled, so a deep link (`:stats`) can move an already-open sheet to its tab as well as seed a new one.
+  const [tab, setTab] = useState<HelpTab>(initialTab);
+  useEffect(() => setTab(initialTab), [initialTab]);
   const unlocked = useGameState((st) => st.vim.unlockedFamilies);
   const actTier = useGameState((st) => st.vim.highestAct);
   const onboardingStep = useGameState((st) => st.vim.onboardingStep);
@@ -295,7 +456,12 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
         </Button>
       }
     >
-      <Tabs.Root defaultValue="keys" activation="manual" controls="selected">
+      <Tabs.Root
+        value={tab}
+        onValueChange={(next) => setTab(next as HelpTab)}
+        activation="manual"
+        controls="selected"
+      >
         <Tabs.List className={s.helpTabs} aria-label="Help sections">
           <Tabs.Tab value="keys" className={s.helpTab}>
             Vim Keys ({known}/{KEY_FAMILIES.length})
@@ -305,6 +471,9 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
           </Tabs.Tab>
           <Tabs.Tab value="glossary" className={s.helpTab}>
             Glossary
+          </Tabs.Tab>
+          <Tabs.Tab value="stats" className={s.helpTab}>
+            Stats
           </Tabs.Tab>
         </Tabs.List>
 
@@ -359,6 +528,10 @@ export function HelpSheet({ onClose }: { onClose(): void }) {
               </div>
             ))}
           </dl>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="stats" className={s.helpPanel}>
+          <StatsPanel />
         </Tabs.Panel>
       </Tabs.Root>
     </Sheet>

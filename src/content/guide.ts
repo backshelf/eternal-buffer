@@ -168,7 +168,11 @@ export const EX_NAV_COMMANDS: readonly { cmd: string; aliases: string; desc: str
   { cmd: ":trials", aliases: ":challenges", desc: "Open Vim Skill Trials" },
   { cmd: ":log", aliases: ":marginalia", desc: "Open Marginalia achievements" },
   { cmd: ":help", aliases: ":h", desc: "Open this Vim Reference & Glossary" },
+  { cmd: ":stats", aliases: "", desc: "Open the ledger of your stats" },
   { cmd: ":pet", aliases: ":treat", desc: "Pet or feed Tilde (~) from the console" },
+  { cmd: ":buy <scribe>", aliases: ":hire", desc: "Hire a Scribe by seat number or name" },
+  { cmd: ":colorscheme <name>", aliases: ":colo", desc: "Print the page on another vellum (no arg cycles)" },
+  { cmd: ":zen", aliases: "", desc: "Fold the desk to the buffer alone" },
   { cmd: ":w", aliases: "ZZ", desc: "Bind Volume when ready (+Seals)" },
   { cmd: ":wq", aliases: "", desc: "Rebind Codex when ready (+Codices)" },
 ];
