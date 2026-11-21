@@ -1,0 +1,146 @@
+/*
+ * The mastery panel: a borderless two-column TUI table of the player's own Vim record, and a monospace ASCII bar
+ * chart of the keys they lean on. The Help sheet already draws the frame, so the hairlines between rows and the lit
+ * cells are the whole surface. Colour, type and rules all come from the `--ui-*` registry; nothing here is rounded.
+ */
+.panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  font-family: var(--ui-font);
+}
+
+/* The panel's name: a machine label on a rule, not a second title. */
+.title {
+  margin: 0;
+  padding-bottom: 5px;
+  border-bottom: var(--ui-hairline);
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.block {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The KPI table: two columns of hairline-divided rows, the divider doing the framing. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+  margin: 0;
+}
+
+.metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0 5px;
+  border-bottom: var(--ui-hairline);
+}
+
+.label {
+  min-width: 0;
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.value {
+  margin: 0;
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The chart: a keycap, twelve cells that fill proportionally, and the raw count. */
+.bars {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(3.5em, max-content) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0 4px;
+  border-bottom: var(--ui-hairline);
+}
+
+.keycap {
+  overflow: hidden;
+  color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar {
+  overflow: hidden;
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: pre;
+}
+
+.lit {
+  color: var(--ui-accent);
+}
+
+.rest {
+  color: var(--ui-line);
+}
+
+.count {
+  color: var(--ui-ink-muted);
+  font-family: var(--ui-font-num);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: var(--ui-hairline);
+  color: var(--ui-ink-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+/* Under a narrow sheet the two columns stack: the labels stay readable rather than cropping the values. */
+@media (max-width: 560px) {
+  .metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

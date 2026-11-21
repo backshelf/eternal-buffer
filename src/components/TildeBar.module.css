@@ -1,7 +1,7 @@
 /*
- * Tilde's statusline: a strip of the archive's own hairline and stipple, two ASCII corners top and two bottom, her
- * frame in warm fur, the Bond, the two presses, and the Act's quip running out to the right. It is the one place on
- * the page where the cat is, so it is the one place that wears her colours.
+ * Tilde's statusline: a flush strip at the foot of the desk, a strip of the archive's own hairline and stipple, her
+ * frame and whatever Bond has dressed her in, the Bond, the three presses, and a quip running out to the right. It is
+ * the one place on the page where the cat is, so it is the one place that wears her colours.
  */
 .bar {
   position: relative;
@@ -9,9 +9,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 12px;
-  padding: 7px 12px;
-  border: 1px solid var(--ui-line);
-  background-color: var(--ui-surface);
+  padding: 6px 10px;
+  border: var(--ui-hairline);
+  border-top: 0;
+  background-color: var(--ui-sunken);
   background-image: var(--dither-4);
   color: var(--ui-ink);
   font-family: var(--ui-font-num);
@@ -19,45 +20,7 @@
   line-height: 1.35;
 }
 
-/* The four corners of the frame: the top two drawn here, the bottom two by the spans inside. */
-.bar::before,
-.bar::after {
-  position: absolute;
-  top: -8px;
-  color: color-mix(in srgb, var(--ui-tilde-fur) 72%, var(--ui-line));
-  font-family: var(--ui-font-num);
-  font-size: 11px;
-  line-height: 1;
-  content: var(--ui-frame-tl);
-  pointer-events: none;
-  user-select: none;
-}
-.bar::before {
-  left: -5px;
-}
-.bar::after {
-  right: -5px;
-  content: var(--ui-frame-tr);
-}
-.footLeft,
-.footRight {
-  position: absolute;
-  bottom: -8px;
-  color: color-mix(in srgb, var(--ui-tilde-fur) 72%, var(--ui-line));
-  font-family: var(--ui-font-num);
-  font-size: 11px;
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
-.footLeft {
-  left: -5px;
-}
-.footRight {
-  right: -5px;
-}
-
-/* Her: a square mood dot, then the frame itself. Held still under reduced motion, where the frame is the nap one. */
+/* Her: a square mood dot, then the frame itself, then the accessory Bond has opened. Held still under reduced motion. */
 .cat {
   display: inline-flex;
   align-items: center;
@@ -82,12 +45,31 @@
   background-color: var(--ui-accent);
   box-shadow: 0 0 8px color-mix(in srgb, var(--ui-accent) 65%, transparent);
 }
+.bar[data-mood="celebrate"] .mood {
+  background-color: var(--ui-clean-ink);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ui-clean-ink) 65%, transparent);
+}
+.bar[data-mood="startle"] .mood {
+  background-color: var(--ui-danger);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ui-danger) 65%, transparent);
+}
 .frame {
   white-space: pre;
   letter-spacing: 0.01em;
 }
 
-/* The Bond, and the two presses, each held off the last by the statusline's own rule. */
+/* What Bond has dressed her in: one monospace token hung beside her face, in her own eye colour. */
+.cosmetic {
+  color: var(--ui-tilde-eye);
+  font-family: var(--ui-font-num);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: pre;
+  user-select: none;
+}
+
+/* The Bond, and the presses, each held off the last by the statusline's own rule. */
 .bond {
   padding-inline-start: 12px;
   border-inline-start: 1px solid var(--ui-line);
@@ -156,12 +138,19 @@
 @media (max-width: 720px) {
   .bar {
     gap: 6px 10px;
-    padding: 8px 10px;
+    padding: 6px 8px;
     font-size: 11px;
   }
   .bond,
   .actions {
     padding-inline-start: 0;
     border-inline-start: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart {
+    animation: none;
+    opacity: 1;
   }
 }

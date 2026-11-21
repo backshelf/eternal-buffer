@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fmt } from "watchpot/core";
 import { useReducedMotion } from "watchpot/kit";
 import { useClockNow } from "watchpot/react";
@@ -7,9 +7,17 @@ import { useGameState, useGameStore } from "../app/hooks";
 import { glyphOf } from "../app/icons";
 import { playTildePurr } from "../app/sound";
 import { TICKER_LINES } from "../content/ticker";
-import { TILDE_BOND_STEP, TILDE_FRAMES, type TildeMood, tildeTreatCost } from "../content/tilde";
+import {
+  TILDE_BOND_STEP,
+  TILDE_COSMETICS,
+  TILDE_FRAMES,
+  TILDE_QUIPS,
+  type TildeMood,
+  tildeTreatCost,
+} from "../content/tilde";
 import { CURRENCY } from "../content/words";
 import { VISITOR_KIND } from "../game/visitor";
+import { momentState } from "../shaders/pulses";
 import { Button } from "../ui/Button";
 import s from "./TildeBar.module.css";
 
@@ -19,15 +27,24 @@ const PURR_MS = 3200;
 const QUIP_MS = 15_000;
 /** How long her heart hangs over the statusline. */
 const HEART_MS = 2400;
+/** How long she stays pleased after a Folio closes, or after every fifth clean one. */
+const CELEBRATE_MS = 2500;
+/** How long she stays startled by the `:wq` Rebind. */
+const STARTLE_MS = 3000;
+/** Every fifth clean Folio in a row is worth being pleased about. */
+const CLEAN_STREAK_STEP = 5;
+
+/** The two moods she only holds for a moment: a mended page, or the archive rebinding under her. */
+type FlashMood = "celebrate" | "startle";
 
 /** What each mood looks like said aloud, for the cat's hidden line. */
 const MOOD_WORDS: Record<TildeMood, string> = {
   nap: "asleep on the statusline",
-  alert: "cheering your Flow",
+  alert: "watching your Flow",
   purr: "purring",
   moth: "batting at the Margin Moth",
   typing: "watching the cursor",
-  celebrate: "celebrating the mended page",
+  celebrate: "pleased with the mended folio",
   startle: "startled by the rebind",
 };
 
@@ -37,10 +54,11 @@ export interface TildeBarProps {
 }
 
 /**
- * Tilde's statusline: her animated ASCII frame, her Bond, the Pet and Treat buttons, and the Act's ticker quip, framed
- * in the archive's own corner marks. She naps at rest, purrs for a few seconds after a press, sits up for a live
- * Margin Moth, and watches the cursor at high Flow. One frame is held under reduced motion, and the heart that
- * answers a press only fades there.
+ * Tilde's statusline: her animated ASCII frame and whatever Bond has dressed her in, her Bond, the Pet, Treat and
+ * Style buttons, and a quip that alternates between her own opinions and the Act's ticker. She naps at rest, sits up
+ * when Flow is middling, watches the cursor when it is high, purrs for a few seconds after a press, is briefly
+ * pleased by a mended page, and is briefly startled by the `:wq` Rebind. One frame is held under reduced motion, and
+ * the heart that answers a press only fades there.
  */
 export function TildeBar({ className }: TildeBarProps) {
   const store = useGameStore();
@@ -50,6 +68,8 @@ export function TildeBar({ className }: TildeBarProps) {
   const flowCap = useGameState((st) => st.vim.flowCap);
   const act = useGameState((st) => st.vim.highestAct);
   const foliosCleared = useGameState((st) => st.vim.totalFoliosCleared);
+  const cleanStreak = useGameState((st) => st.vim.currentCleanStreak);
+  const cosmeticId = useGameState((st) => st.vim.tildeCosmetic);
   const veteran = useGameState((st) => st.settings.veteranMode);
   const treatsCount = useGameState((st) => st.wallet.treats);
   const treats = fmt(treatsCount).text;
@@ -59,23 +79,66 @@ export function TildeBar({ className }: TildeBarProps) {
   const [purring, setPurring] = useState(false);
   const [heart, setHeart] = useState(0);
   const [note, setNote] = useState<string | null>(null);
+  const [flash, setFlash] = useState<FlashMood | null>(null);
   const purrTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
       if (purrTimer.current !== null) clearTimeout(purrTimer.current);
       if (heartTimer.current !== null) clearTimeout(heartTimer.current);
       if (noteTimer.current !== null) clearTimeout(noteTimer.current);
+      if (flashTimer.current !== null) clearTimeout(flashTimer.current);
     },
     [],
   );
 
+  /** Holds one of her momentary moods for a few seconds, then lets the ordinary one come back. */
+  const flashFor = useCallback((mood: FlashMood, ms: number) => {
+    setFlash(mood);
+    if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), ms);
+  }, []);
+
+  // A Folio closed: she notices the pile getting shorter.
+  const clearedBefore = useRef<number | null>(null);
+  useEffect(() => {
+    const before = clearedBefore.current;
+    clearedBefore.current = foliosCleared;
+    if (before === null || foliosCleared <= before) return;
+    flashFor("celebrate", CELEBRATE_MS);
+  }, [foliosCleared, flashFor]);
+
+  // Every fifth clean Folio in a row, likewise.
+  const streakBefore = useRef<number | null>(null);
+  useEffect(() => {
+    const before = streakBefore.current;
+    streakBefore.current = cleanStreak;
+    if (before === null || cleanStreak <= before) return;
+    if (cleanStreak % CLEAN_STREAK_STEP !== 0) return;
+    flashFor("celebrate", CELEBRATE_MS);
+  }, [cleanStreak, flashFor]);
+
+  // The archive rebinding under her nose: the one thing on the page she is allowed to be loud about.
+  useEffect(
+    () =>
+      momentState.subscribe((active) => {
+        if (active) flashFor("startle", STARTLE_MS);
+      }),
+    [flashFor],
+  );
+
   const mothLive = live !== null && live.diesAt > now;
-  const typing = flowCap > 0 && flow / flowCap > 0.6;
-  // The player's own press answers first, then the moth she is on, then the Flow she has noticed.
-  const mood: TildeMood = purring ? "purr" : mothLive ? "moth" : typing ? "typing" : "nap";
+  const flowRatio = flowCap > 0 ? flow / flowCap : 0;
+  // The player's own press answers first, then the Moment or the mended page, then the moth, then the Flow.
+  let mood: TildeMood = "nap";
+  if (flow > 0 && flowRatio >= 0.4) mood = "alert";
+  if (flowRatio > 0.6) mood = "typing";
+  if (mothLive) mood = "moth";
+  if (flash !== null) mood = flash;
+  if (purring) mood = "purr";
   const frames = TILDE_FRAMES[mood];
 
   const [frameStep, setFrameStep] = useState(0);
@@ -86,13 +149,21 @@ export function TildeBar({ className }: TildeBarProps) {
   }, [reduced, frames.length]);
   const frame = reduced ? frames[0] : frames[frameStep % frames.length];
 
-  const lines = TICKER_LINES[act] ?? TICKER_LINES[1] ?? [];
+  // Her own opinions and the Act's ticker, alternating, so the whole of her repertoire surfaces over a session.
+  const actLines = TICKER_LINES[act] ?? TICKER_LINES[1] ?? [];
   const [quipStep, setQuipStep] = useState(0);
   useEffect(() => {
     const tick = setInterval(() => setQuipStep((n) => n + 1), QUIP_MS);
     return () => clearInterval(tick);
   }, []);
-  const quip = lines.length > 0 ? (lines[quipStep % lines.length] ?? "") : "";
+  const quip =
+    quipStep % 2 === 0
+      ? (TILDE_QUIPS[Math.floor(quipStep / 2) % TILDE_QUIPS.length] ?? "")
+      : (actLines[Math.floor(quipStep / 2) % actLines.length] ?? "");
+
+  const equipped = TILDE_COSMETICS.find((entry) => entry.id === cosmeticId);
+  const badge = equipped?.badge ?? "";
+  const unlocked = TILDE_COSMETICS.filter((entry) => entry.minBond <= bond);
 
   const cost = tildeTreatCost(bond);
 
@@ -133,6 +204,16 @@ export function TildeBar({ className }: TildeBarProps) {
     delight();
   };
 
+  /** Dresses her in the next thing Bond has opened, and says so. */
+  const restyle = () => {
+    if (unlocked.length === 0) return;
+    const worn = unlocked.findIndex((entry) => entry.id === cosmeticId);
+    const next = unlocked[(worn + 1) % unlocked.length];
+    if (next === undefined) return;
+    if (!store.getState().vim.setTildeCosmetic(next.id)) return;
+    say(next.id === "none" ? "She puts it all away." : `She puts on the ${next.name}.`);
+  };
+
   // Tilde wakes up on the statusline once the player finishes their opening lesson (Folio 0).
   if (foliosCleared === 0 && !veteran) return null;
 
@@ -141,18 +222,21 @@ export function TildeBar({ className }: TildeBarProps) {
 
   return (
     <div className={cx(s.bar, className)} data-mood={mood}>
-      <span className={s.footLeft} aria-hidden="true">
-        └
-      </span>
-      <span className={s.footRight} aria-hidden="true">
-        ┘
-      </span>
       <span className={s.cat}>
         <span className={s.mood} aria-hidden="true" />
         <span className={s.frame} aria-hidden="true">
           {frame ?? "~ (=^-ω-^=)"}
         </span>
-        <VisuallyHidden>{`Tilde is ${MOOD_WORDS[mood]}.`}</VisuallyHidden>
+        {badge !== "" && (
+          <span className={s.cosmetic} aria-hidden="true">
+            {badge}
+          </span>
+        )}
+        <VisuallyHidden>
+          {equipped === undefined || equipped.id === "none"
+            ? `Tilde is ${MOOD_WORDS[mood]}.`
+            : `Tilde is ${MOOD_WORDS[mood]}, wearing the ${equipped.name}.`}
+        </VisuallyHidden>
       </span>
       {showTreats && (
         <span className={s.bond} title="Permanent +10% Glyph Clarity & Ink Flow per Bond level">
@@ -170,6 +254,11 @@ export function TildeBar({ className }: TildeBarProps) {
             unit={CURRENCY.treats.plural}
           >
             Treat
+          </Button>
+        )}
+        {bond >= 1 && (
+          <Button variant="ghost" onClick={restyle} title="Cycle Tilde's accessory">
+            Style
           </Button>
         )}
       </span>
