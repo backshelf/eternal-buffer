@@ -45,13 +45,10 @@ export function GeneratorList({ mode }: { mode: BuyMode }) {
   return (
     <div className={s.scribes}>
       {introSpotlight ? (
-        <div className={s.spotlight}>
-          <span className={s.spotTag}>NEW · DESK HELPERS</span>
-          <p className={s.spotCopy}>
-            Spend Glyphs to hire your first Scribe. Scribes work automatically beside you — brewing{" "}
-            <strong>Ink</strong> and trickling bonus <strong>Glyphs</strong> while you mend.
-          </p>
-        </div>
+        <p className={s.spotlight}>
+          Hire your first Scribe: they brew <strong>Ink</strong> and trickle bonus <strong>Glyphs</strong>{" "}
+          while you mend.
+        </p>
       ) : (
         <p className={s.summary}>
           +{fmt(ink, { decimals: 1 }).text} Ink/s · +{fmt(trickle, { decimals: 1 }).text} Glyphs/s

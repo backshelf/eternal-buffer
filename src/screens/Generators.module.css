@@ -1,29 +1,22 @@
-/* Compact, scannable Scribe cards designed for the 264px right Margin Desk wing. */
+/* Compact, scannable Scribe rows for the 264px right Margin Desk wing: a hairline-divided tabular stack. */
 .scribes {
   display: grid;
   gap: 8px;
 }
 .spotlight {
-  display: grid;
-  gap: 5px;
-  padding: 9px 10px;
-  border: 1px solid var(--ui-accent);
-  background-color: var(--ui-surface);
-  background-image: var(--dither-accent);
-}
-.spotTag {
-  font-family: var(--ui-font-num);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--ui-accent);
-}
-.spotCopy {
   margin: 0;
+  padding: 2px 0 2px 8px;
+  border: 0;
+  border-left: 2px solid var(--ui-accent);
+  background: transparent;
+  color: var(--ui-ink-muted);
   font-family: var(--ui-font);
   font-size: 12px;
   line-height: 1.45;
+}
+.spotlight strong {
   color: var(--ui-ink);
+  font-weight: 600;
 }
 .summary {
   margin: 0;
@@ -34,21 +27,30 @@
 }
 .list {
   display: grid;
-  gap: 8px;
+  gap: 0;
   margin: 0;
   padding: 0;
+  border-top: var(--ui-hairline);
   list-style: none;
 }
 .card {
   display: grid;
   gap: 5px;
-  padding: 9px 10px;
-  border: var(--ui-hairline);
-  background-color: color-mix(in srgb, var(--ui-surface) 88%, transparent);
-  background-image: var(--dither-4);
+  padding: 9px 4px 9px 8px;
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  border-left: 2px solid transparent;
+  background-color: transparent;
+  transition:
+    background-color var(--ui-duration) ease-out,
+    border-color var(--ui-duration) ease-out;
 }
+.card:hover,
 .card[data-spotlight] {
-  border-color: var(--ui-accent);
+  border-left-color: var(--ui-accent);
+}
+.card:hover {
+  background-color: color-mix(in srgb, var(--ui-surface) 60%, transparent);
 }
 .head {
   display: flex;
@@ -57,9 +59,9 @@
   gap: 8px;
 }
 .name {
-  font-family: var(--ui-font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ui-ink);
 }
 .owned {
@@ -100,6 +102,7 @@
 }
 .pip[data-lit] {
   background-color: var(--ui-accent);
+  background-image: var(--dither-accent);
 }
 .foot {
   display: flex;
@@ -108,9 +111,9 @@
 }
 .teaser {
   margin: 0;
-  padding: 6px 8px;
-  border: var(--ui-hairline);
-  border-style: dashed;
+  padding: 6px 0 0;
+  border: 0;
+  border-top: 1px dashed var(--ui-line);
   font-family: var(--ui-font-num);
   font-size: 10.5px;
   color: var(--ui-ink-muted);

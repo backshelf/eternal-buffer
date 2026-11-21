@@ -422,13 +422,10 @@ export function UpgradesScreen() {
     <div className={s.screen}>
       <Title>{TAB_NAMES.tree}</Title>
       {introBeat && (
-        <Panel heading="New · The Codex" tone="surface">
-          <p className="small">
-            Spend Glyphs here on <strong>Run Upgrades</strong> (boosts your Glyph payout &amp; Flow) or unlock
-            new <strong>Vim Key Families</strong> — every new key opens with a short hands-on interactive
-            lesson and stays unlocked forever.
-          </p>
-        </Panel>
+        <p className={s.roomLead}>
+          Spend Glyphs on Run Upgrades or unlock Vim Key Families — every new key opens with a short hands-on
+          lesson and stays unlocked forever.
+        </p>
       )}
       <Tabs.Root defaultValue="tree" activation="manual" controls="selected" className={s.pages}>
         <Tabs.List className={s.subTabs} aria-label="The Codex's pages">

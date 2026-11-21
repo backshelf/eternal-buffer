@@ -15,6 +15,7 @@ import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
 import { Title } from "../ui/Title";
 import s from "./Mosaic.module.css";
+import screens from "./screens.module.css";
 
 /** The plate is square: six sockets across, six down. */
 const COLUMNS = MOSAIC_GRID.width;
@@ -409,13 +410,10 @@ export function MosaicScreen() {
     <div className={s.screen}>
       <Title>Mosaic</Title>
       {introBeat ? (
-        <Panel heading="New · Plugin Mosaic">
-          <p className={s.standing}>
-            A mouse-friendly keycap board: spend <strong>Ink</strong> &amp; <strong>Shards</strong> on the
-            Bench to cut tiles, then place them on the 4×4 plate. Adjacent tiles boost each other&apos;s
-            multipliers!
-          </p>
-        </Panel>
+        <p className={screens.roomLead}>
+          A mouse-friendly keycap board: spend <strong>Ink</strong> &amp; <strong>Shards</strong> on the Bench
+          to cut tiles, then place them on the plate — adjacent tiles boost each other.
+        </p>
       ) : (
         <p className={s.standing}>
           Keycaps cut from Ink &amp; Shards, laid on a ruled plate. Where a piece sits decides what it is

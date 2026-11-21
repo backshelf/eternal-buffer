@@ -11,6 +11,7 @@
 //      and the treat and shard drops come from the same hash of the anomaly id, so a reload replays the
 //      same page and a seeded test says the same thing every time.
 import { type BuffsState, D, type Decimal, defineFeature, type Move, reach, startBuff } from "watchpot/core";
+import { type ActiveContractState, type ContractKind, rollContract } from "../content/contracts";
 import { EGG_BY_ID } from "../content/easterEggs";
 import {
   BASE_EDIT_GLYPHS,
@@ -21,7 +22,7 @@ import {
   PAR_CRIT_MULT,
   TIDY_EDIT_MULT,
 } from "../content/economy";
-import { TILDE_BOND_STEP, TILDE_PET_COOLDOWN_MS, tildeTreatCost } from "../content/tilde";
+import { TILDE_BOND_STEP, TILDE_COSMETICS, TILDE_PET_COOLDOWN_MS, tildeTreatCost } from "../content/tilde";
 import { KEY_FAMILIES, type KeyFamilyId, VIMRC_RULES } from "../content/vimActs";
 import { VISITOR_BUFFS, type VisitorBuffId } from "../content/visitor";
 import { generateFolio, practiceRite } from "../vim/folio";
@@ -87,6 +88,22 @@ export interface VimState {
   onboardingStep: number;
   /** Interactive system-introduction beats already completed (e.g. "scribes", "codex", "expeditions", "mosaic", "tilde"). */
   seenBeats: Record<string, true>;
+  /** What Tilde is wearing: one of `TILDE_COSMETICS`' ids. Permanent. */
+  tildeCosmetic: string;
+  /** The highest Flow stack ever held. Permanent. */
+  bestFlow: number;
+  /** Clean Cuts landed in a row without a sloppier edit between them. Permanent. */
+  currentCleanStreak: number;
+  /** The longest such run. Permanent. */
+  bestCleanStreak: number;
+  /** Errata Slips paid out. Permanent. */
+  contractsCompleted: number;
+  /** The serial the next Errata Slip is rolled from. Permanent, so no slip repeats. */
+  contractSerial: number;
+  /** The Errata Slip the desk is holding open, or null when none has been drawn. Permanent. */
+  activeContract: ActiveContractState | null;
+  /** How often each key has been pressed, for the mastery panel: a tiny, bounded record. Permanent. */
+  keyCounts: Record<string, number>;
 
   /** The Flow streak, in stacks, never above `flowCap`. Run-scoped. */
   flow: number;
@@ -146,6 +163,10 @@ const SHARD_DROP_SHARE = 0.05;
 const TIDY_SLACK = 3;
 /** The most echoes a folio holds. */
 const ECHO_CAP = 9;
+/** The most distinct keys the mastery record tracks, so the save stays small. */
+const KEY_COUNT_CAP = 64;
+/** The longest key name counted: a Vim key is a token, not a name. */
+const KEY_NAME_MAX = 6;
 /** How fast the active-rate EWMA forgets: a twelve-second half-life, roughly. */
 const RATE_DECAY_MS = 8_000;
 
@@ -209,6 +230,26 @@ function parMultOf(grade: VimGrade): number {
   if (grade === "clean") return PAR_CRIT_MULT;
   if (grade === "tidy") return TIDY_EDIT_MULT;
   return 1;
+}
+
+/**
+ * Moves an Errata Slip's progress on by `amount`, when the slip on the desk asks for that kind of work and is
+ * still open. Progress never passes the ask, and the slip that reaches it is marked complete and never again.
+ */
+function advanceContractIn(s: VimHost, kind: ContractKind, amount = 1): void {
+  const active = s.vim.activeContract;
+  if (active === null || active.completed || active.kind !== kind) return;
+  const progress = Math.min(active.target, active.progress + amount);
+  s.vim.activeContract = { ...active, progress, completed: progress >= active.target };
+}
+
+/** Marks a `flow-reach` slip met the moment the run's Flow climbs to its ask. */
+function meetFlowContractIn(s: VimHost): void {
+  const active = s.vim.activeContract;
+  if (active === null || active.completed || active.kind !== "flow-reach") return;
+  if (s.vim.flow >= active.target) {
+    s.vim.activeContract = { ...active, progress: active.target, completed: true };
+  }
 }
 
 /**
@@ -295,9 +336,21 @@ function resolveAnomalyIn(
     s.vim.hintMastery[hintId] = (s.vim.hintMastery[hintId] ?? 0) + 1;
     const flowGain = rules["fast-flow"] === true ? 3 : 2;
     s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + flowGain);
+    s.vim.currentCleanStreak += 1;
+    if (s.vim.currentCleanStreak > s.vim.bestCleanStreak) {
+      s.vim.bestCleanStreak = s.vim.currentCleanStreak;
+    }
+    advanceContractIn(s, "clean-cuts");
   } else if (grade === "tidy") {
     s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + 1);
+    s.vim.currentCleanStreak = 0;
+  } else {
+    s.vim.currentCleanStreak = 0;
   }
+  if (s.vim.flow > s.vim.bestFlow) s.vim.bestFlow = s.vim.flow;
+  advanceContractIn(s, "anomaly-clear");
+  meetFlowContractIn(s);
+
   // A mended edit never costs Flow: it still counts as work, so the timer restarts.
   s.vim.lastFlowAt = now;
   s.vim.flowDecayMs = 0;
@@ -328,6 +381,9 @@ function completeFolioIn(s: VimHost, isRite: boolean, riteFamily?: string): Foli
   s.vim.folioSeed = nextSeed;
   s.vim.folioSerial = serial;
   s.vim.flow = Math.min(s.vim.flowCap, s.vim.flow + 3);
+  if (s.vim.flow > s.vim.bestFlow) s.vim.bestFlow = s.vim.flow;
+  advanceContractIn(s, "folio-clear");
+  meetFlowContractIn(s);
 
   return { bonus, nextSeed };
 }
@@ -400,6 +456,14 @@ export const vim = defineFeature({
     highestAct: 1,
     onboardingStep: 0,
     seenBeats: {},
+    tildeCosmetic: "none",
+    bestFlow: 0,
+    currentCleanStreak: 0,
+    bestCleanStreak: 0,
+    contractsCompleted: 0,
+    contractSerial: 1,
+    activeContract: null,
+    keyCounts: {},
     flow: 0,
     flowDecayMs: 0,
     lastFlowAt: 0,
@@ -468,6 +532,14 @@ export const vim = defineFeature({
       highestAct: before.highestAct,
       onboardingStep: before.onboardingStep,
       seenBeats: before.seenBeats,
+      tildeCosmetic: before.tildeCosmetic,
+      bestFlow: before.bestFlow,
+      currentCleanStreak: before.currentCleanStreak,
+      bestCleanStreak: before.bestCleanStreak,
+      contractsCompleted: before.contractsCompleted,
+      contractSerial: before.contractSerial,
+      activeContract: before.activeContract,
+      keyCounts: before.keyCounts,
       // The run: back to a fresh page, one serial on, and a seed no reset repeats.
       folioSerial: serial,
       folioSeed: rollSeed(before.folioSeed, serial),
@@ -534,6 +606,7 @@ export const vim = defineFeature({
         s.vim.tildePets += 1;
         s.vim.lastPetAt = now;
         startTildeBuff(s, "tilde-purr", now);
+        advanceContractIn(s, "pet-tilde");
         return { ok: true, bond: s.vim.tildeBond };
       }),
 
@@ -545,6 +618,32 @@ export const vim = defineFeature({
         s.vim.tildeBond += 1;
         startTildeBuff(s, "tilde-approval", now);
         return true;
+      }),
+
+    /** Wears one of Tilde's cosmetics, if the Bond level has opened it. False leaves her dressed as she was. */
+    setTildeCosmetic: (id: string): boolean =>
+      api.set((s) => {
+        const cosmetic = TILDE_COSMETICS.find((entry) => entry.id === id);
+        if (!cosmetic) return false;
+        if (s.vim.tildeBond < cosmetic.minBond) return false;
+        s.vim.tildeCosmetic = id;
+        return true;
+      }),
+
+    /**
+     * Counts one key press for the mastery panel. Blank and absurdly long keys are ignored, and only the first
+     * sixty-four distinct keys are kept so the save stays tiny.
+     */
+    recordKeyUsage: (key: string): void =>
+      api.set((s) => {
+        if (key.length === 0 || key.length > KEY_NAME_MAX) return;
+        const counted = s.vim.keyCounts[key];
+        if (counted === undefined) {
+          if (Object.keys(s.vim.keyCounts).length >= KEY_COUNT_CAP) return;
+          s.vim.keyCounts[key] = 1;
+          return;
+        }
+        s.vim.keyCounts[key] = counted + 1;
       }),
 
     /** Toggles an Act VII `.vimrc` rule, if the Forge is open and a slot is free. Returns whether it is on. */
@@ -609,6 +708,49 @@ export const vim = defineFeature({
     completeBeat: (beatId: string): void =>
       api.set((s) => {
         s.vim.seenBeats[beatId] = true;
+      }),
+
+    /** Draws the Errata Slip the desk is holding, if none is open, and answers with the one on the desk. */
+    ensureContract: (): ActiveContractState =>
+      api.set((s) => {
+        const active = s.vim.activeContract;
+        if (active === null) {
+          const rolled = rollContract(s.vim.contractSerial, s.vim.actTier);
+          s.vim.activeContract = rolled;
+          return rolled;
+        }
+        // A copy: the action answers with plain data, never a handle on the state it just read.
+        return { ...active };
+      }),
+
+    /** Marks the "one folio, no HJKL" slip done when the buffer closed a folio without them. */
+    noteNoHjklFolio: (): void =>
+      api.set((s) => {
+        advanceContractIn(s, "no-hjkl-folio");
+      }),
+
+    /**
+     * Pays a finished slip's reward, counts it, and rolls the next one from the serial after it. A slip still
+     * open pays nothing and is left exactly as it is, so a finished slip can never pay twice.
+     */
+    claimContract: (): boolean =>
+      api.set((s) => {
+        const active = s.vim.activeContract;
+        if (active === null || !active.completed) return false;
+        wallet.draft.credit(s, active.rewardCurrency, active.rewardAmount);
+        s.vim.contractsCompleted += 1;
+        s.vim.contractSerial += 1;
+        s.vim.activeContract = rollContract(s.vim.contractSerial, s.vim.actTier);
+        return true;
+      }),
+
+    /** Throws the slip on the desk away and draws the next one. */
+    skipContract: (): ActiveContractState =>
+      api.set((s) => {
+        s.vim.contractSerial += 1;
+        const rolled = rollContract(s.vim.contractSerial, s.vim.actTier);
+        s.vim.activeContract = rolled;
+        return rolled;
       }),
 
     /** One headless Clean Cut on the folio on screen, then its clear when that was the last anomaly. */

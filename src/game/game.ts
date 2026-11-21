@@ -23,7 +23,7 @@ export const game = defineGame({
   id: SLUG,
   save: {
     key: `${SLUG}.save`,
-    version: 4,
+    version: 5,
     migrations: {
       2: (saved) => saved,
       3: (saved) => {
@@ -62,6 +62,37 @@ export const game = defineGame({
             ...root.vim,
             onboardingStep: root.vim.onboardingStep ?? (experienced ? 5 : 0),
             seenBeats: root.vim.seenBeats ?? (experienced ? { scribes: true } : {}),
+          },
+        };
+      },
+      5: (saved) => {
+        if (!saved || typeof saved !== "object") return saved;
+        const root = saved as {
+          vim?: {
+            tildeCosmetic?: string;
+            bestFlow?: number;
+            currentCleanStreak?: number;
+            bestCleanStreak?: number;
+            contractsCompleted?: number;
+            contractSerial?: number;
+            activeContract?: unknown;
+            keyCounts?: Record<string, number>;
+          };
+        };
+        if (!root.vim) return saved;
+        // Every field is `??`, so a save that somehow already holds one keeps it.
+        return {
+          ...root,
+          vim: {
+            ...root.vim,
+            tildeCosmetic: root.vim.tildeCosmetic ?? "none",
+            bestFlow: root.vim.bestFlow ?? 0,
+            currentCleanStreak: root.vim.currentCleanStreak ?? 0,
+            bestCleanStreak: root.vim.bestCleanStreak ?? 0,
+            contractsCompleted: root.vim.contractsCompleted ?? 0,
+            contractSerial: root.vim.contractSerial ?? 1,
+            activeContract: root.vim.activeContract ?? null,
+            keyCounts: root.vim.keyCounts ?? {},
           },
         };
       },

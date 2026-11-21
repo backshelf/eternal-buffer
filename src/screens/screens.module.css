@@ -5,12 +5,19 @@
  */
 .screen {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   box-sizing: border-box;
   width: 100%;
   max-width: 1080px;
   margin-inline: auto;
-  padding: 20px 16px 32px;
+  padding: 10px 16px 24px;
+}
+/* A room's one-line subtitle under its <h1>: quiet, single line, tight under the title. */
+.roomLead {
+  margin: -6px 0 2px;
+  color: var(--ui-ink-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 .grid {
   display: grid;
@@ -57,16 +64,18 @@
 .subTabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px;
-  border: var(--ui-hairline);
-  background-color: var(--ui-sunken);
-  background-image: var(--dither-4);
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  background: transparent;
 }
 .subTab {
-  flex: 1 1 auto;
-  padding: 8px 12px;
-  border: 1px solid transparent;
+  flex: 0 0 auto;
+  margin-bottom: -1px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
   background-color: transparent;
   background-image: none;
   color: var(--ui-ink-muted);
@@ -78,17 +87,18 @@
   cursor: pointer;
   transition:
     color var(--ui-duration) ease-out,
-    border-color var(--ui-duration) ease-out;
+    border-color var(--ui-duration) ease-out,
+    background-color var(--ui-duration) ease-out;
 }
 .subTab:hover {
-  border-color: var(--ui-line);
+  background-color: color-mix(in srgb, var(--ui-surface) 55%, transparent);
   color: var(--ui-ink);
 }
 .subTab[data-state="active"] {
-  border-color: color-mix(in srgb, var(--ui-accent) 62%, var(--ui-line));
-  background-color: var(--ui-surface);
+  border-bottom-color: var(--ui-accent);
   background-image: var(--dither-accent);
   color: var(--ui-ink);
+  font-weight: 600;
 }
 .page {
   display: grid;
@@ -99,10 +109,11 @@
 }
 
 /* --- A card: one family, one node, one rule ------------------------------------------------------------- */
+/* A hairline-divided two-column TUI list, not a grid of boxes: the divider does the framing. */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -111,21 +122,25 @@
   display: grid;
   align-content: start;
   gap: 6px;
-  padding: 10px 11px;
-  border: var(--ui-hairline);
-  background-color: var(--ui-sunken);
-  background-image: var(--dither-4);
+  padding: 10px 8px 10px 10px;
+  border: 0;
+  border-bottom: var(--ui-hairline);
+  border-left: 2px solid transparent;
+  background-color: transparent;
+  transition:
+    background-color var(--ui-duration) ease-out,
+    border-color var(--ui-duration) ease-out;
 }
-.card[data-state="short"] {
-  border-color: color-mix(in srgb, var(--ui-line) 80%, var(--ui-ink-muted));
+.card:hover {
+  background-color: color-mix(in srgb, var(--ui-surface) 60%, transparent);
 }
 .card[data-state="open"] {
-  border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line));
+  border-left-color: var(--ui-accent);
 }
 .card[data-state="maxed"],
 .card[data-state="bound"] {
-  border-color: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-line));
-  background-color: var(--ui-surface);
+  border-left-color: color-mix(in srgb, var(--ui-accent) 70%, transparent);
+  background-color: color-mix(in srgb, var(--ui-surface) 45%, transparent);
 }
 .card[data-state="locked"] {
   opacity: 0.62;
@@ -138,10 +153,10 @@
 }
 .cardName {
   min-width: 0;
-  font-family: var(--ui-font-display);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: var(--ui-font);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 .tag {
   flex: none;
@@ -299,11 +314,14 @@
   align-items: start;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px dashed var(--ui-line);
+  border: 0;
+  border-bottom: var(--ui-hairline);
+}
+.milestone:last-child {
+  border-bottom: 0;
 }
 .milestone[data-reached] {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
+  border-bottom-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line));
   background-image: var(--dither-accent);
 }
 .check {
@@ -427,17 +445,20 @@
   text-transform: uppercase;
 }
 
-/* --- Phone: one column of cards, and the wall's rail above its row --------------------------------------- */
+/* --- Phone: one column of rows, and the wall's rail above its row ---------------------------------------- */
 @media (max-width: 620px) {
   .screen {
-    padding: 16px 12px 28px;
+    padding: 10px 12px 20px;
   }
   .cards,
   .matrix {
     grid-template-columns: minmax(0, 1fr);
   }
-  .subTab {
-    flex-basis: 100%;
+  .cards {
+    gap: 0;
+  }
+  .subTabs {
+    gap: 8px;
   }
   .archiveWall.archiveWall > [role="row"] {
     grid-template-columns: repeat(var(--columns), minmax(0, 1fr));

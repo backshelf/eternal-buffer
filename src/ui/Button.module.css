@@ -1,21 +1,25 @@
 /*
- * A keycap rather than a rounded rectangle: one hairline, a 2px bottom bevel cast in the plate's own ink, and a press
- * that sinks those 2px into the page. The label is the keystroke, the price a figure in the machine face.
+ * A keycap, not a card: one hairline, a 1px bottom bevel in the plate's own ink, and a press that sinks that pixel into
+ * the page. Dense enough to sit in a hairline-divided row: 32px tall, the label in the machine face. The signature
+ * stipple stays: `--dither-4` on the resting plate, `--dither-accent` on hover.
  */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6em;
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 11px;
   border: var(--ui-hairline);
   border-radius: 0;
   background-color: var(--ui-surface);
   background-image: var(--dither-4);
   color: var(--ui-ink);
+  font-family: var(--ui-font-num);
+  font-size: 11.5px;
   font-weight: 600;
   line-height: 1;
+  letter-spacing: 0.03em;
   box-shadow: inset 0 calc(-1 * var(--ui-bevel)) 0 color-mix(in srgb, var(--ui-ink) 14%, transparent);
   cursor: pointer;
   translate: 0 0;
@@ -88,12 +92,13 @@
 .button[data-size="large"] {
   justify-content: space-between;
   width: 100%;
-  min-height: 48px;
-  padding: 0 16px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 12.5px;
 }
 
 .label {
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 .button[data-size="large"] .label {
@@ -107,7 +112,7 @@
 }
 .figure {
   font-family: var(--ui-font-num);
-  font-size: 12px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }

@@ -1,111 +1,63 @@
 /*
- * A unit of a screen: a soot plate inside one amber-soot hairline, its heading bar carrying a Bayer stipple, its
- * corners cut as ASCII brackets. A screen's own panels (level 2) take the double-line alphabet and a second rule
- * standing off the first; a panel inside a titled section (level 3) takes the single line, so the nesting reads at a
- * glance without a size change.
+ * A section of a screen, not a card: an open column on the page's own ground, its name on a ruled lintel bar, its
+ * contents divided by hairlines rather than boxed again. No border, no second outline, no corner brackets: the page
+ * already frames everything, and a panel inside a panel used to draw four lines of frame for one idea.
  *
- * The corners come from the one alphabet in `theme.css` (`--ui-frame-*`): `::before`/`::after` hold the top pair, and
- * the head's own pair, positioned against `.panel` because the head is not a containing block.
+ * The signature texture survives. The lintel carries `--dither-accent` (the theme's phosphor in a 4x4 Bayer stipple)
+ * over a wash of the sunken plate; a sunken panel (`data-tone="sunken"`) is the one surface that sits into the page,
+ * and it keeps `--dither-4`. Everything else is transparent, so two panels in a column read as one continuous sheet.
  */
 .panel {
-  position: relative;
   display: grid;
+  gap: 10px;
   min-width: 0;
-  border: var(--ui-hairline);
-  background-color: var(--ui-surface);
+  border: 0;
+  background: transparent;
+}
+
+/* The one plate: a well for what is read rather than played, ruled top and bottom so the column stays continuous. */
+.panel[data-tone="sunken"] {
+  padding: 12px 14px;
+  border-top: var(--ui-hairline);
+  border-bottom: var(--ui-hairline);
+  background-color: var(--ui-sunken);
   background-image: var(--dither-4);
 }
-.panel[data-level="2"] {
-  outline: 1px solid color-mix(in srgb, var(--ui-accent) 28%, transparent);
-  outline-offset: 2px;
-}
-.panel[data-tone="sunken"] {
-  background-color: var(--ui-sunken);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-ink) 6%, transparent);
-}
-.panel[data-tone="sunken"][data-level="2"] {
-  outline-color: color-mix(in srgb, var(--ui-line) 70%, transparent);
-}
 
-.panel::before,
-.panel::after,
-.head::before,
-.head::after {
-  position: absolute;
-  color: color-mix(in srgb, var(--ui-accent) 72%, transparent);
-  font-family: var(--ui-font-num);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1;
-  content: var(--ui-frame-tl);
-  pointer-events: none;
-  user-select: none;
-}
-.panel::before {
-  top: -6px;
-  left: -5px;
-}
-.panel::after {
-  top: -6px;
-  right: -5px;
-  content: var(--ui-frame-tr);
-}
-.head::before {
-  bottom: -6px;
-  left: -5px;
-  content: var(--ui-frame-bl);
-}
-.head::after {
-  right: -5px;
-  bottom: -6px;
-  content: var(--ui-frame-br);
-}
-.panel[data-level="2"]::before {
-  content: var(--ui-frame-dtl);
-}
-.panel[data-level="2"]::after {
-  content: var(--ui-frame-dtr);
-}
-.panel[data-level="2"] .head::before {
-  content: var(--ui-frame-dbl);
-}
-.panel[data-level="2"] .head::after {
-  content: var(--ui-frame-dbr);
-}
-
+/* The lintel: a crisp rule under a machine label, with the phosphor stipple kept cool and low. */
 .head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 9px 14px;
-  background-color: color-mix(in srgb, var(--ui-sunken) 68%, var(--ui-surface));
+  padding: 6px 10px;
+  border-bottom: var(--ui-hairline);
+  background-color: color-mix(in srgb, var(--ui-sunken) 55%, transparent);
   background-image: var(--dither-accent);
 }
+/* Inside a sunken plate the plate is already stippled: the bar keeps its rule and drops its fill. */
 .panel[data-tone="sunken"] .head {
+  padding-inline: 0;
   background-color: transparent;
-  background-image: var(--dither-4);
+  background-image: none;
 }
 
+/* A panel's name is a label in the machine face, never a title in the display serif. */
 .heading {
   min-width: 0;
   margin: 0;
-  font-family: var(--ui-font-display);
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.004em;
-  text-wrap: balance;
-}
-/* A section's panel is a lintel, not a title: a ruled label in the machine face. */
-.panel[data-level="3"] .heading {
-  color: var(--ui-ink-muted);
+  color: var(--ui-ink);
   font-family: var(--ui-font-num);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-wrap: balance;
+}
+/* A section inside a titled section is a quieter label, not a smaller title. */
+.panel[data-level="3"] .heading {
+  color: var(--ui-ink-muted);
 }
 
 .aside {
@@ -120,7 +72,7 @@
 
 .body {
   display: grid;
-  gap: 8px;
-  padding: 12px 14px 14px;
-  border-top: var(--ui-hairline);
+  gap: 6px;
+  padding: 2px 0 0;
+  border-top: 0;
 }

@@ -59,7 +59,7 @@ export const THEMES: readonly ThemeDef[] = [
     name: "Gruvbox Dark",
     group: "editor",
     scheme: "dark",
-    swatches: ["#282828", "#3c3836", "#d79921", "#ebdbb2"],
+    swatches: ["#1d2021", "#282828", "#fabd2f", "#ebdbb2"],
     aliases: ["gruvbox"],
   },
   {
@@ -67,14 +67,14 @@ export const THEMES: readonly ThemeDef[] = [
     name: "Gruvbox Light",
     group: "editor",
     scheme: "light",
-    swatches: ["#fbf1c7", "#f2e5bc", "#af3a03", "#3c3836"],
+    swatches: ["#fbf1c7", "#f2e5bc", "#b57614", "#3c3836"],
   },
   {
     id: "solarized-dark",
     name: "Solarized Dark",
     group: "editor",
     scheme: "dark",
-    swatches: ["#002b36", "#073642", "#b58900", "#93a1a1"],
+    swatches: ["#002b36", "#073642", "#b58900", "#eee8d5"],
     aliases: ["solarized"],
   },
   {
@@ -82,14 +82,14 @@ export const THEMES: readonly ThemeDef[] = [
     name: "Solarized Light",
     group: "editor",
     scheme: "light",
-    swatches: ["#fdf6e3", "#eee8d5", "#b58900", "#586e75"],
+    swatches: ["#fdf6e3", "#eee8d5", "#b58900", "#073642"],
   },
   {
     id: "catppuccin-mocha",
     name: "Catppuccin Mocha",
     group: "editor",
     scheme: "dark",
-    swatches: ["#1e1e2e", "#313244", "#cba6f7", "#cdd6f4"],
+    swatches: ["#1e1e2e", "#252538", "#f9e2af", "#cdd6f4"],
     // `midnight` was the archive's old dark vellum; its save keeps working here.
     aliases: ["midnight", "catppuccin", "mocha"],
   },

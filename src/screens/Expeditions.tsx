@@ -12,6 +12,7 @@ import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
 import { Title } from "../ui/Title";
 import s from "./Expeditions.module.css";
+import screens from "./screens.module.css";
 
 /** How many cells the ASCII meter is cut into, lit ones followed by dotted ones. */
 const METER_BLOCKS = 8;
@@ -116,13 +117,10 @@ export function ExpeditionsScreen() {
     <div className={s.screen}>
       <Title>Expeditions</Title>
       {introBeat ? (
-        <Panel heading="New · Margin Errands">
-          <p className={s.standing}>
-            Send Scribes&apos; <strong>Ink</strong> on timed errands (they keep running while you&apos;re
-            away) to bring back <strong>Shards</strong> (for crafting Mosaic tiles) and{" "}
-            <strong>Treats</strong> (to feed Tilde). Dispatch your first errand below!
-          </p>
-        </Panel>
+        <p className={screens.roomLead}>
+          Send Scribes&apos; <strong>Ink</strong> on timed errands — they keep running while you&apos;re away
+          — for <strong>Shards</strong> and <strong>Treats</strong>. Dispatch your first errand below.
+        </p>
       ) : (
         <p className={s.standing}>
           Timed errands into the archive&apos;s unindexed parts. They run offline too and bring back Shards
