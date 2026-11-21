@@ -2,7 +2,10 @@ import type { UniformKind } from "watchpot/shader";
 import { BAYER, compose, GLOW, IGN, MOSAIC, OKLAB, SDF, uniformDecls } from "watchpot/shader";
 import type { Surface } from "./surface";
 
-/** The uniforms the cursor halo declares: the palette, the mode's colour, the cursor, and the run's weather. */
+/**
+ * The uniforms the cursor halo declares: the palette, the mode's colour, the cursor, the run's weather, and the
+ * glow's intensity (`u_glowIntensity`: 0 off, 0.55 subtle, 1 warm).
+ */
 export const BUFFER_GLOW_UNIFORMS = {
   u_ground: "vec4",
   u_ink: "vec4",
@@ -11,6 +14,7 @@ export const BUFFER_GLOW_UNIFORMS = {
   u_cursor: "vec2",
   u_pulse: "float",
   u_flow: "float",
+  u_glowIntensity: "float",
 } as const satisfies Record<string, UniformKind>;
 
 /**
@@ -19,6 +23,10 @@ export const BUFFER_GLOW_UNIFORMS = {
  * out: `u_pulse` sends a crisp dithered shockwave ring expanding from the cursor as it decays. Flow thickens the
  * tube — a broad warm haze at the edges that grows with `u_flow`. The pool is flat per 3px cell, so the light
  * steps in dots like a real low-res phosphor, and the output is premultiplied: transparent away from the cursor.
+ *
+ * The glow never washes out the editor's text: on a dark ground the pool and core darken toward `u_ground` and the
+ * alpha behind the words is capped, on a light vellum the same parts become a soft warm paper-lamp tint at a
+ * fainter cap still, and `u_glowIntensity` (0 off, 0.55 subtle, 1 warm) scales the whole halo to nothing at 0.
  */
 export const BUFFER_GLOW: Surface = {
   fragment: compose(
@@ -41,6 +49,10 @@ void main() {
   float flow = clamp(u_flow, 0.0, 1.0);
   float pulse = clamp(u_pulse, 0.0, 1.0);
   float mode = clamp(u_modeColor.a, 0.0, 1.0);
+  float intensity = clamp(u_glowIntensity, 0.0, 1.0);
+  // the ground's luminance picks the recipe: a dark tube darkens its glow so the editor's text stays
+  // crisp through it, a light vellum blends a soft warm paper-lamp tint instead
+  float isLight = smoothstep(0.42, 0.58, dot(u_ground.rgb, vec3(0.2126, 0.7152, 0.0722)));
 
   // the cursor in the same square-pixel space as cuAt (y up from the editor box's foot)
   vec2 cur = (u_cursor - 0.5) * u_resolution / min(u_resolution.x, u_resolution.y);
@@ -66,21 +78,29 @@ void main() {
   float edge = glow(dist, 0.55 + 0.3 * flow) * (0.1 + 0.38 * flow);
   float edgeOn = step(bayer8(floor(px / 4.0)), clamp(edge, 0.0, 1.0));
 
-  // colour: the pool takes the mode's tint, the hot core whitens like an overdriven phosphor
-  vec3 poolCol = oklabMix(u_accent.rgb, u_modeColor.rgb, 0.62);
-  vec3 coreCol = oklabMix(u_modeColor.rgb, u_ink.rgb, 0.25);
+  // colour: on a dark tube the pool and core darken toward the ground (never the ink) so white text
+  // reads crisp through them; on a light vellum both soften into the paper-lamp's warm tint
+  vec3 darkPool = oklabMix(u_ground.rgb, oklabMix(u_accent.rgb, u_modeColor.rgb, 0.55), 0.62);
+  vec3 darkCore = oklabMix(u_ground.rgb, u_modeColor.rgb, 0.72);
+  vec3 lampTint = oklabMix(u_ground.rgb, u_modeColor.rgb, 0.45);
+  vec3 poolCol = mix(darkPool, lampTint, isLight);
+  vec3 coreCol = mix(darkCore, lampTint, isLight);
   vec3 edgeCol = oklabMix(u_ground.rgb, u_accent.rgb, 0.4);
   vec3 colour = mix(poolCol, coreCol, coreOn * 0.5);
   colour = mix(colour, edgeCol, clamp(edgeOn * 1.6, 0.0, 1.0) * 0.6);
 
-  // premultiplied: transparent away from the cursor, light where the phosphor is on
-  float alpha = clamp(on * 0.4 + coreOn * 0.36 + ringOn * 0.55 * pulse + edgeOn * 0.16, 0.0, 1.0);
+  // premultiplied: transparent away from the cursor, light where the phosphor is on. The glow that sits
+  // behind the text is capped — 0.42 on a dark tube, 0.28 on a light vellum — so the words stay crisp;
+  // the Clean Cut ring rides on top as it passes, and u_glowIntensity fades the whole halo to nothing at 0
+  float darkGlow = clamp(on * 0.24 + coreOn * 0.16 + edgeOn * 0.10, 0.0, 0.42);
+  float lightGlow = clamp(on * 0.16 + coreOn * 0.08 + edgeOn * 0.04, 0.0, 0.28);
+  float alpha = clamp(mix(darkGlow, lightGlow, isLight) + mix(0.38, 0.28, isLight) * ringOn * pulse, 0.0, 1.0) * intensity;
   colour += vec3(interleavedGradientNoise(px) - 0.5) * 0.02;
   fragColor = vec4(colour * alpha, alpha);
 }
 `,
   ),
   still:
-    "radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--ui-accent) 30%, transparent) 0%, color-mix(in srgb, var(--ui-accent) 12%, transparent) 30%, transparent 68%)",
+    "radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--ui-accent) 18%, transparent) 0%, color-mix(in srgb, var(--ui-accent) 12%, transparent) 30%, transparent 68%)",
   reducedTime: 8,
 };

@@ -40,6 +40,12 @@ describe("the shader suite", () => {
     });
   }
 
+  test("the cursor halo declares and drives its glow intensity", () => {
+    expect(BUFFER_GLOW_UNIFORMS.u_glowIntensity).toBe("float");
+    expect(BUFFER_GLOW.fragment).toContain("uniform float u_glowIntensity;");
+    expect(BUFFER_GLOW.fragment).toContain("clamp(u_glowIntensity, 0.0, 1.0)");
+  });
+
   test("the backdrop wiring points at the archive room", () => {
     expect(PRINT).toBe(ARCHIVE_BACKDROP);
     expect(BACKDROP).toBe(ARCHIVE_BACKDROP);

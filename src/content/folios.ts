@@ -3,14 +3,18 @@
 // evaluator live in `src/vim/folio.ts`.
 import type { AnomalyKind } from "../vim/folio";
 
-/** The six archival genres a procedural folio is drawn from. */
+/** The ten archival genres a procedural folio is drawn from. */
 export type Genre =
   | "astral-ledger"
   | "broken-incantation"
   | "mainframe-memo"
   | "shelf-manifest"
   | "nocturne-verse"
-  | "margin-script";
+  | "margin-script"
+  | "haiku-folio"
+  | "patch-diff"
+  | "schema-config"
+  | "cursed-json";
 
 /** One clean manuscript page. The generator corrupts it; it is never shown as-is. */
 export interface FolioTemplate {
@@ -106,8 +110,9 @@ export const ACT1_FOLIO_TEMPLATES: readonly FolioTemplate[] = [
 ];
 
 /**
- * Eighteen clean pages, three per genre, every one 10–14 lines. Lines run long on purpose: a long
- * line is what makes a char snipe worth three keystrokes instead of twenty-five.
+ * Twenty-six clean pages: three per original genre, two per Beta genre, every one 10–14 lines.
+ * Lines run long on purpose: a long line is what makes a char snipe worth three keystrokes instead
+ * of twenty-five.
  */
 export const FOLIO_TEMPLATES: readonly FolioTemplate[] = [
   {
@@ -418,6 +423,150 @@ export const FOLIO_TEMPLATES: readonly FolioTemplate[] = [
       "Item: a correction to the correction of the previous item.",
       "Item: a pawprint, matched to the flyleaf of the folio on shelf 14.",
       "The list is not finished. The list will not be finished.",
+    ],
+  },
+  {
+    id: "haiku-folio-1",
+    genre: "haiku-folio",
+    title: "Three Haiku for a Cold Desk",
+    lines: [
+      '"Still lamp on the desk,"',
+      "a moth corrects the margin",
+      "and asks for no thanks.",
+      '"Cold shelf, warm ledger:"',
+      "the ninth star leans in closer",
+      "to read its own entry.",
+      '"Snow on the reading room,"',
+      "and the winter read the rest.",
+      "Late shift, quiet hands,",
+      "the archive keeps what we mend.",
+    ],
+  },
+  {
+    id: "haiku-folio-2",
+    genre: "haiku-folio",
+    title: "Winter Haiku, Filed Late",
+    lines: [
+      "Nine moths on the glass,",
+      "each one editing the light",
+      "and calling it dusk.",
+      "Warm vellum, cold hands;",
+      "the lantern does not mind the dark,",
+      "it minds the waiting.",
+      "Someone left a page",
+      "open at the corridor",
+      "and the corridor read it.",
+      "Morning, unread:",
+      "the archive keeps its own hours.",
+    ],
+  },
+  {
+    id: "patch-diff-1",
+    genre: "patch-diff",
+    title: "Patch: Attic Ledger, Arbitration",
+    lines: [
+      "diff --git a/ledger/attic.txt b/ledger/attic.txt",
+      "index 4a19c2f..7be0d31 100644",
+      "--- a/ledger/attic.txt",
+      "+++ b/ledger/attic.txt",
+      "@@ -12,7 +12,8 @@ margin notes",
+      " the archivist keeps three registers",
+      "-and deletes none of them lightly",
+      "+and deletes none of them before dawn",
+      " the shelf list ends where the corridor begins",
+      "-a moth got into the light well",
+      "+it edited the constellation map",
+    ],
+  },
+  {
+    id: "patch-diff-2",
+    genre: "patch-diff",
+    title: "Patch: Shelf Manifest, Renamed",
+    lines: [
+      "diff --git a/shelf/manifest.txt b/shelf/manifest.txt",
+      "--- a/shelf/manifest.txt",
+      "+++ b/shelf/manifest.txt",
+      "@@ -3,6 +3,6 @@ shelf fourteen",
+      " Volume i: Meditations on Rot, spine cracked",
+      "-Volume ii: The Amber Index, watermarked",
+      "+Volume ii: The Amber Index, legible at an angle",
+      " Volume iii: A Concordance of Doors",
+      "-shelved face down at the binder request",
+      "+shelved face up, which the binder denies",
+    ],
+  },
+  {
+    id: "schema-config-1",
+    genre: "schema-config",
+    title: "Reading Room Schema, Revision Nine",
+    lines: [
+      "# reading room schema, revision nine",
+      "room:",
+      "  name: west-corridor",
+      "  lamps: 9",
+      "  shelves:",
+      "    - manifest",
+      "    - catalogue",
+      "    - complaints",
+      "  hours:",
+      "    opens: ninth hour",
+      "    closes: never",
+      "  note: do not reorder the shelves",
+    ],
+  },
+  {
+    id: "schema-config-2",
+    genre: "schema-config",
+    title: "Terminal Config, Quiet Hours",
+    lines: [
+      "# terminal seven, quiet hours",
+      "terminal = 7",
+      "phosphor = amber",
+      "backup = on",
+      "swapfile = off",
+      "undolevels = 900",
+      "relativenumber = on",
+      "# the audit found four settings out of place",
+      "ignorecase = on",
+      "smartcase = on",
+      "last rule = do not restart the daemon",
+    ],
+  },
+  {
+    id: "cursed-json-1",
+    genre: "cursed-json",
+    title: "Folio Record, Ninth Copy",
+    lines: [
+      "{ // ninth copy, still warm",
+      '  "folio": "The Eternal Buffer",',
+      '  "shelf": 14, // not shelf three',
+      '  "mended": true,',
+      '  "anomalies": [',
+      '    "stray-rot",',
+      '    "margin-snipe",',
+      '    "rotten-word"',
+      "  ], // one of these is not real",
+      '  "reader": { "hand": "left" },',
+      '  "lamp": "lit", // it is not lit',
+      "}; // the closing brace is a suggestion",
+    ],
+  },
+  {
+    id: "cursed-json-2",
+    genre: "cursed-json",
+    title: "Ledger Entry, Parsed Twice",
+    lines: [
+      '{ "entry": 1041, "signed": true',
+      '  "spine": "cracked",',
+      '  "pages": [ 9, 11, 12 ],',
+      '  "reader": null, // the reader is not null',
+      '  "moth": {',
+      '    "wings": 6,',
+      '    "legs": 4,',
+      '    "count": "disputed"',
+      "  }, // the moth block, closed",
+      '  "seal": "wax", "date": "fifth year"',
+      "}; // do not parse this twice",
     ],
   },
 ];

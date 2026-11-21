@@ -42,6 +42,7 @@ import {
 } from "../app/sound";
 import { EGG_BY_ID } from "../content/easterEggs";
 import { FIRST_LESSON_FOLIO, FOLIO_1_APPEND_LESSON, FOLIO_2_EDGE_LESSON } from "../content/guide";
+import { resolveThemeId, THEMES, type ThemeId } from "../content/themes";
 import type { KeyFamilyId } from "../content/vimActs";
 import { codex, volumes } from "../game/prestige";
 import { VISITOR_KIND } from "../game/visitor";
@@ -1062,12 +1063,11 @@ export function BufferEditor({ className }: BufferEditorProps) {
 
     const cycleScheme = (arg: string): void => {
       const live = store.getState();
-      const order = ["amber", "jade", "paper", "midnight"] as const;
-      type Tint = (typeof order)[number];
-      const asked = arg.trim().toLowerCase();
-      let next: Tint;
-      if ((order as readonly string[]).includes(asked)) {
-        next = asked as Tint;
+      const order = THEMES.map((theme) => theme.id);
+      const asked = resolveThemeId(arg.trim());
+      let next: ThemeId;
+      if (asked !== null) {
+        next = asked;
       } else {
         const at = order.indexOf(live.settings.tintPreset);
         next = order[(at + 1) % order.length] ?? "amber";

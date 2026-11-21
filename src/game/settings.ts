@@ -1,5 +1,12 @@
 import { defineSettings as playerSettings } from "watchpot/core";
 import type { GameRuntimeOptions } from "watchpot/react";
+import type { ThemeId } from "../content/themes";
+
+/** How much phosphor the buffer's glow surface puts out. */
+export type GlowIntensity = "off" | "subtle" | "warm";
+
+/** The editor's type size, as a named step rather than a pixel count. */
+export type BufferFontSize = "sm" | "md" | "lg";
 
 /**
  * The player's choices, under `settings`.
@@ -24,13 +31,25 @@ export interface Settings {
   /** Show any line numbers at all. */
   showLineNumbers: boolean;
   /** Which vellum the page is printed on. */
-  tintPreset: "amber" | "jade" | "paper" | "midnight";
+  tintPreset: ThemeId;
   /** Draw the touch keypad under the editor, for a phone. */
   touchKeypad: boolean;
   /** Whether the player has dismissed the opening desk arrival plate. */
   welcomed: boolean;
   /** Show the live Target Coach strip above the buffer. */
   showCoach: boolean;
+  /** How hard the buffer's glow surface burns. */
+  glowIntensity: GlowIntensity;
+  /** The buffer's type size. */
+  bufferFontSize: BufferFontSize;
+  /** The whole mix, 0..1. */
+  volumeMaster: number;
+  /** The keys bus: the typing thocks, 0..1. */
+  volumeKeys: number;
+  /** The chimes bus: bells and ceremony, 0..1. */
+  volumeChimes: number;
+  /** Collapse the page to the buffer and nothing else. */
+  zenMode: boolean;
 }
 
 /**
@@ -52,5 +71,11 @@ export const settings = playerSettings({
     touchKeypad: false,
     welcomed: false,
     showCoach: true,
+    glowIntensity: "warm",
+    bufferFontSize: "md",
+    volumeMaster: 0.85,
+    volumeKeys: 0.85,
+    volumeChimes: 0.85,
+    zenMode: false,
   }),
 });

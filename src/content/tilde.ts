@@ -1,7 +1,7 @@
 // Tilde, the statusline cat: her faces, her opinions, and what petting and feeding her are worth.
 
 /** How she is holding herself. The screen picks the frames; nothing here reads a clock. */
-export type TildeMood = "nap" | "alert" | "purr" | "moth" | "typing";
+export type TildeMood = "nap" | "alert" | "purr" | "moth" | "typing" | "celebrate" | "startle";
 
 /**
  * Her faces, in crisp monospace. Every frame within a mood is the same number of cells wide, so the statusline does
@@ -18,7 +18,34 @@ export const TILDE_FRAMES: Record<TildeMood, readonly string[]> = {
   moth: ["~ (=^･ω･^=)ﾉ ✦", "~ (=^･ω･^=)ﾉ ·"],
   /** You are typing. She is watching the cursor, not you. */
   typing: ["~ (=^oωo^=) ▮", "~ (=^oωo^=) ▯"],
+  /** A slip paid out or a folio closed in one pass. She is genuinely pleased, briefly. */
+  celebrate: ["~ (=^★ω★^=) ✦", "~ (=^✧ω✧^=) ✦"],
+  /** Something went wrong under her nose. She has opinions and they are loud. */
+  startle: ["~ (=^OωO^=) !", "~ (=^°ω°^=) !"],
 };
+
+/**
+ * What Tilde will wear, once she trusts you enough to be dressed. `badge` is the monospace token
+ * the statusline hangs beside her face; `none` wears nothing at all.
+ */
+export interface TildeCosmeticDef {
+  readonly id: string;
+  readonly name: string;
+  /** The Bond level that opens this up. Bond is a level count, not a decimal. */
+  readonly minBond: number;
+  /** Fixed-width monospace token drawn beside her frame. Empty for `none`. */
+  readonly badge: string;
+}
+
+/** Her wardrobe, in the order Bond unlocks it. */
+export const TILDE_COSMETICS: readonly TildeCosmeticDef[] = [
+  { id: "none", name: "Nothing at All", minBond: 0, badge: "" },
+  { id: "bell", name: "Brass Bell", minBond: 1, badge: "°" },
+  { id: "specs", name: "Reading Specs", minBond: 3, badge: "o-o" },
+  { id: "ribbon", name: "Frayed Ribbon", minBond: 5, badge: "><" },
+  { id: "halo", name: "Moth Halo", minBond: 8, badge: "✦" },
+  { id: "crown", name: "Shelf Crown", minBond: 12, badge: "♛" },
+];
 
 /** Her small opinions, drawn in order and without repeats. Dry, fond, and faintly superior. */
 export const TILDE_QUIPS: readonly string[] = [

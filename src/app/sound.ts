@@ -961,9 +961,49 @@ export function isSoundEnabled(): boolean {
   return turnedOn;
 }
 
-/** Every wrapper's play: a no-op while the page's setting is off. */
+/** The three faders the settings sheet owns, each `0..1`. */
+export interface SoundVolumes {
+  master: number;
+  keys: number;
+  chimes: number;
+}
+
+/** The mix's faders: the page writes them at mount and on every change of its volume settings. */
+let volumes: SoundVolumes = { master: 0.85, keys: 0.85, chimes: 0.85 };
+
+/** Clamps one fader to `0..1`; anything that is not a number mutes it rather than poisoning the gain. */
+function clampVolume(value: number): number {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+}
+
+/** Sets the master, keys and chimes faders, clamping each to `0..1`. */
+export function setSoundVolumes(next: SoundVolumes): void {
+  volumes = {
+    master: clampVolume(next.master),
+    keys: clampVolume(next.keys),
+    chimes: clampVolume(next.chimes),
+  };
+}
+
+/**
+ * The cues a finger on the keys makes: the four `keys`-bus thocks plus the two the `ui` bus answers with (a locked
+ * key and a rusted arrow). Everything else, chimes and ceremony alike, rides the chimes fader.
+ */
+const KEY_CUES: ReadonlySet<Cue> = new Set<Cue>([
+  "keyMotion",
+  "keyOp",
+  "keyInsert",
+  "keyEsc",
+  "keyLocked",
+  "arrowRust",
+]);
+
+/** Every wrapper's play: a no-op while the page's setting is off or the mix is muted. */
 function play(cue: Cue, options?: PlayOptions): VoiceHandle | null {
-  return turnedOn ? sound.play(cue, options) : null;
+  if (!turnedOn) return null;
+  const gain = volumes.master * (KEY_CUES.has(cue) ? volumes.keys : volumes.chimes);
+  if (gain <= 0.001) return null;
+  return sound.play(cue, { ...options, db: (options?.db ?? 0) + 20 * Math.log10(gain) });
 }
 
 /** The player's arms on the keys: which cue a press is. */

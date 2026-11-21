@@ -27,6 +27,8 @@ const MOOD_WORDS: Record<TildeMood, string> = {
   purr: "purring",
   moth: "batting at the Margin Moth",
   typing: "watching the cursor",
+  celebrate: "celebrating the mended page",
+  startle: "startled by the rebind",
 };
 
 /** Props of `TildeBar`: only the caller's class; everything else is on the store. */

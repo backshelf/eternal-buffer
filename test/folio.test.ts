@@ -155,13 +155,13 @@ const SEEDS = Array.from({ length: 25 }, (_, index) => index * 7 + 1);
 const ACTS = [1, 2, 3, 4, 5, 6, 7] as const;
 
 describe("folio content", () => {
-  test("eighteen templates across six genres, every one a page of 10 to 14 lines", () => {
-    expect(FOLIO_TEMPLATES.length).toBeGreaterThanOrEqual(18);
+  test("twenty-six templates across ten genres, every one a page of 10 to 14 lines", () => {
+    expect(FOLIO_TEMPLATES.length).toBeGreaterThanOrEqual(26);
     const ids = new Set(FOLIO_TEMPLATES.map((template) => template.id));
     expect(ids.size).toBe(FOLIO_TEMPLATES.length);
 
     const genres = new Set(FOLIO_TEMPLATES.map((template) => template.genre));
-    expect(genres.size).toBe(6);
+    expect(genres.size).toBe(10);
 
     for (const template of FOLIO_TEMPLATES) {
       expect(template.lines.length).toBeGreaterThanOrEqual(10);
@@ -436,14 +436,20 @@ describe("a dd in the middle", () => {
   });
 
   test("deleting an unrelated line resolves nothing", () => {
+    let checked = 0;
     for (const seed of SEEDS) {
       const folio = generateFolio({ seed, unlocked: ALL_FAMILIES, actTier: 7, challengeRules: [] });
+      const touched = new Set(folio.anomalies.map((anomaly) => anomaly.line));
+      const at = folio.lines.findIndex((_line, index) => !touched.has(index));
+      if (at < 0) continue;
       const page = [...folio.lines];
-      page.splice(Math.floor(page.length / 2), 1);
+      page.splice(at, 1);
       const result = evaluateFolio(page, folio, {});
       expect(result.newlyResolved.length).toBe(0);
       expect(result.allResolved).toBe(false);
+      checked += 1;
     }
+    expect(checked).toBeGreaterThan(0);
   });
 });
 
